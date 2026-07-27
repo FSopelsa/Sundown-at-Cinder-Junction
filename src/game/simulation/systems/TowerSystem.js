@@ -1,0 +1,104 @@
+import { SWITCHYARD_MAP, distanceToPath } from '../../content/map.js';
+import { TOWER_DEFINITIONS } from '../../content/towers.js';
+
+function distanceBetween(first, second) {
+  return Math.hypot(first.x - second.x, first.y - second.y);
+}
+
+export class TowerSystem {
+  constructor(
+    gameState,
+    economySystem,
+    combatSystem,
+    definitions = TOWER_DEFINITIONS,
+    map = SWITCHYARD_MAP,
+  ) {
+    this.gameState = gameState;
+    this.economySystem = economySystem;
+    this.combatSystem = combatSystem;
+    this.definitions = definitions;
+    this.map = map;
+  }
+
+  placeTower(towerType, x, y) {
+    const definition = this.definitions[towerType];
+
+    if (!definition) {
+      return { ok: false, reason: `Unknown tower type: ${towerType}` };
+    }
+
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return { ok: false, reason: 'Invalid tower position.' };
+    }
+
+    const margin = this.map.buildMargin;
+    const outsideBounds =
+      x < margin ||
+      y < margin ||
+      x > this.map.width - margin ||
+      y > this.map.height - margin;
+
+    if (outsideBounds) {
+      return { ok: false, reason: 'Build inside the switchyard.' };
+    }
+
+    if (distanceToPath(x, y, this.map.path) < this.map.pathClearance) {
+      return { ok: false, reason: 'The rail route must remain clear.' };
+    }
+
+    const overlapsTower = this.gameState.towers.some(
+      (tower) => distanceBetween(tower, { x, y }) < this.map.towerSpacing,
+    );
+
+    if (overlapsTower) {
+      return { ok: false, reason: 'Too close to another tower.' };
+    }
+
+    if (!this.economySystem.spendScrap(definition.cost)) {
+      return { ok: false, reason: 'Not enough Scrap.' };
+    }
+
+    const tower = {
+      id: this.gameState.allocateId('tower'),
+      type: definition.id,
+      name: definition.name,
+      x,
+      y,
+      level: 1,
+      range: definition.range,
+      damage: definition.damage,
+      damageType: definition.damageType,
+      fireIntervalMs: 1000 / definition.shotsPerSecond,
+      cooldownMs: 0,
+      assetKey: definition.assetKey,
+    };
+
+    this.gameState.towers.push(tower);
+    return { ok: true, tower };
+  }
+
+  update(deltaMs) {
+    for (const tower of this.gameState.towers) {
+      tower.cooldownMs = Math.max(0, tower.cooldownMs - deltaMs);
+
+      if (tower.cooldownMs > 0) {
+        continue;
+      }
+
+      const target = this.gameState.enemies
+        .filter((enemy) => distanceBetween(tower, enemy) <= tower.range)
+        .sort((first, second) => second.progress - first.progress)[0];
+
+      if (!target) {
+        continue;
+      }
+
+      this.combatSystem.applyDamage(
+        target.id,
+        tower.damage,
+        tower.damageType,
+      );
+      tower.cooldownMs = tower.fireIntervalMs;
+    }
+  }
+}
