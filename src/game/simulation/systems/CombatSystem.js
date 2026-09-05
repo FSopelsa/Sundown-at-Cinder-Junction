@@ -2,6 +2,11 @@ export class CombatSystem {
   constructor(gameState, economySystem) {
     this.gameState = gameState;
     this.economySystem = economySystem;
+    this.events = [];
+  }
+
+  recordEvent(event) {
+    this.events.push(event);
   }
 
   applyDamage(targetOrId, amount, damageType = 'neutral') {
@@ -20,9 +25,26 @@ export class CombatSystem {
     const applied = Math.min(amount, target.hp);
     target.hp -= applied;
 
+    this.events.push({
+      type: 'hit',
+      targetId: target.id,
+      x: target.x,
+      y: target.y,
+      damageType,
+      amount: applied,
+    });
+
     if (target.hp > 0) {
       return { applied, killed: false, damageType };
     }
+
+    this.events.push({
+      type: 'death',
+      targetId: target.id,
+      x: target.x,
+      y: target.y,
+      damageType,
+    });
 
     this.gameState.enemies = this.gameState.enemies.filter(
       (enemy) => enemy.id !== target.id,
@@ -30,5 +52,11 @@ export class CombatSystem {
     this.economySystem.awardScrap(target.reward);
 
     return { applied, killed: true, damageType };
+  }
+
+  drainEvents() {
+    const events = this.events;
+    this.events = [];
+    return events;
   }
 }

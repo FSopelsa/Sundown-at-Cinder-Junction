@@ -225,10 +225,13 @@ The architecture skeleton now includes:
 - Eleven placeholder raid definitions: ten normal waves plus The Black Comet
 - Enemy, tower, combat, status, economy, wave, and recipe systems
 - A real Phaser boot flow and battle scene
-- A DOM-based HUD with raid, pause, and speed controls
-- Click-to-place Peacemaker towers and placeholder combat
+- A DOM-based HUD with raid, pause, speed, build-palette, and outcome controls
+- Click-to-place Peacemaker, Sunspitter, and Cold-Iron Longshot towers
+- Solar burn and Cryo slow status effects, with a Rift Leech regeneration trait
+- Wave-clear and station-failure panels, plus placeholder hit and death effects
+- Escaped enemies returning as next-raid reinforcements and raid-by-raid hull scaling
 - Stable asset keys and a public asset layout
 - Unit tests for state, map helpers, economy, recipes, and simulation integration
 
-The next milestone is content depth: bounty selection, catalysts, four elemental
-towers, three fusion towers, Deadeye, and authored placeholder art/audio.
+The next milestone is content depth: bounty selection, catalysts, the remaining
+elemental towers, three fusion towers, Deadeye, and authored art/audio.

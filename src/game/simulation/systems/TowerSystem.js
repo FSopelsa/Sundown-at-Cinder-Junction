@@ -10,12 +10,14 @@ export class TowerSystem {
     gameState,
     economySystem,
     combatSystem,
+    statusEffectSystem = null,
     definitions = TOWER_DEFINITIONS,
     map = SWITCHYARD_MAP,
   ) {
     this.gameState = gameState;
     this.economySystem = economySystem;
     this.combatSystem = combatSystem;
+    this.statusEffectSystem = statusEffectSystem;
     this.definitions = definitions;
     this.map = map;
   }
@@ -25,6 +27,10 @@ export class TowerSystem {
 
     if (!definition) {
       return { ok: false, reason: `Unknown tower type: ${towerType}` };
+    }
+
+    if (this.gameState.stationIntegrity <= 0) {
+      return { ok: false, reason: 'The junction has fallen. Restart to build again.' };
     }
 
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
@@ -71,6 +77,7 @@ export class TowerSystem {
       fireIntervalMs: 1000 / definition.shotsPerSecond,
       cooldownMs: 0,
       assetKey: definition.assetKey,
+      effect: definition.effect ? { ...definition.effect } : null,
     };
 
     this.gameState.towers.push(tower);
@@ -93,11 +100,25 @@ export class TowerSystem {
         continue;
       }
 
-      this.combatSystem.applyDamage(
+      this.combatSystem.recordEvent({
+        type: 'tower-fire',
+        towerType: tower.type,
+      });
+      const result = this.combatSystem.applyDamage(
         target.id,
         tower.damage,
         tower.damageType,
       );
+
+      if (
+        result.applied > 0 &&
+        !result.killed &&
+        tower.effect &&
+        this.statusEffectSystem
+      ) {
+        this.statusEffectSystem.apply(target.id, tower.effect);
+      }
+
       tower.cooldownMs = tower.fireIntervalMs;
     }
   }

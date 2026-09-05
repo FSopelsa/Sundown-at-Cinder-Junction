@@ -22,6 +22,7 @@ export function createSimulation(initialState = new GameState()) {
     state,
     economySystem,
     combatSystem,
+    statusEffectSystem,
   );
   const waveSystem = new WaveSystem(state, enemySystem);
   const elementRecipeSystem = new ElementRecipeSystem();

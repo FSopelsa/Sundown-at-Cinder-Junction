@@ -3,10 +3,16 @@
 A space-western elemental tower-defense prototype built with JavaScript,
 Phaser, and Vite.
 
-The current build is a playable architecture skeleton: place Peacemaker
-turrets, start raids, defend the switchyard, pause, and switch between 1× and
-2× simulation speed. Placeholder shapes are generated at runtime, so no art
-download is required.
+The current build is a playable first-combat beat: choose and place a
+Peacemaker, Sunspitter, or Cold-Iron Longshot; start raids; defend the
+switchyard; pause; and switch between 1× and 2× simulation speed. The
+Sunspitter's solar burn suppresses Rift Leech regeneration, while the
+Cold-Iron Longshot slows targets at long range. Placeholder shapes are
+generated at runtime, so no art download is required.
+
+Enemies gain 18% more hull for each raid after the first, with a small speed
+increase. Enemies that breach the station still damage its integrity, then
+return as the first reinforcements in the next raid.
 
 ## Run locally
 
@@ -22,10 +28,13 @@ machine execution policy.
 
 ## Controls
 
-- Click clear ground to place a Peacemaker turret for 40 Scrap.
+- Select a tower in the Build Catalogue, then click clear ground to deploy it.
 - `Space` starts the next raid.
 - `P` pauses or resumes.
 - `1` and `2` select simulation speed.
+
+Clearing a raid opens a result panel with a button for the next raid. If the
+station falls, the failure panel offers a fresh run.
 
 ## Quality checks
 

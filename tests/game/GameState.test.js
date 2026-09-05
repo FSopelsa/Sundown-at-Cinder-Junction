@@ -13,6 +13,11 @@ test('GameState serializes as an object and restores plain simulation data', () 
     hp: 10,
     effects: [{ id: 'effect-3', type: 'slow', remainingMs: 500 }],
   });
+  state.carryoverEnemies.push({
+    enemyType: 'rustRunner',
+    sourceWaveIndex: 2,
+  });
+  state.wave.carryoverCount = 1;
 
   const serialized = JSON.stringify(state);
   const parsed = JSON.parse(serialized);
@@ -21,6 +26,8 @@ test('GameState serializes as an object and restores plain simulation data', () 
   assert.equal(parsed.schemaVersion, SAVE_SCHEMA_VERSION);
   assert.equal(parsed.towers[0].id, 'tower-1');
   assert.equal(parsed.enemies[0].effects[0].type, 'slow');
+  assert.equal(parsed.carryoverEnemies[0].enemyType, 'rustRunner');
+  assert.equal(parsed.wave.carryoverCount, 1);
 
   const restored = GameState.fromJSON(serialized);
   assert.deepEqual(restored.toJSON(), parsed);

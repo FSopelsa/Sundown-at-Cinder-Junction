@@ -22,16 +22,21 @@ function createEnemyTexture(scene, key, color, size) {
   graphics.destroy();
 }
 
-function createTowerTexture(scene) {
-  const size = 34;
+function createTowerTexture(scene, key, bodyColor, accentColor, barrelWidth, barrelLength) {
+  const size = 38;
   const graphics = scene.make.graphics({ add: false });
   graphics.fillStyle(0x181b20, 1);
   graphics.fillCircle(size / 2, size / 2, size / 2);
-  graphics.fillStyle(0xb87333, 1);
-  graphics.fillCircle(size / 2, size / 2, 11);
-  graphics.fillStyle(0xe2c07d, 1);
-  graphics.fillRect(size / 2 - 2, 1, 4, 16);
-  graphics.generateTexture(ASSET_KEYS.towers.peacemaker, size, size);
+  graphics.fillStyle(bodyColor, 1);
+  graphics.fillCircle(size / 2, size / 2, 12);
+  graphics.fillStyle(accentColor, 1);
+  graphics.fillRect(
+    size / 2 - barrelWidth / 2,
+    2,
+    barrelWidth,
+    barrelLength,
+  );
+  graphics.generateTexture(key, size, size);
   graphics.destroy();
 }
 
@@ -42,7 +47,22 @@ export function createPlaceholderTextures(scene) {
     }
   }
 
-  if (!scene.textures.exists(ASSET_KEYS.towers.peacemaker)) {
-    createTowerTexture(scene);
+  const towerTextures = [
+    [ASSET_KEYS.towers.peacemaker, 0xb87333, 0xe2c07d, 4, 16],
+    [ASSET_KEYS.towers.sunspitter, 0xc86831, 0xffd36f, 6, 18],
+    [ASSET_KEYS.towers.coldIronLongshot, 0x44788d, 0xbaf3ff, 3, 25],
+  ];
+
+  for (const [key, bodyColor, accentColor, barrelWidth, barrelLength] of towerTextures) {
+    if (!scene.textures.exists(key)) {
+      createTowerTexture(
+        scene,
+        key,
+        bodyColor,
+        accentColor,
+        barrelWidth,
+        barrelLength,
+      );
+    }
   }
 }

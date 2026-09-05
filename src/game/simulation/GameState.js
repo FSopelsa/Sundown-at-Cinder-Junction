@@ -16,6 +16,10 @@ function createWaveState(wave = {}) {
     isBounty: Boolean(wave.isBounty),
     label: typeof wave.label === 'string' ? wave.label : '',
     elapsedMs: Number.isFinite(wave.elapsedMs) ? wave.elapsedMs : 0,
+    carryoverCount:
+      Number.isInteger(wave.carryoverCount) && wave.carryoverCount >= 0
+        ? wave.carryoverCount
+        : 0,
     spawnQueue: Array.isArray(wave.spawnQueue)
       ? wave.spawnQueue.map((spawn) => ({ ...spawn }))
       : [],
@@ -32,6 +36,9 @@ export class GameState {
       : [];
     this.enemies = Array.isArray(snapshot.enemies)
       ? snapshot.enemies.map(cloneEnemy)
+      : [];
+    this.carryoverEnemies = Array.isArray(snapshot.carryoverEnemies)
+      ? snapshot.carryoverEnemies.map((enemy) => ({ ...enemy }))
       : [];
     this.wave = createWaveState(snapshot.wave);
     this.stationIntegrity = Number.isFinite(snapshot.stationIntegrity)
@@ -60,6 +67,7 @@ export class GameState {
       catalysts: { ...this.catalysts },
       towers: this.towers.map((tower) => ({ ...tower })),
       enemies: this.enemies.map(cloneEnemy),
+      carryoverEnemies: this.carryoverEnemies.map((enemy) => ({ ...enemy })),
       wave: createWaveState(this.wave),
       stationIntegrity: this.stationIntegrity,
       settings: { ...this.settings },

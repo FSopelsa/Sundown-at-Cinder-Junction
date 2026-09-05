@@ -15,13 +15,43 @@ export class StatusEffectSystem {
       throw new RangeError('Effect duration must be a positive number.');
     }
 
+    const tickEveryMs = effect.tickEveryMs ?? 1000;
+
+    if (!Number.isFinite(tickEveryMs) || tickEveryMs <= 0) {
+      throw new RangeError('Effect tick interval must be a positive number.');
+    }
+
+    const existingEffect = target.effects.find(
+      (activeEffect) => activeEffect.type === effect.type,
+    );
+
+    if (existingEffect) {
+      existingEffect.magnitude = Math.max(
+        existingEffect.magnitude,
+        effect.magnitude ?? 0,
+      );
+      existingEffect.remainingMs = Math.max(
+        existingEffect.remainingMs,
+        effect.durationMs,
+      );
+      existingEffect.tickEveryMs = Math.min(
+        existingEffect.tickEveryMs,
+        tickEveryMs,
+      );
+      existingEffect.tickRemainingMs = Math.min(
+        existingEffect.tickRemainingMs,
+        tickEveryMs,
+      );
+      return true;
+    }
+
     target.effects.push({
       id: this.gameState.allocateId('effect'),
       type: effect.type,
       magnitude: effect.magnitude ?? 0,
       remainingMs: effect.durationMs,
-      tickEveryMs: effect.tickEveryMs ?? 1000,
-      tickRemainingMs: effect.tickEveryMs ?? 1000,
+      tickEveryMs,
+      tickRemainingMs: tickEveryMs,
     });
 
     return true;

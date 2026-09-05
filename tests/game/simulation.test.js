@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { ENEMY_DEFINITIONS } from '../../src/game/content/enemies.js';
+import { getRaidScaling } from '../../src/game/content/waves.js';
 import { ACTIONS } from '../../src/game/input/actions.js';
 import { createSimulation } from '../../src/game/simulation/createSimulation.js';
+import { WAVE_START_DELAY_MS } from '../../src/game/simulation/systems/WaveSystem.js';
 
 test('systems mutate GameState instead of keeping parallel entity arrays', () => {
   const simulation = createSimulation();
@@ -30,6 +33,59 @@ test('tower placement validates rails, spacing, and economy', () => {
   assert.equal(simulation.state.scrap, 120);
 });
 
+test('elemental towers apply their distinct status effects', () => {
+  const solarSimulation = createSimulation();
+  const solarEnemy = solarSimulation.systems.enemySystem.spawn('dustMite');
+  solarEnemy.x = 110;
+  solarEnemy.y = 350;
+
+  assert.equal(
+    solarSimulation.dispatch(ACTIONS.placeTower, {
+      towerType: 'sunspitter',
+      x: 100,
+      y: 350,
+    }).ok,
+    true,
+  );
+  solarSimulation.update(20);
+  assert.ok(solarEnemy.effects.some((effect) => effect.type === 'burn'));
+
+  const cryoSimulation = createSimulation();
+  const cryoEnemy = cryoSimulation.systems.enemySystem.spawn('tinbackHauler');
+  cryoEnemy.x = 110;
+  cryoEnemy.y = 350;
+
+  assert.equal(
+    cryoSimulation.dispatch(ACTIONS.placeTower, {
+      towerType: 'coldIronLongshot',
+      x: 100,
+      y: 350,
+    }).ok,
+    true,
+  );
+  cryoSimulation.update(20);
+  assert.ok(cryoEnemy.effects.some((effect) => effect.type === 'slow'));
+});
+
+test('Rift Leech regeneration is suppressed by burn', () => {
+  const simulation = createSimulation();
+  const leech = simulation.systems.enemySystem.spawn('riftLeech');
+  leech.hp = 20;
+
+  simulation.systems.enemySystem.update(1000);
+  assert.equal(leech.hp, 35);
+
+  simulation.systems.statusEffectSystem.apply(leech.id, {
+    type: 'burn',
+    magnitude: 8,
+    durationMs: 1000,
+  });
+  const hpWhileBurning = leech.hp;
+  simulation.systems.enemySystem.update(1000);
+
+  assert.equal(leech.hp, hpWhileBurning);
+});
+
 test('starting a raid stores its queue in GameState and spawns into GameState', () => {
   const simulation = createSimulation();
   const started = simulation.dispatch(ACTIONS.startWave);
@@ -37,10 +93,57 @@ test('starting a raid stores its queue in GameState and spawns into GameState', 
   assert.equal(started.ok, true);
   assert.ok(simulation.state.wave.spawnQueue.length > 0);
 
-  simulation.update(20);
+  for (let elapsedMs = 0; elapsedMs < WAVE_START_DELAY_MS + 20; elapsedMs += 20) {
+    simulation.update(20);
+  }
 
   assert.equal(simulation.state.enemies.length, 1);
   assert.equal(simulation.state.wave.index, 1);
+});
+
+test('escaped enemies return first in the next raid', () => {
+  const simulation = createSimulation();
+  simulation.state.wave.index = 1;
+  const escapedEnemy = simulation.systems.enemySystem.spawn('dustMite');
+  escapedEnemy.progress = 0.99;
+
+  simulation.systems.enemySystem.update(1000);
+
+  assert.equal(simulation.state.enemies.length, 0);
+  assert.deepEqual(simulation.state.carryoverEnemies, [
+    { enemyType: 'dustMite', sourceWaveIndex: 1 },
+  ]);
+
+  const nextRaid = simulation.dispatch(ACTIONS.startWave);
+
+  assert.equal(nextRaid.ok, true);
+  assert.equal(nextRaid.wave.index, 2);
+  assert.equal(nextRaid.wave.carryoverCount, 1);
+  assert.equal(simulation.state.carryoverEnemies.length, 0);
+  assert.deepEqual(nextRaid.wave.spawnQueue[0], {
+    enemyType: 'dustMite',
+    atMs: WAVE_START_DELAY_MS,
+    isCarryover: true,
+  });
+});
+
+test('enemy hull scales up for every raid', () => {
+  const simulation = createSimulation();
+  simulation.state.wave.index = 1;
+  const firstRaidEnemy = simulation.systems.enemySystem.spawn('dustMite');
+
+  simulation.state.wave.index = 4;
+  const fourthRaidEnemy = simulation.systems.enemySystem.spawn('dustMite');
+
+  assert.equal(firstRaidEnemy.maxHp, ENEMY_DEFINITIONS.dustMite.maxHp);
+  assert.equal(
+    fourthRaidEnemy.maxHp,
+    Math.round(
+      ENEMY_DEFINITIONS.dustMite.maxHp * getRaidScaling(4).healthMultiplier,
+    ),
+  );
+  assert.ok(fourthRaidEnemy.maxHp > firstRaidEnemy.maxHp);
+  assert.ok(fourthRaidEnemy.speed > firstRaidEnemy.speed);
 });
 
 test('combat pays a reward once and rejects invalid damage', () => {
@@ -56,6 +159,10 @@ test('combat pays a reward once and rejects invalid damage', () => {
   assert.equal(
     simulation.systems.combatSystem.applyDamage(enemy.id, 1).applied,
     0,
+  );
+  assert.deepEqual(
+    simulation.systems.combatSystem.drainEvents().map((event) => event.type),
+    ['hit', 'death'],
   );
   assert.throws(
     () => simulation.systems.combatSystem.applyDamage(enemy.id, -1),

@@ -14,9 +14,9 @@ export const SWITCHYARD_MAP = Object.freeze({
   width: 1280,
   height: 720,
   path: Object.freeze(path),
-  buildMargin: 36,
-  pathClearance: 70,
-  towerSpacing: 58,
+  buildMargin: 26,
+  pathClearance: 55,
+  towerSpacing: 38,
 });
 
 export function getPathLength(points = SWITCHYARD_MAP.path) {
