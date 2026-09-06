@@ -1,9 +1,12 @@
 import { ACTIONS } from '../input/actions.js';
+import { getMap } from '../content/map.js';
+import { getElementalTrialWave } from '../content/waves.js';
 import { GameState } from './GameState.js';
 import { CombatSystem } from './systems/CombatSystem.js';
 import { EconomySystem } from './systems/EconomySystem.js';
 import { ElementRecipeSystem } from './systems/ElementRecipeSystem.js';
 import { EnemySystem } from './systems/EnemySystem.js';
+import { HeroSystem } from './systems/HeroSystem.js';
 import { StatusEffectSystem } from './systems/StatusEffectSystem.js';
 import { TowerSystem } from './systems/TowerSystem.js';
 import { WaveSystem } from './systems/WaveSystem.js';
@@ -15,22 +18,37 @@ export function createSimulation(initialState = new GameState()) {
   const state =
     initialState instanceof GameState ? initialState : new GameState(initialState);
   const economySystem = new EconomySystem(state);
+  const map = getMap(state.levelId);
   const combatSystem = new CombatSystem(state, economySystem);
-  const enemySystem = new EnemySystem(state);
   const statusEffectSystem = new StatusEffectSystem(state, combatSystem);
+  const heroSystem = new HeroSystem(
+    state,
+    combatSystem,
+    map,
+    undefined,
+    statusEffectSystem,
+    economySystem,
+  );
+  const enemySystem = new EnemySystem(state, undefined, map, heroSystem);
   const towerSystem = new TowerSystem(
     state,
     economySystem,
     combatSystem,
     statusEffectSystem,
+    undefined,
+    map,
+    heroSystem,
   );
-  const waveSystem = new WaveSystem(state, enemySystem);
+  const waveSystem = new WaveSystem(state, enemySystem,
+    map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
   const elementRecipeSystem = new ElementRecipeSystem();
   let accumulatorMs = 0;
 
   function tick(deltaMs) {
     waveSystem.update(deltaMs);
     statusEffectSystem.update(deltaMs);
+    if (map.mode === 'maze') enemySystem.refreshMazeRoutes();
+    heroSystem.update(deltaMs);
     towerSystem.update(deltaMs);
     enemySystem.update(deltaMs);
     waveSystem.completeIfFinished();
@@ -60,6 +78,14 @@ export function createSimulation(initialState = new GameState()) {
           payload.x,
           payload.y,
         );
+      case ACTIONS.upgradeTower:
+        return towerSystem.upgradeTower(payload.towerId, payload.upgrade);
+      case ACTIONS.sellTower:
+        return towerSystem.sellTower(payload.towerId);
+      case ACTIONS.moveHero:
+        return heroSystem.commandMove(payload.x, payload.y);
+      case ACTIONS.castHeroSkill:
+        return heroSystem.castHeroSkill(payload.skillId, payload.x, payload.y);
       case ACTIONS.togglePause:
         state.settings.paused = !state.settings.paused;
         return { ok: true, paused: state.settings.paused };
@@ -76,12 +102,14 @@ export function createSimulation(initialState = new GameState()) {
   }
 
   return {
+    map,
     state,
     systems: {
       combatSystem,
       economySystem,
       elementRecipeSystem,
       enemySystem,
+      heroSystem,
       statusEffectSystem,
       towerSystem,
       waveSystem,

@@ -3,7 +3,7 @@ import { createGame } from './phaser/createGame.js';
 import { Hud } from './ui/hud/Hud.js';
 import './ui/styles.css';
 
-const simulation = createSimulation();
+const simulation = createSimulation({ levelId: new URLSearchParams(window.location.search).get('level') });
 const hudRoot = document.querySelector('#hud-root');
 
 if (!(hudRoot instanceof HTMLElement)) {
@@ -15,9 +15,15 @@ hud.mount();
 
 const game = createGame('game-root', simulation, hud);
 
+// Opt-in local diagnostics for reproducible game playtests; excluded from builds.
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
+  window.__cinder = { game, simulation, hud };
+}
+
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     hud.dispose();
     game.destroy(true);
+    delete window.__cinder;
   });
 }
