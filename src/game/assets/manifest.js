@@ -1,4 +1,7 @@
 export const ASSET_KEYS = Object.freeze({
+  heroes: Object.freeze({
+    circuitMarshal: 'hero-circuit-marshal',
+  }),
   enemies: Object.freeze({
     dustMite: 'enemy-dust-mite',
     rustRunner: 'enemy-rust-runner',
@@ -12,8 +15,32 @@ export const ASSET_KEYS = Object.freeze({
     peacemaker: 'tower-peacemaker',
     sunspitter: 'tower-sunspitter',
     coldIronLongshot: 'tower-cold-iron-longshot',
+    teslaCoil: 'tower-tesla-coil',
   }),
 });
+
+export const TOWER_ANIMATION_KEYS = Object.freeze({
+  sunspitterFire: 'tower-sunspitter-fire',
+  coldIronLongshot: 'tower-cold-iron-longshot:attack',
+  teslaCoil: 'tower-tesla-coil:attack',
+});
+
+export const HERO_ANIMATION_KEYS = Object.freeze({
+  idle: 'hero-circuit-marshal:idle',
+  run: 'hero-circuit-marshal:run',
+  cast: 'hero-circuit-marshal:cast',
+});
+
+export const SUNSPITTER_ATLAS_FRAMES = Object.freeze([
+  'sunspitter-idle-01',
+  'sunspitter-charge-01',
+  'sunspitter-charge-02',
+  'sunspitter-charge-03',
+  'sunspitter-charge-04',
+  'sunspitter-fire-01',
+  'sunspitter-cooldown-01',
+  'sunspitter-idle-02',
+]);
 
 export const AUDIO_KEYS = Object.freeze({
   ambience: Object.freeze({
@@ -42,6 +69,18 @@ export const AUDIO_KEYS = Object.freeze({
 
 export const ASSET_MANIFEST = Object.freeze({
   images: Object.freeze([]),
+  atlases: Object.freeze([
+    { key: ASSET_KEYS.towers.coldIronLongshot, path: '/assets/sprites/cold-iron-longshot' },
+    { key: ASSET_KEYS.towers.teslaCoil, path: '/assets/sprites/tesla-coil' },
+    { key: ASSET_KEYS.heroes.circuitMarshal, path: '/assets/sprites/singularity-hero' },
+  ]),
+  spritesheets: Object.freeze([
+    Object.freeze({
+      key: ASSET_KEYS.towers.sunspitter,
+      path: 'public/assets/towers/sunspitter-charge.png',
+      frameConfig: Object.freeze({ frameWidth: 192, frameHeight: 192 }),
+    }),
+  ]),
   audio: Object.freeze([
     Object.freeze({
       key: AUDIO_KEYS.ambience.combat,
@@ -69,7 +108,7 @@ export const ASSET_MANIFEST = Object.freeze({
     }),
     Object.freeze({
       key: AUDIO_KEYS.music.menu,
-      path: 'public/assets/audio/menuMusic-dark-future-logo-196217.mp3',
+      path: 'public/assets/audio/music/menuMusic-dark-future-logo-196217.mp3',
     }),
     Object.freeze({
       key: AUDIO_KEYS.wave.start,

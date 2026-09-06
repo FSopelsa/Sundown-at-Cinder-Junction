@@ -74,3 +74,12 @@ export function getWaveDefinition(index) {
     groups,
   };
 }
+
+export function getElementalTrialWave(index) {
+  const wave = getWaveDefinition(index);
+  if (!wave || index !== 1) return wave;
+  return { ...wave, label: 'Arc field trial', groups: [
+    { enemyType: 'dustMite', count: 4, intervalMs: 650 },
+    { enemyType: 'sparkWagon', count: 5, intervalMs: 550, delayBeforeMs: 900 },
+  ] };
+}

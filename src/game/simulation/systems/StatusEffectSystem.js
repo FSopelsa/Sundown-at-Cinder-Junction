@@ -42,6 +42,7 @@ export class StatusEffectSystem {
         existingEffect.tickRemainingMs,
         tickEveryMs,
       );
+      existingEffect.source = effect.source ? { ...effect.source } : existingEffect.source;
       return true;
     }
 
@@ -52,6 +53,7 @@ export class StatusEffectSystem {
       remainingMs: effect.durationMs,
       tickEveryMs,
       tickRemainingMs: tickEveryMs,
+      source: effect.source ? { ...effect.source } : null,
     });
 
     return true;
@@ -64,14 +66,15 @@ export class StatusEffectSystem {
       for (const effect of enemy.effects) {
         effect.remainingMs -= deltaMs;
 
-        if (effect.type === 'burn') {
+        if (effect.type === 'burn' || effect.type === 'void-rend') {
           effect.tickRemainingMs -= deltaMs;
 
           while (effect.tickRemainingMs <= 0 && targetAlive) {
             const result = this.combatSystem.applyDamage(
               enemy.id,
               Math.max(1, effect.magnitude),
-              'solar',
+              effect.type === 'burn' ? 'solar' : 'void',
+              effect.source,
             );
             targetAlive = !result.killed;
             effect.tickRemainingMs += effect.tickEveryMs;

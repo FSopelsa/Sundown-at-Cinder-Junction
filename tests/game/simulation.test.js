@@ -67,6 +67,34 @@ test('elemental towers apply their distinct status effects', () => {
   assert.ok(cryoEnemy.effects.some((effect) => effect.type === 'slow'));
 });
 
+test('tower fire events include the Sunspitter and target positions for visual effects', () => {
+  const simulation = createSimulation();
+  const enemy = simulation.systems.enemySystem.spawn('dustMite');
+  enemy.x = 110;
+  enemy.y = 350;
+
+  const placement = simulation.dispatch(ACTIONS.placeTower, {
+    towerType: 'sunspitter',
+    x: 100,
+    y: 350,
+  });
+  simulation.systems.towerSystem.update(0);
+
+  const fire = simulation.systems.combatSystem
+    .drainEvents()
+    .find((event) => event.type === 'tower-fire');
+
+  assert.deepEqual(fire, {
+    type: 'tower-fire',
+    towerId: placement.tower.id,
+    towerType: 'sunspitter',
+    x: 100,
+    y: 350,
+    targetX: 110,
+    targetY: 350,
+  });
+});
+
 test('Rift Leech regeneration is suppressed by burn', () => {
   const simulation = createSimulation();
   const leech = simulation.systems.enemySystem.spawn('riftLeech');

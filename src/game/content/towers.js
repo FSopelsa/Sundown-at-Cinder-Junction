@@ -1,12 +1,39 @@
 import { ASSET_KEYS } from '../assets/manifest.js';
 
+export const MAX_TOWER_LEVEL = 3;
+export const UPGRADE_MULTIPLIER = 1.5;
+export const TOWER_SELL_RATE = 0.8;
+
+export function getUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower.type]) {
+  return tower.level >= MAX_TOWER_LEVEL ? null : Math.ceil(definition.cost * tower.level * 0.75);
+}
+
+// New towers keep the exact amount paid so a sell value is unambiguous. Older
+// saves do not have that field, so reconstruct it from the fixed upgrade curve.
+export function getTowerInvestment(tower, definition = TOWER_DEFINITIONS[tower.type]) {
+  if (Number.isFinite(tower.investedScrap)) {
+    return Math.max(0, tower.investedScrap);
+  }
+
+  let invested = definition?.cost ?? 0;
+  const level = Math.max(1, Number.isInteger(tower.level) ? tower.level : 1);
+  for (let currentLevel = 1; currentLevel < level; currentLevel += 1) {
+    invested += Math.ceil((definition?.cost ?? 0) * currentLevel * 0.75);
+  }
+  return invested;
+}
+
+export function getTowerSellValue(tower, definition = TOWER_DEFINITIONS[tower.type]) {
+  return Math.floor(getTowerInvestment(tower, definition) * TOWER_SELL_RATE);
+}
+
 export const TOWER_DEFINITIONS = Object.freeze({
   peacemaker: Object.freeze({
     id: 'peacemaker',
     name: 'Peacemaker Turret',
     cost: 40,
     range: 156,
-    damage: 12,
+    damage: 8,
     shotsPerSecond: 1.5,
     damageType: 'neutral',
     assetKey: ASSET_KEYS.towers.peacemaker,
@@ -17,8 +44,8 @@ export const TOWER_DEFINITIONS = Object.freeze({
     name: 'Sunspitter',
     cost: 90,
     range: 142,
-    damage: 8,
-    shotsPerSecond: 2.5,
+    damage: 5,
+    shotsPerSecond: 2,
     damageType: 'solar',
     assetKey: ASSET_KEYS.towers.sunspitter,
     effect: Object.freeze({
@@ -34,7 +61,7 @@ export const TOWER_DEFINITIONS = Object.freeze({
     name: 'Cold-Iron Longshot',
     cost: 99,
     range: 290,
-    damage: 32,
+    damage: 12,
     shotsPerSecond: 0.42,
     damageType: 'cryo',
     assetKey: ASSET_KEYS.towers.coldIronLongshot,
@@ -45,4 +72,27 @@ export const TOWER_DEFINITIONS = Object.freeze({
     }),
     description: 'Long-range cryo shots hit hard and slow priority targets.',
   }),
+  teslaCoil: Object.freeze({
+    id: 'teslaCoil',
+    name: 'Tesla Coil',
+    cost: 115,
+    range: 165,
+    damage: 18,
+    shotsPerSecond: 0.9,
+    damageType: 'arc',
+    assetKey: ASSET_KEYS.towers.teslaCoil,
+    chain: Object.freeze({ maxTargets: 4, jumpRange: 110, damageMultiplier: 0.72 }),
+    description: 'Arc lightning chains to 4 enemies, losing 28% damage per jump. Deals double damage to shields.',
+  }),
+  wall: Object.freeze({
+    id: 'wall',
+    name: 'Defensive Wall',
+    cost: 4,
+    range: 0,
+    damage: 0,
+    shotsPerSecond: 0,
+    damageType: 'neutral',
+    assetKey: ASSET_KEYS.towers.wall,
+    description: 'A sturdy wall to block enemy advances.',
+  })
 });

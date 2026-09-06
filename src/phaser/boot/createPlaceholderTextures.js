@@ -40,7 +40,25 @@ function createTowerTexture(scene, key, bodyColor, accentColor, barrelWidth, bar
   graphics.destroy();
 }
 
+function createHeroTexture(scene, key) {
+  const size = 38;
+  const graphics = scene.make.graphics({ add: false });
+  graphics.fillStyle(0x11151a, 1);
+  graphics.fillCircle(size / 2, size / 2, 18);
+  graphics.fillStyle(0x3f6f79, 1);
+  graphics.fillTriangle(19, 5, 7, 31, 31, 31);
+  graphics.fillStyle(0xf4cf8c, 1);
+  graphics.fillCircle(19, 14, 7);
+  graphics.fillStyle(0xd0a566, 1);
+  graphics.fillRect(16, 20, 6, 12);
+  graphics.generateTexture(key, size, size);
+  graphics.destroy();
+}
+
 export function createPlaceholderTextures(scene) {
+  if (!scene.textures.exists(ASSET_KEYS.heroes.circuitMarshal)) {
+    createHeroTexture(scene, ASSET_KEYS.heroes.circuitMarshal);
+  }
   for (const [key, color, size] of enemyTextures) {
     if (!scene.textures.exists(key)) {
       createEnemyTexture(scene, key, color, size);

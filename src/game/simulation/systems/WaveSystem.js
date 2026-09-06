@@ -30,10 +30,11 @@ function createSpawnQueue(groups, carryoverEnemies = []) {
 }
 
 export class WaveSystem {
-  constructor(gameState, enemySystem, waveProvider = getWaveDefinition) {
+  constructor(gameState, enemySystem, waveProvider = getWaveDefinition, heroSystem = null) {
     this.gameState = gameState;
     this.enemySystem = enemySystem;
     this.waveProvider = waveProvider;
+    this.heroSystem = heroSystem;
   }
 
   startNextWave() {
@@ -52,6 +53,7 @@ export class WaveSystem {
       return { ok: false, reason: 'All planned raids are complete.' };
     }
 
+    const heroRevived = this.heroSystem?.reviveForNextWave() ?? false;
     const carryoverEnemies = this.gameState.carryoverEnemies.map((enemy) => ({
       ...enemy,
     }));
@@ -68,7 +70,7 @@ export class WaveSystem {
       spawnQueue: createSpawnQueue(definition.groups, carryoverEnemies),
     };
 
-    return { ok: true, wave: this.gameState.wave };
+    return { ok: true, wave: this.gameState.wave, heroRevived };
   }
 
   update(deltaMs) {
