@@ -320,6 +320,7 @@ export class HeroSystem {
     this.updateGravityWells(deltaMs);
 
     const hero = this.hero;
+    hero.aegisRemainingMs = Math.max(0, (hero.aegisRemainingMs ?? 0) - deltaMs);
     if (!hero.alive) return;
 
     this.updateMovement(deltaMs);
@@ -493,7 +494,8 @@ export class HeroSystem {
     if (!hero.alive || !Number.isFinite(amount) || amount <= 0) {
       return { applied: 0, killed: false };
     }
-    const applied = Math.min(hero.hp, amount);
+    const mitigation = hero.aegisRemainingMs > 0 ? 0.5 : 1;
+    const applied = Math.min(hero.hp, amount * mitigation);
     hero.hp -= applied;
     this.events.push({ type: 'hero-hit', x: hero.x, y: hero.y, amount: applied, source });
     if (hero.hp > 0) return { applied, killed: false };
@@ -516,6 +518,7 @@ export class HeroSystem {
     hero.x = this.map.heroSpawn.x;
     hero.y = this.map.heroSpawn.y;
     hero.hp = hero.maxHp;
+    hero.aegisRemainingMs = 0;
     hero.attackCooldownMs = 0;
     hero.navigationCell = null;
     hero.navigationNext = null;

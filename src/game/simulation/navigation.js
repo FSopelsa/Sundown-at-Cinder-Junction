@@ -43,6 +43,7 @@ function neighbors(cell) {
 }
 
 export function isHeroCellBlocked(map, towers, cell) {
+  towers = towers.filter((tower) => !(tower.type === 'wall' && tower.ladder));
   if (map.mode === 'maze') {
     return towers.some((tower) => cellsMatch(worldToHeroCell(map, tower.x, tower.y), cell));
   }
@@ -132,5 +133,5 @@ export function findHeroPath(map, towers, startPosition, targetPosition) {
 }
 
 export function getTowerNavigationRevision(towers) {
-  return towers.map((tower) => `${tower.id}:${tower.x}:${tower.y}`).join('|');
+  return towers.map((tower) => `${tower.id}:${tower.x}:${tower.y}:${Boolean(tower.ladder)}`).join('|');
 }

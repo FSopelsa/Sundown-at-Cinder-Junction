@@ -166,6 +166,14 @@ export function createHeroState(map, snapshot = {}) {
     collisionRadius: HERO_DEFINITION.collisionRadius,
     alive,
     deathWave: Number.isInteger(snapshot.deathWave) ? snapshot.deathWave : null,
+    aegisRemainingMs: Math.max(
+      0,
+      Number.isFinite(snapshot.aegisRemainingMs) ? snapshot.aegisRemainingMs : 0,
+    ),
+    trainingPurchases: Math.max(
+      0,
+      Number.isInteger(snapshot.trainingPurchases) ? snapshot.trainingPurchases : 0,
+    ),
     navigationCell: snapshot.navigationCell ? { ...snapshot.navigationCell } : null,
     navigationNext: snapshot.navigationNext ? { ...snapshot.navigationNext } : null,
     destination: snapshot.destination ? { ...snapshot.destination } : null,

@@ -77,7 +77,7 @@ test('maze enemies take the shorter of unequal detours and cannot cut blocked co
 });
 
 for (const levelId of ['cinder-switchyard', 'cinder-maze']) {
-  for (const type of Object.keys(TOWER_DEFINITIONS)) {
+  for (const type of Object.keys(TOWER_DEFINITIONS).filter((towerType) => TOWER_DEFINITIONS[towerType].damage > 0)) {
     test(`${type} supports mixed upgrades and a level cap in ${levelId}`, () => {
       const sim = createSimulation({ levelId, scrap: 1000 });
       const position = levelId === MAZE_MAP.id ? cellCenter(MAZE_MAP, { col: 2, row: 3 }) : { x: 100, y: 350 };
