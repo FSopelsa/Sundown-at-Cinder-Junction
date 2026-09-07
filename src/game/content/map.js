@@ -50,7 +50,7 @@ export const OVERLOOK_MAP = Object.freeze({
   heroSpawn: Object.freeze({ x: 380, y: 440 }),
   waveSet: 'elemental-trial',
   presentation: Object.freeze({ type: 'isometric', originX: 553, originY: 128,
-    halfWidth: 29, halfHeight: 12 }),
+    halfWidth: 40, halfHeight: 28 }),
 });
 
 export const LEVELS = Object.freeze([SWITCHYARD_MAP, MAZE_MAP, OVERLOOK_MAP]);

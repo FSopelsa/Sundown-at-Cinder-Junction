@@ -1,3 +1,4 @@
+import { SUPPORT_ITEMS } from '../../game/simulation/systems/SupportShop.js';
 import { FINAL_WAVE_INDEX, getRaidScaling } from '../../game/content/waves.js';
 import {
   TOWER_DEFINITIONS,
@@ -93,6 +94,7 @@ export class Hud {
               <button type="button" data-upgrade="damage"></button>
               <button type="button" data-upgrade="speed"></button>
             </div>
+            <div data-hud="structure-actions" class="structure-actions"></div>
             <button type="button" class="tower-details__sell" data-action="sell-tower"></button>
           </div>
         </aside>
@@ -180,6 +182,15 @@ export class Hud {
     this.root.querySelector('[data-action="back-build"]').addEventListener('click', () => {
       this.selectedTowerId = null;
       this.inputMode = 'build';
+      this.render(true);
+    });
+    this.root.querySelector('[data-hud="structure-actions"]').addEventListener('click', event => {
+      const button = event.target.closest('[data-support], [data-ladder]');
+      if (!button) return;
+      const result = button.hasAttribute('data-ladder')
+        ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: 'ladder' })
+        : this.simulation.dispatch(ACTIONS.purchaseSupport, { towerId: this.selectedTowerId, item: button.dataset.support });
+      this.showNotice(result.ok ? result.message ?? 'Ladder installed. The hero can cross this wall.' : result.reason, result.ok ? 'success' : 'warning');
       this.render(true);
     });
     this.elements.commandHero.addEventListener('click', () => this.commandHero());
@@ -453,6 +464,7 @@ export class Hud {
   render(force = false) {
     const state = this.simulation.state;
     const renderKey = [
+      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}`).join(),
       state.scrap,
       state.stationIntegrity,
       state.wave.index,
@@ -469,6 +481,7 @@ export class Hud {
       this.inputMode,
       this.targetingSkillId,
       state.towers.find((tower) => tower.id === this.selectedTowerId)?.level,
+      Math.ceil((state.hero.aegisRemainingMs ?? 0) / 1000),
       state.hero.alive,
       state.hero.level,
       state.hero.hp,
@@ -504,6 +517,21 @@ export class Hud {
           : `Attack speed +50% · ${cost} Scrap`;
         button.disabled = cost === null || state.scrap < cost || state.stationIntegrity <= 0;
       }
+      const structure = tower.type === 'wall' || tower.type === 'scrapExchange';
+      for (const button of this.elements.upgradeButtons) button.hidden = structure;
+      const actions = this.root.querySelector('[data-hud="structure-actions"]');
+      actions.innerHTML = tower.type === 'wall'
+        ? `<button data-ladder ${tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
+        : tower.type === 'scrapExchange' ? Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
+          const price = offer.cost * (id === 'buyback' ? hero.level : id === 'xp' ? 1 + (hero.trainingPurchases ?? 0) : 1);
+          const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
+          return `<button data-support="${id}" ${unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
+        }).join('') : '';
+      if (structure) {
+        this.elements.towerName.textContent = tower.name;
+        this.elements.towerStats.textContent = tower.type === 'wall' ? 'Blocks enemies. Ladder allows hero passage.' : `${Math.ceil(tower.hp)} / ${tower.maxHp} hull · Taunt range 100${tower.aura ? ' · Relay radius 180' : ''}`;
+        this.elements.towerHistory.textContent = tower.type === 'wall' ? 'Select a combat tower, then click this wall to replace it.' : 'Taunted enemies bombard the Exchange until it falls. Auras do not stack. Training price increases after each purchase.';
+      }
       const sellValue = getTowerSellValue(tower);
       this.elements.sellTower.textContent = `Sell for ${sellValue} Scrap (80% return)`;
       this.elements.sellTower.disabled = false;
@@ -537,7 +565,7 @@ export class Hud {
     this.elements.heroName.textContent = hero.name;
     this.elements.heroLevel.textContent = `Level ${hero.level}`;
     this.elements.heroState.textContent = hero.alive
-      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec`
+      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}`
       : 'DOWN — returns at the next raid';
     this.elements.heroHp.textContent = `${Math.ceil(hero.hp)} / ${hero.maxHp}`;
     this.elements.heroHpFill.style.width = `${(100 * hero.hp) / hero.maxHp}%`;

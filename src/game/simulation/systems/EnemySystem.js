@@ -125,7 +125,7 @@ export class EnemySystem {
       const travelledDistance = enemy.speed * speedMultiplier * (deltaMs / 1000);
       enemy.attackCooldownMs = Math.max(0, enemy.attackCooldownMs - deltaMs);
 
-      if (this.attackHero(enemy)) {
+      if (this.attackExchange(enemy) || this.attackHero(enemy)) {
         continue;
       }
 
@@ -156,6 +156,20 @@ export class EnemySystem {
         (enemy) => !escapedEnemyIds.has(enemy.id),
       );
     }
+  }
+
+  attackExchange(enemy) {
+    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && tower.hp > 0 && distanceBetween(tower, enemy) <= tower.range)
+      .sort((a, b) => distanceBetween(a, enemy) - distanceBetween(b, enemy) || a.id.localeCompare(b.id))[0];
+    enemy.tauntedBy = exchange?.id ?? null;
+    if (!exchange) return false;
+    if (enemy.attackCooldownMs <= 0) {
+      exchange.hp = Math.max(0, exchange.hp - Math.max(1, enemy.attackDamage));
+      enemy.attackCooldownMs = enemy.attackIntervalMs;
+      this.heroSystem?.combatSystem?.recordEvent({ type: 'hit', targetId: exchange.id, x: exchange.x, y: exchange.y, damageType: 'neutral', amount: enemy.attackDamage });
+      if (exchange.hp === 0) this.gameState.towers = this.gameState.towers.filter(tower => tower.id !== exchange.id);
+    }
+    return true;
   }
 
   attackHero(enemy) {

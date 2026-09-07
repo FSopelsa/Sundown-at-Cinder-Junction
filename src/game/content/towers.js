@@ -84,6 +84,12 @@ export const TOWER_DEFINITIONS = Object.freeze({
     chain: Object.freeze({ maxTargets: 4, jumpRange: 110, damageMultiplier: 0.72 }),
     description: 'Arc lightning chains to 4 enemies, losing 28% damage per jump. Deals double damage to shields.',
   }),
+  scrapExchange: Object.freeze({
+    id: 'scrapExchange', name: 'Scrap Exchange', cost: 100, range: 100,
+    damage: 0, shotsPerSecond: 0, damageType: 'neutral',
+    assetKey: ASSET_KEYS.towers.teslaCoil,
+    description: '600 hull. Taunts enemies within 100 range; they stop and bombard it. Sells recovery, XP and a tower aura.',
+  }),
   wall: Object.freeze({
     id: 'wall',
     name: 'Defensive Wall',
@@ -92,7 +98,7 @@ export const TOWER_DEFINITIONS = Object.freeze({
     damage: 0,
     shotsPerSecond: 0,
     damageType: 'neutral',
-    assetKey: ASSET_KEYS.towers.wall,
+    assetKey: ASSET_KEYS.towers.coldIronLongshot,
     description: 'A sturdy wall to block enemy advances.',
   })
 });

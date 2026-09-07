@@ -124,6 +124,7 @@ export class TowerSystem {
       x,
       y,
       level: 1,
+      ...(towerType === 'scrapExchange' ? { hp: 600, maxHp: 600, aura: false } : {}),
       upgrades: [],
       investedScrap: definition.cost,
       range: definition.range,
@@ -144,6 +145,14 @@ export class TowerSystem {
     const tower = this.gameState.towers.find((candidate) => candidate.id === towerId);
     if (!tower) return { ok: false, reason: 'Select a deployed tower first.' };
     if (this.gameState.stationIntegrity <= 0) return { ok: false, reason: 'The junction has fallen.' };
+    if (upgrade === 'ladder' && tower.type === 'wall') {
+      if (tower.ladder) return { ok: false, reason: 'This wall already has a ladder.' };
+      if (!this.economySystem.spendScrap(12)) return { ok: false, reason: 'Not enough Scrap.' };
+      tower.investedScrap = getTowerInvestment(tower) + 12;
+      tower.ladder = true;
+      return { ok: true, tower, cost: 12 };
+    }
+    if (tower.damage === 0) return { ok: false, reason: 'Use this structure’s special upgrades.' };
     if (upgrade !== 'damage' && upgrade !== 'speed') return { ok: false, reason: 'Choose damage or attack speed.' };
     if (tower.level >= MAX_TOWER_LEVEL) return { ok: false, reason: 'This tower is already at maximum level.' };
     const cost = getUpgradeCost(tower, this.definitions[tower.type]);
@@ -177,9 +186,10 @@ export class TowerSystem {
   update(deltaMs) {
     for (const tower of this.gameState.towers) {
       tower.timeDilationRemainingMs = Math.max(0, (tower.timeDilationRemainingMs ?? 0) - deltaMs);
-      const attackSpeedMultiplier = tower.timeDilationRemainingMs > 0
+      const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && distanceBetween(source, tower) <= 180) ? 1.2 : 1;
+      const attackSpeedMultiplier = auraMultiplier * (tower.timeDilationRemainingMs > 0
         ? tower.timeDilationMultiplier ?? 1
-        : 1;
+        : 1);
       if (tower.damage <= 0 || !Number.isFinite(tower.fireIntervalMs)) continue;
       tower.cooldownMs = Math.max(0, tower.cooldownMs - deltaMs * attackSpeedMultiplier);
 
@@ -208,7 +218,7 @@ export class TowerSystem {
       });
       if (tower.chain) {
         this.fireChain(tower, target);
-        tower.cooldownMs = tower.fireIntervalMs / attackSpeedMultiplier;
+        tower.cooldownMs = tower.fireIntervalMs;
         continue;
       }
       const result = this.combatSystem.applyDamage(
@@ -227,7 +237,7 @@ export class TowerSystem {
         this.statusEffectSystem.apply(target.id, tower.effect);
       }
 
-      tower.cooldownMs = tower.fireIntervalMs / attackSpeedMultiplier;
+      tower.cooldownMs = tower.fireIntervalMs;
     }
   }
 

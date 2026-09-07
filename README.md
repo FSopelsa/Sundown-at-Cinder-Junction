@@ -7,7 +7,7 @@ Choose Cinder Switchyard, Cinder Maze, or Cinder Overlook in the level selector,
 **Start level** to begin a fresh run (this resets the current run).
 
 The current build lets you choose and place a
-Peacemaker, Sunspitter, Cold-Iron Longshot, Tesla Coil, or Defensive Wall; start raids; defend the
+Peacemaker, Sunspitter, Cold-Iron Longshot, Tesla Coil, Scrap Exchange, or Defensive Wall; start raids; defend the
 switchyard; pause; and switch between 1× and 2× simulation speed. The
 Sunspitter's solar burn suppresses Rift Leech regeneration, while the
 Cold-Iron Longshot slows targets at long range. Tesla Coil uses Arc lightning
@@ -19,7 +19,7 @@ reaches hull when a shield breaks.
 Every run also includes **Singularity**, the player-commanded hero. The
 hero moves on the same tower-blocked navigation grid as the enemies,
 auto-casts at hostiles within 120 units, and can be attacked in return. A fallen
-hero stays down until the next raid begins.
+hero stays down until the next raid begins, unless bought back at a Scrap Exchange.
 
 Enemies gain 18% more hull for each raid after the first, with a small speed
 increase. Enemies that breach the station still damage its integrity, then
@@ -162,3 +162,35 @@ Runtime assets belong under `public/assets/` and should be referenced through
 
 The full concept and first-playable scope are documented in
 [`docs/game-design.md`](docs/game-design.md).
+
+## Camera, ladders and support buildings
+
+- Click Singularity (or press H) to select the hero; click ground to move.
+- Mouse wheel or + / - zooms (0.65x–3.5x). Right/middle-drag, arrow keys,
+  or the camera arrow buttons pan. Overview fits the board back into view.
+  Camera movement also works while paused and never changes simulation positions.
+- Select Defensive Wall, click an existing wall, then install a ladder for 12 Scrap.
+  Heroes can cross it; enemies still route around it. A ladder counts toward salvage.
+  Select another building before clicking a wall to replace it.
+- Scrap Exchange costs 100 Scrap and has 600 hull. Its 100-unit taunt field
+  makes nearby enemies stop and bombard it until it falls. No refund on destruction.
+  Click it to buy hull restoration (30), 15-second half-damage Aegis (45),
+  a permanent +20% tower-speed aura within 180 units (80), hero buyback
+  (100 times hero level), 25 XP (50, increasing by 50 per purchase across all
+  Exchanges), or full building repair (35). Aura sources do not stack.
+  Only the permanent aura increases the building's 80% sale value.
+- Complete sprite frames use a shared tile-fit size. Isometric tiles are larger;
+  zoom in to inspect them. Labels, range indicators and attack effects can extend
+  beyond a tile. The hero alone can occupy a ladder wall.
+
+Art limitation: AutoSprite's MCP rejected generation because the connected account
+requires a paid subscription. Exchange and wall views reuse the existing Tesla and
+Cold-Iron artwork with distinct labels/tints. Dedicated Exchange and ladder artwork
+and a bespoke climbing animation remain pending; no new programmer-drawn sprites
+were added.
+
+Verification: `npm.cmd run check` runs simulation tests and a production build.
+`scripts/playtest-support.cjs` exercises all maps with Edge/Playwright against
+`http://127.0.0.1:5175`, including hero selection at zoom, camera drag, ladder upgrades,
+shop purchases, buyback and mobile shop access. Screenshots go to
+`artifacts/playtest/`. Set `PLAYWRIGHT_MODULE` when Playwright is installed elsewhere.

@@ -1,3 +1,4 @@
+import { purchaseSupport } from './systems/SupportShop.js';
 import { ACTIONS } from '../input/actions.js';
 import { getMap } from '../content/map.js';
 import { getElementalTrialWave } from '../content/waves.js';
@@ -80,6 +81,8 @@ export function createSimulation(initialState = new GameState()) {
         );
       case ACTIONS.upgradeTower:
         return towerSystem.upgradeTower(payload.towerId, payload.upgrade);
+      case ACTIONS.purchaseSupport:
+        return purchaseSupport(state, economySystem, heroSystem, payload.towerId, payload.item);
       case ACTIONS.sellTower:
         return towerSystem.sellTower(payload.towerId);
       case ACTIONS.moveHero:

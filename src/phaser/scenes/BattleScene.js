@@ -1,3 +1,5 @@
+import { BattlefieldCamera } from '../presentation/BattlefieldCamera.js';
+import { tileAssetSize } from '../presentation/assetSizing.js';
 import Phaser from 'phaser';
 import { AudioManager } from '../audio/AudioManager.js';
 import { TOWER_ANIMATION_KEYS, HERO_ANIMATION_KEYS } from '../../game/assets/manifest.js';
@@ -17,6 +19,8 @@ const DAMAGE_COLORS = Object.freeze({
 });
 
 const TOWER_VISUALS = Object.freeze({
+  scrapExchange: { frame: 'attack-00' },
+  wall: { frame: 'attack-00' },
   sunspitter: { frame: 0, size: 72, originY: 1, animation: TOWER_ANIMATION_KEYS.sunspitterFire },
   coldIronLongshot: { frame: 'attack-00', size: 78, originY: .9375, animation: TOWER_ANIMATION_KEYS.coldIronLongshot },
   teslaCoil: { frame: 'attack-00', size: 84, originY: .9375, animation: TOWER_ANIMATION_KEYS.teslaCoil },
@@ -53,6 +57,8 @@ export class BattleScene extends Phaser.Scene {
     this.heroPathGraphics = this.add.graphics().setDepth(3.5);
     this.skillFieldGraphics = this.add.graphics().setDepth(9.4);
     this.levelLabels = new Map();
+    this.cameraControls = new BattlefieldCamera(this);
+    this.assetSize = tileAssetSize(this.map, this.projection.isometric);
     this.drawHeroRallyPoint();
     this.input.on('pointerdown', this.handlePointerDown, this);
     this.input.keyboard?.on('keydown', this.handleKeyDown, this);
@@ -61,6 +67,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
+    this.cameraControls.update(delta);
     const { paused, speed } = this.simulation.state.settings;
     const visualSpeed = paused || this.simulation.state.stationIntegrity <= 0 ? 0 : speed;
     this.anims.globalTimeScale = visualSpeed;
@@ -116,7 +123,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   handlePointerDown(pointer) {
-    if (pointer.rightButtonDown()) {
+    if (pointer.rightButtonDown() || pointer.middleButtonDown()) {
       return;
     }
 
@@ -131,10 +138,12 @@ export class BattleScene extends Phaser.Scene {
       this.hud?.resolveSkillTarget(result);
       return;
     }
+    const hero = this.simulation.state.hero;
+    if (hero.alive && Math.hypot(point.x-hero.x,point.y-hero.y)<=18) { this.hud?.commandHero(); return; }
     const existing = this.simulation.state.towers.find((tower) => this.map.mode === 'maze'
       ? Math.abs(tower.x - point.x) < this.map.grid.cellSize / 2 && Math.abs(tower.y - point.y) < this.map.grid.cellSize / 2
       : Math.hypot(tower.x - point.x, tower.y - point.y) <= 20);
-    if (existing && !(this.hud?.isBuilding() && existing.type === 'wall')) {
+    if (existing && !(this.hud?.isBuilding() && this.hud?.getSelectedTowerType() !== 'wall' && !this.hud?.selectedTowerId && existing.type === 'wall')) {
       this.hud?.inspectTower(existing.id);
       return;
     }
@@ -213,7 +222,7 @@ export class BattleScene extends Phaser.Scene {
           ? this.add.sprite(tower.x, tower.y, tower.assetKey, visual.frame).setDepth(4)
           : this.add.image(tower.x, tower.y, tower.assetKey).setDepth(4);
         this.towerViews.set(tower.id, sprite);
-        this.towerShadows.set(tower.id, this.add.ellipse(point.x, point.y + 9, 40, 13, 0x060b12, .5).setDepth(3));
+        this.towerShadows.set(tower.id, this.add.ellipse(point.x, point.y + 9, this.assetSize, this.assetSize / 3, 0x060b12, .5).setDepth(3));
         this.levelLabels.set(tower.id, this.add.text(tower.x + 12, tower.y + 10, '', {
           fontFamily: 'monospace', fontSize: '12px', color: '#fff0c8', backgroundColor: '#171b1f',
         }).setDepth(8));
@@ -222,16 +231,16 @@ export class BattleScene extends Phaser.Scene {
       const visual = TOWER_VISUALS[tower.type];
       if (visual) {
         sprite
-          .setOrigin(0.5, visual.originY)
-          .setDisplaySize(visual.size, visual.size)
-          .setPosition(point.x, point.y + (this.projection.isometric ? 8 : 20));
+          .setOrigin(.5).setDisplaySize(this.assetSize, this.assetSize).setPosition(point.x, point.y);
       } else {
-        sprite.setPosition(point.x, point.y);
+        sprite.setPosition(point.x, point.y).setDisplaySize(this.assetSize, this.assetSize);
       }
       sprite.setDepth(this.projection.depth(tower.x, tower.y));
       if ((tower.timeDilationRemainingMs ?? 0) > 0) sprite.setTint(0x9cecff);
+      else if (tower.type === 'scrapExchange') sprite.setTint(0xffd67c);
+      else if (tower.type === 'wall') sprite.setTint(tower.ladder ? 0x72e6c8 : 0x82919f);
       else sprite.clearTint();
-      this.levelLabels.get(tower.id).setText(String(tower.level))
+      this.levelLabels.get(tower.id).setText(tower.type === 'wall' ? (tower.ladder ? 'LADDER' : 'WALL') : tower.type === 'scrapExchange' ? `EX ${Math.ceil(tower.hp)}` : String(tower.level))
         .setPosition(point.x + 12, point.y + 10).setDepth(15);
     }
 
@@ -261,6 +270,15 @@ export class BattleScene extends Phaser.Scene {
       graphics.lineStyle(1, 0xf1d8ff, pulse * .8).strokePoints(core, true);
     }
 
+    for (const exchange of this.simulation.state.towers.filter(t => t.type === 'scrapExchange')) {
+      graphics.lineStyle(1, 0xe2c07d, .35).strokePoints(this.projection.circle(exchange.x, exchange.y, exchange.range), true);
+      if (exchange.aura) graphics.lineStyle(1, 0x72c5ca, .25).strokePoints(this.projection.circle(exchange.x, exchange.y, 180), true);
+      for (const enemy of this.simulation.state.enemies.filter(e => e.tauntedBy === exchange.id)) {
+        const from = this.projection.project(enemy.x, enemy.y);
+        const to = this.projection.project(exchange.x, exchange.y);
+        graphics.lineStyle(1, 0xeaa676, .25).lineBetween(from.x, from.y, to.x, to.y);
+      }
+    }
     const portals = this.simulation.state.wormholes;
     if (portals.length === 2) {
       const first = this.projection.project(portals[0].x, portals[0].y);
@@ -334,7 +352,7 @@ export class BattleScene extends Phaser.Scene {
       this.add.text(screen.x, screen.y, label, { fontFamily: 'monospace', fontSize: '11px', color: '#fff0c8' })
         .setOrigin(.5).setDepth(2);
     }
-    this.add.text(640, 542, 'CINDER OVERLOOK  /  ARC FIELD TRIAL', {
+    this.add.text(c.x, c.y + 45, 'CINDER OVERLOOK  /  ARC FIELD TRIAL', {
       fontFamily: 'monospace', fontSize: '13px', color: '#a5c4cb', letterSpacing: 2,
     }).setOrigin(.5);
     this.routeGraphics = this.add.graphics().setDepth(1);
@@ -412,7 +430,7 @@ export class BattleScene extends Phaser.Scene {
 
     if (!this.heroView) {
       const sprite = this.add.sprite(hero.x, hero.y, hero.assetKey, 'idle-00')
-        .setOrigin(.5, .9375).setDisplaySize(62, 62).setDepth(9);
+        .setOrigin(.5).setDisplaySize(this.assetSize, this.assetSize).setDepth(9);
       const healthBack = this.add
         .rectangle(hero.x - 18, hero.y - 28, 36, 5, 0x111111)
         .setOrigin(0, 0.5)
@@ -429,7 +447,7 @@ export class BattleScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
         .setDepth(11);
-      const shadow = this.add.ellipse(point.x, point.y, 30, 10, 0x060b12, .6).setDepth(3);
+      const shadow = this.add.ellipse(point.x, point.y, this.assetSize, this.assetSize / 3, 0x060b12, .6).setDepth(3);
       this.heroView = { sprite, healthBack, healthBar, label, shadow };
     }
 
@@ -437,7 +455,8 @@ export class BattleScene extends Phaser.Scene {
     const dx = point.x - sprite.x;
     if (Math.abs(dx) > .1) sprite.setFlipX(dx < 0);
     sprite.setPosition(point.x, point.y).setDepth(this.projection.depth(hero.x, hero.y));
-    shadow.setPosition(point.x, point.y);
+    shadow.setPosition(point.x, point.y).setStrokeStyle(this.hud?.isHeroCommandMode() ? 2 : 0, 0x72e6c8);
+    sprite.setTint(hero.aegisRemainingMs > 0 ? 0x8be9ff : 0xffffff);
     const casting = (this.heroCastUntil ?? 0) > (this.presentationTime ?? 0);
     if (!casting) {
       const moving = Boolean(hero.navigationNext || hero.route.length);
@@ -446,11 +465,11 @@ export class BattleScene extends Phaser.Scene {
         sprite.play(HERO_ANIMATION_KEYS.idle);
       }
     }
-    healthBack.setPosition(point.x - 18, point.y - 52).setDepth(14);
+    healthBack.setPosition(point.x - 18, point.y - this.assetSize / 2 - 6).setDepth(14);
     healthBar
-      .setPosition(point.x - 18, point.y - 52).setDepth(14.1)
+      .setPosition(point.x - 18, point.y - this.assetSize / 2 - 6).setDepth(14.1)
       .setDisplaySize(36 * Math.max(0, hero.hp / hero.maxHp), 5);
-    label.setPosition(point.x, point.y - 63).setText(`SINGULARITY L${hero.level}`).setDepth(15);
+    label.setPosition(point.x, point.y - this.assetSize / 2 - 18).setText(`SINGULARITY L${hero.level}`).setDepth(15);
   }
 
   drawHeroPath() {
@@ -501,7 +520,7 @@ export class BattleScene extends Phaser.Scene {
         this.enemyViews.set(enemy.id, view);
       }
 
-      view.sprite.setPosition(point.x, point.y).setDepth(this.projection.depth(enemy.x, enemy.y));
+      view.sprite.setPosition(point.x, point.y).setDisplaySize(this.assetSize, this.assetSize).setDepth(this.projection.depth(enemy.x, enemy.y));
       view.shieldRing.setPosition(point.x, point.y).setDepth(13).setVisible((enemy.shield ?? 0) > 0);
       view.shieldBar.setPosition(point.x - 15, point.y - 27).setDepth(14.2).setVisible((enemy.shield ?? 0) > 0)
         .setDisplaySize(30 * ((enemy.shield ?? 0) / (enemy.maxShield || 1)), 3);
@@ -902,6 +921,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   handleShutdown() {
+    this.cameraControls?.destroy();
     this.input.off('pointerdown', this.handlePointerDown, this);
     this.input.keyboard?.off('keydown', this.handleKeyDown, this);
     this.audio?.stop();
