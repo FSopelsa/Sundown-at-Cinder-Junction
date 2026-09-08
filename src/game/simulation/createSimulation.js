@@ -49,6 +49,7 @@ export function createSimulation(initialState = new GameState()) {
     waveSystem.update(deltaMs);
     statusEffectSystem.update(deltaMs);
     if (map.mode === 'maze') enemySystem.refreshMazeRoutes();
+    if (map.mode === 'rooms') enemySystem.refreshRoomRoutes();
     heroSystem.update(deltaMs);
     towerSystem.update(deltaMs);
     enemySystem.update(deltaMs);

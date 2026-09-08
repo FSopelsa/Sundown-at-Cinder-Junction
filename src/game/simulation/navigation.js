@@ -1,18 +1,33 @@
 // The hero navigates on a grid so both maps can give towers solid collision.
 // Maze cells match enemy pathing; Switchyard uses a finer invisible grid.
+import {
+  findNearestOpenRoomCell,
+  findRoomHeroPath,
+  isRoomCellBlocked,
+  isRoomMap,
+  isInsideRoomGrid,
+  roomCellCenter,
+  roomCellKey,
+  roomCellsMatch,
+  worldToRoomCell,
+} from './roomNavigation.js';
+
 export function getHeroGrid(map) {
   return map.mode === 'maze' ? map.grid : map.heroGrid;
 }
 
 export function heroCellKey(cell) {
+  if (cell?.roomId) return roomCellKey(cell);
   return `${cell.col},${cell.row}`;
 }
 
 export function cellsMatch(first, second) {
+  if (first?.roomId || second?.roomId) return roomCellsMatch(first, second);
   return Boolean(first && second && first.col === second.col && first.row === second.row);
 }
 
 export function worldToHeroCell(map, x, y) {
+  if (isRoomMap(map)) return worldToRoomCell(map, x, y);
   const grid = getHeroGrid(map);
   return {
     col: Math.floor((x - grid.x) / grid.cellSize),
@@ -21,6 +36,7 @@ export function worldToHeroCell(map, x, y) {
 }
 
 export function heroCellCenter(map, cell) {
+  if (isRoomMap(map)) return roomCellCenter(map, cell);
   const grid = getHeroGrid(map);
   return {
     x: grid.x + (cell.col + 0.5) * grid.cellSize,
@@ -29,6 +45,7 @@ export function heroCellCenter(map, cell) {
 }
 
 export function isInsideHeroGrid(map, cell) {
+  if (isRoomMap(map)) return isInsideRoomGrid(map, cell);
   const grid = getHeroGrid(map);
   return cell.col >= 0 && cell.col < grid.columns && cell.row >= 0 && cell.row < grid.rows;
 }
@@ -43,6 +60,7 @@ function neighbors(cell) {
 }
 
 export function isHeroCellBlocked(map, towers, cell) {
+  if (isRoomMap(map)) return isRoomCellBlocked(map, towers, cell);
   towers = towers.filter((tower) => !(tower.type === 'wall' && tower.ladder));
   if (map.mode === 'maze') {
     return towers.some((tower) => cellsMatch(worldToHeroCell(map, tower.x, tower.y), cell));
@@ -54,6 +72,7 @@ export function isHeroCellBlocked(map, towers, cell) {
 }
 
 export function findNearestOpenHeroCell(map, towers, cell) {
+  if (isRoomMap(map)) return findNearestOpenRoomCell(map, towers, cell);
   if (!isInsideHeroGrid(map, cell)) {
     return null;
   }
@@ -80,6 +99,7 @@ export function findNearestOpenHeroCell(map, towers, cell) {
 }
 
 export function findHeroPath(map, towers, startPosition, targetPosition) {
+  if (isRoomMap(map)) return findRoomHeroPath(map, towers, startPosition, targetPosition);
   const start = findNearestOpenHeroCell(
     map,
     towers,

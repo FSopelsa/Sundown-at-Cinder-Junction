@@ -12,6 +12,15 @@ import {
   isWormholeTransition,
   nextRouteCell,
 } from '../maze.js';
+import {
+  buildRoomDistanceField,
+  getRoom,
+  isRoomWormholeTransition,
+  nextRoomRouteCell,
+  roomCellCenter,
+  roomCellKey,
+  roomCellsMatch,
+} from '../roomNavigation.js';
 
 function distanceBetween(first, second) {
   return Math.hypot(first.x - second.x, first.y - second.y);
@@ -31,8 +40,9 @@ export class EnemySystem {
     this.definitions = definitions;
     this.map = map;
     this.heroSystem = heroSystem;
-    this.pathLength = map.mode === 'maze' ? 0 : getPathLength(map.path);
+    this.pathLength = map.mode === 'maze' || map.mode === 'rooms' ? 0 : getPathLength(map.path);
     this.mazeRevision = null;
+    this.roomRevision = null;
     this.events = [];
   }
 
@@ -44,7 +54,10 @@ export class EnemySystem {
     }
 
     const start = this.map.mode === 'maze'
-      ? cellCenter(this.map, this.map.entrance) : pointAlongPath(0, this.map.path);
+      ? cellCenter(this.map, this.map.entrance)
+      : this.map.mode === 'rooms'
+        ? roomCellCenter(this.map, this.map.entrance)
+        : pointAlongPath(0, this.map.path);
     const raidIndex = Math.max(1, this.gameState.wave.index);
     const scaling = getRaidScaling(raidIndex);
     const maxHp = Math.round(definition.maxHp * scaling.healthMultiplier);
@@ -82,6 +95,12 @@ export class EnemySystem {
       enemy.mazeNext = null;
       this.refreshMazeRoutes();
       enemy.remainingDistance = this.mazeDistances.get(cellKey(enemy.mazeCell)) * this.map.grid.cellSize;
+    } else if (this.map.mode === 'rooms') {
+      enemy.roomCell = { ...this.map.entrance };
+      enemy.roomNext = null;
+      this.refreshRoomRoutes();
+      enemy.remainingDistance = this.roomDistances.get(roomCellKey(enemy.roomCell)) *
+        getRoom(this.map, enemy.roomCell.roomId).grid.cellSize;
     }
 
     this.gameState.enemies.push(enemy);
@@ -97,6 +116,7 @@ export class EnemySystem {
 
   update(deltaMs) {
     if (this.map.mode === 'maze') this.refreshMazeRoutes();
+    if (this.map.mode === 'rooms') this.refreshRoomRoutes();
     const escapedEnemyIds = new Set();
 
     for (const enemy of this.gameState.enemies) {
@@ -131,6 +151,8 @@ export class EnemySystem {
 
       if (this.map.mode === 'maze') {
         this.moveThroughMaze(enemy, travelledDistance);
+      } else if (this.map.mode === 'rooms') {
+        this.moveThroughRooms(enemy, travelledDistance);
       } else {
         this.moveThroughSwitchyard(enemy, travelledDistance);
       }
@@ -279,6 +301,69 @@ export class EnemySystem {
     const fieldDistance = this.mazeDistances.get(cellKey(cell));
     enemy.remainingDistance = Math.hypot(target.x - enemy.x, target.y - enemy.y) +
       (Number.isFinite(fieldDistance) ? fieldDistance * this.map.grid.cellSize : Number.POSITIVE_INFINITY);
+    enemy.progress = enemy.remainingDistance === 0 ? 1 : 0;
+  }
+
+  refreshRoomRoutes() {
+    const portalRevision = (this.gameState.wormholes ?? [])
+      .map((portal) => portal.cell ? roomCellKey(portal.cell) : '')
+      .join('|');
+    const revision = `${this.gameState.towers.map((tower) => `${tower.id}:${tower.x}:${tower.y}`).join('|')}#${portalRevision}#${this.gameState.roomState?.openDoorIds?.join('|') ?? ''}`;
+    if (revision === this.roomRevision) return;
+    this.roomRevision = revision;
+    this.roomDistances = buildRoomDistanceField(
+      this.map,
+      this.gameState.towers,
+      null,
+      this.gameState.wormholes,
+      this.gameState.roomState,
+    );
+    for (const enemy of this.gameState.enemies) this.moveThroughRooms(enemy, 0);
+  }
+
+  moveThroughRooms(enemy, distance) {
+    while (distance > 0 && !roomCellsMatch(enemy.roomCell, this.map.exit)) {
+      enemy.roomNext ??= nextRoomRouteCell(
+        enemy.roomCell,
+        this.roomDistances,
+        this.gameState.wormholes,
+        this.map,
+        this.gameState.roomState,
+      );
+      if (!enemy.roomNext) break;
+      if (isRoomWormholeTransition(enemy.roomCell, enemy.roomNext, this.gameState.wormholes)) {
+        const from = roomCellCenter(this.map, enemy.roomCell);
+        const target = roomCellCenter(this.map, enemy.roomNext);
+        enemy.x = target.x;
+        enemy.y = target.y;
+        this.events.push({
+          type: 'wormhole-travel', enemyId: enemy.id, x: from.x, y: from.y,
+          targetX: target.x, targetY: target.y,
+        });
+        enemy.roomCell = enemy.roomNext;
+        enemy.roomNext = null;
+        continue;
+      }
+      const target = roomCellCenter(this.map, enemy.roomNext);
+      const segment = Math.hypot(target.x - enemy.x, target.y - enemy.y);
+      if (distance < segment) {
+        enemy.x += (target.x - enemy.x) * distance / segment;
+        enemy.y += (target.y - enemy.y) * distance / segment;
+        distance = 0;
+      } else {
+        enemy.x = target.x;
+        enemy.y = target.y;
+        distance -= segment;
+        enemy.roomCell = enemy.roomNext;
+        enemy.roomNext = null;
+      }
+    }
+    const cell = enemy.roomNext ?? enemy.roomCell;
+    const target = roomCellCenter(this.map, cell);
+    const fieldDistance = this.roomDistances.get(roomCellKey(cell));
+    const cellSize = getRoom(this.map, cell.roomId)?.grid.cellSize ?? 1;
+    enemy.remainingDistance = Math.hypot(target.x - enemy.x, target.y - enemy.y) +
+      (Number.isFinite(fieldDistance) ? fieldDistance * cellSize : Number.POSITIVE_INFINITY);
     enemy.progress = enemy.remainingDistance === 0 ? 1 : 0;
   }
 }
