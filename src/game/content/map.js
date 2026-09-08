@@ -9,6 +9,35 @@ const path = [
   { x: 1280, y: 590 },
 ].map(Object.freeze);
 
+function roomCell(roomId, col, row) {
+  return Object.freeze({ roomId, col, row });
+}
+
+const THRESHOLD_ROOMS = Object.freeze([
+  Object.freeze({
+    id: 'arrival-yard',
+    name: 'Arrival Yard',
+    grid: Object.freeze({ x: 40, y: 200, columns: 12, rows: 8, cellSize: 40 }),
+    environment: Object.freeze({ palette: 'rust', hero: 'scrap-crane' }),
+  }),
+  Object.freeze({
+    id: 'relay-hall',
+    name: 'Relay Hall',
+    grid: Object.freeze({ x: 600, y: 200, columns: 12, rows: 8, cellSize: 40 }),
+    environment: Object.freeze({ palette: 'teal', hero: 'power-relay' }),
+  }),
+]);
+
+const THRESHOLD_CONNECTIONS = Object.freeze([
+  Object.freeze({
+    id: 'arrival-gate',
+    name: 'Arrival Gate',
+    from: roomCell('arrival-yard', 11, 3),
+    to: roomCell('relay-hall', 0, 3),
+    initiallyOpen: true,
+  }),
+]);
+
 export const SWITCHYARD_MAP = Object.freeze({
   id: 'cinder-switchyard',
   name: 'Cinder Switchyard',
@@ -39,7 +68,7 @@ export const MAZE_MAP = Object.freeze({
 
 export const OVERLOOK_MAP = Object.freeze({
   id: 'cinder-overlook',
-  name: 'Cinder Overlook · Isometric',
+  name: 'Cinder Overlook',
   mode: 'maze',
   width: 1280,
   height: 720,
@@ -49,11 +78,35 @@ export const OVERLOOK_MAP = Object.freeze({
   exit: Object.freeze({ col: 17, row: 5 }),
   heroSpawn: Object.freeze({ x: 380, y: 440 }),
   waveSet: 'elemental-trial',
-  presentation: Object.freeze({ type: 'isometric', originX: 553, originY: 128,
-    halfWidth: 40, halfHeight: 28 }),
 });
 
-export const LEVELS = Object.freeze([SWITCHYARD_MAP, MAZE_MAP, OVERLOOK_MAP]);
+// First 3D migration level. Each room retains its own grid and a stable ID;
+// connections are graph edges rather than a large flattened grid. The door is
+// intentionally open for this milestone so traversal can be tested end-to-end.
+export const THRESHOLD_MAP = Object.freeze({
+  id: 'cinder-threshold',
+  name: 'Cinder Threshold · 3D Trial',
+  mode: 'rooms',
+  width: 1120,
+  height: 720,
+  startingScrap: 560,
+  rooms: THRESHOLD_ROOMS,
+  roomConnections: THRESHOLD_CONNECTIONS,
+  entrance: roomCell('arrival-yard', 0, 3),
+  exit: roomCell('relay-hall', 11, 3),
+  heroSpawn: Object.freeze({ x: 140, y: 420 }),
+  roomState: Object.freeze({
+    unlockedRoomIds: Object.freeze(THRESHOLD_ROOMS.map((room) => room.id)),
+    openDoorIds: Object.freeze(THRESHOLD_CONNECTIONS
+      .filter((connection) => connection.initiallyOpen)
+      .map((connection) => connection.id)),
+  }),
+  presentation: Object.freeze({ type: 'three' }),
+});
+
+export const LEVELS = Object.freeze([THRESHOLD_MAP, SWITCHYARD_MAP, MAZE_MAP, OVERLOOK_MAP]);
+
+export const DEFAULT_3D_LEVEL_ID = THRESHOLD_MAP.id;
 
 export function getMap(levelId) {
   return LEVELS.find((map) => map.id === levelId) ?? SWITCHYARD_MAP;

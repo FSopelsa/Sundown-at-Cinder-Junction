@@ -160,7 +160,7 @@ Recommended rules:
 
 The art direction should evoke a lived-in frontier future without copying Firefly’s characters, ships, or iconography.
 
-- Three-quarter top-down painted sprites
+- Tactical 3D terrain and readable GLB silhouettes viewed from a high oblique camera
 - Sun-bleached ochre, rust red, soot black, brass, and oxidized teal
 - Cyan and violet reserved for advanced elemental effects
 - Spaceships with covered-wagon and steam-locomotive silhouettes
@@ -171,20 +171,17 @@ The art direction should evoke a lived-in frontier future without copying Firefl
 
 The canvas should carry the battlefield. Text-heavy tower details, bounty selection, settings, and wave information should live in a responsive DOM overlay around it.
 
-## Preliminary Browser implementation plan
+## 3D browser implementation plan
 
-The strong fit could be:
+The runtime fit is:
 
-- Phaser
-- JavaScript
-- Vite
-- Phaser canvas for the battlefield
-- DOM overlay for the HUD and menus
-- Desktop-first mouse and keyboard controls
-- Touch support after the desktop loop is proven
-  (?)
+- Three.js with WebGL first (WebGPU is an optional later renderer upgrade)
+- JavaScript and Vite
+- Blender-authored glTF 2.0 / GLB environment and unit assets
+- A Three.js battlefield with a responsive DOM HUD and menus
+- Desktop-first mouse and keyboard controls; touch after the core loop is proven
 
-Gameplay rules should live outside Phaser scenes:
+Gameplay rules stay outside the renderer:
 
 - `WaveSystem`
 - `EnemySystem`
@@ -195,7 +192,31 @@ Gameplay rules should live outside Phaser scenes:
 - `ElementRecipeSystem`
 - `GameState`
 
-Phaser scenes should only translate that state into sprites, animation, camera movement, particles, and sound. Save data should contain serializable game state and settings—not Phaser objects.
+The Three.js layer should only translate that state into models, procedural
+motion, camera movement, particles, lighting, and sound. Save data contains
+serializable game state and settings—not Three.js objects.
+
+### Room-expansion architecture
+
+Campaign maps grow as rooms unlock. Every room has a persistent ID and a local
+grid; doors are graph edges between cells in two room grids. Enemy and hero
+navigation use that global graph, so a new room can be appended without
+flattening the campaign into a giant fragile grid. Rendering can later stream
+nearby room scenes while the complete graph remains resident for route
+validation and saves.
+
+The production order is:
+
+1. Retire the isometric renderer.
+2. Define rooms, doors, and persistent IDs in the simulation.
+3. Prove two connected rooms in 3D.
+4. Make one enemy and the hero traverse both.
+5. Restore placement and the raid loop.
+6. Add render-room streaming once real rooms create a measurable load.
+7. Perform the final authored art, materials, lighting, and animation pass.
+
+This order is still intentional: it establishes the stable data and gameplay
+seams before high-cost environment production.
 
 ## First playable milestone
 
@@ -210,7 +231,7 @@ Build a 10–15 minute vertical slice containing:
 - Two bounty decisions
 - Deadeye ability
 - Pause and 1×/2× speed
-- Basic sound, impact effects, and placeholder sprites
+- Basic sound, impact effects, and functional GLB prototype models
 
 The first balancing question should be: **Does choosing a bounty create an exciting new build direction within the following two waves?** If that works, the game’s central hook works.
 
@@ -218,20 +239,21 @@ The first balancing question should be: **Does choosing a bounty create an excit
 
 ## Current prototype status
 
-The architecture skeleton now includes:
+The first 3D milestone now includes:
 
 - A serializable, versioned `GameState` as the single source of truth
-- Deterministic simulation updates outside Phaser
-- Eleven placeholder raid definitions: ten normal waves plus The Black Comet
-- Enemy, tower, combat, status, economy, wave, and recipe systems
-- A real Phaser boot flow and battle scene
+- Deterministic enemy, tower, combat, economy, hero, and wave systems
+- A room-aware global graph, persistent room IDs, door state, and saved routes
+- Cinder Threshold: two connected Blender-authored GLB blockout rooms
+- Three.js/WebGL battlefield presentation, tactical camera, lighting, shadows,
+  procedural model motion, and simple hit/death/elemental effects
 - A DOM-based HUD with raid, pause, speed, build-palette, and outcome controls
-- Click-to-place Peacemaker, Sunspitter, and Cold-Iron Longshot towers
-- Solar burn and Cryo slow status effects, with a Rift Leech regeneration trait
-- Wave-clear and station-failure panels, plus placeholder hit and death effects
-- Escaped enemies returning as next-raid reinforcements and raid-by-raid hull scaling
-- Stable asset keys and a public asset layout
-- Unit tests for state, map helpers, economy, recipes, and simulation integration
+- Existing elemental counterplay, carryover enemies, and raid-by-raid hull scaling
+- A stable model/audio manifest and a source Blender export workflow
+- Tests for room traversal, save round-trips, door-safe placement, and existing
+  simulation behavior
 
-The next milestone is content depth: bounty selection, catalysts, the remaining
-elemental towers, three fusion towers, Deadeye, and authored art/audio.
+The next implementation milestone is vertical-slice polish: approve a visual
+brief, replace the functional blockouts with authored environment art, establish
+real model animation clips, and then stream render rooms only if profiling shows
+the growing campaign needs it.

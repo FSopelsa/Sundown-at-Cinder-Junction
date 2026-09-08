@@ -1,0 +1,6 @@
+{
+  "schema": "game-room.opening-schedule.v1",
+  "roomId": "cinder-threshold",
+  "primaryArrival": {"openingId": "", "exception": ""},
+  "openings": []
+}

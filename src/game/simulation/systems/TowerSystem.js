@@ -8,6 +8,12 @@ import {
   getUpgradeCost,
 } from '../../content/towers.js';
 import { validateMazePlacement, worldToCell } from '../maze.js';
+import {
+  roomCellsMatch,
+  towerRoomCell,
+  validateRoomPlacement,
+  worldToRoomCell,
+} from '../roomNavigation.js';
 
 function distanceBetween(first, second) {
   return Math.hypot(first.x - second.x, first.y - second.y);
@@ -49,16 +55,24 @@ export class TowerSystem {
 
     let replacedWall = null;
 
-    if (this.map.mode === 'maze') {
-      const candidateCell = worldToCell(this.map, x, y);
+    if (this.map.mode === 'maze' || this.map.mode === 'rooms') {
+      const isRoomMap = this.map.mode === 'rooms';
+      const candidateCell = isRoomMap ? null : worldToCell(this.map, x, y);
+      const roomCandidate = isRoomMap ? worldToRoomCell(this.map, x, y) : null;
       replacedWall = this.gameState.towers.find((tower) =>
         tower.type === 'wall' &&
-        worldToCell(this.map, tower.x, tower.y).col === candidateCell.col &&
-        worldToCell(this.map, tower.x, tower.y).row === candidateCell.row,
+        (isRoomMap
+          ? roomCellsMatch(towerRoomCell(this.map, tower), roomCandidate)
+          : worldToCell(this.map, tower.x, tower.y).col === candidateCell.col &&
+            worldToCell(this.map, tower.x, tower.y).row === candidateCell.row),
       ) ?? null;
-      const placement = validateMazePlacement(this.map, this.gameState, x, y, {
-        ignoreTowerId: replacedWall?.id ?? null,
-      });
+      const placement = isRoomMap
+        ? validateRoomPlacement(this.map, this.gameState, x, y, {
+          ignoreTowerId: replacedWall?.id ?? null,
+        })
+        : validateMazePlacement(this.map, this.gameState, x, y, {
+          ignoreTowerId: replacedWall?.id ?? null,
+        });
       if (!placement.ok) return placement;
       ({ x, y } = placement);
     } else {
@@ -199,7 +213,7 @@ export class TowerSystem {
 
       const target = this.gameState.enemies
         .filter((enemy) => distanceBetween(tower, enemy) <= tower.range)
-        .sort((first, second) => this.map.mode === 'maze'
+        .sort((first, second) => this.map.mode === 'maze' || this.map.mode === 'rooms'
           ? first.remainingDistance - second.remainingDistance
           : second.progress - first.progress)[0];
 

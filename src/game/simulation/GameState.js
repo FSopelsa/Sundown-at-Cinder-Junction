@@ -19,7 +19,9 @@ function cloneEffects(effects = []) {
 function cloneEnemy(enemy) {
   return { ...enemy, effects: cloneEffects(enemy.effects),
     ...(enemy.mazeCell ? { mazeCell: { ...enemy.mazeCell } } : {}),
-    ...(enemy.mazeNext ? { mazeNext: { ...enemy.mazeNext } } : {}) };
+    ...(enemy.mazeNext ? { mazeNext: { ...enemy.mazeNext } } : {}),
+    ...(enemy.roomCell ? { roomCell: { ...enemy.roomCell } } : {}),
+    ...(enemy.roomNext ? { roomNext: { ...enemy.roomNext } } : {}) };
 }
 
 function cloneHero(hero) {
@@ -58,6 +60,28 @@ function createWaveState(wave = {}) {
   };
 }
 
+function createRoomState(map, snapshot = {}) {
+  const defaultState = map.roomState ?? {};
+  const roomIds = new Set((map.rooms ?? []).map((room) => room.id));
+  const doorIds = new Set((map.roomConnections ?? []).map((connection) => connection.id));
+  const normalizedIds = (ids, valid, fallback) => Array.isArray(ids)
+    ? ids.filter((id) => typeof id === 'string' && valid.has(id))
+    : [...fallback];
+
+  return {
+    unlockedRoomIds: normalizedIds(
+      snapshot.unlockedRoomIds,
+      roomIds,
+      defaultState.unlockedRoomIds ?? [],
+    ),
+    openDoorIds: normalizedIds(
+      snapshot.openDoorIds,
+      doorIds,
+      defaultState.openDoorIds ?? [],
+    ),
+  };
+}
+
 export class GameState {
   constructor(snapshot = {}) {
     this.schemaVersion = snapshot.schemaVersion ?? SAVE_SCHEMA_VERSION;
@@ -83,6 +107,7 @@ export class GameState {
     this.wormholes = Array.isArray(snapshot.wormholes)
       ? snapshot.wormholes.slice(0, 2).map(cloneFieldObject)
       : [];
+    this.roomState = createRoomState(map, snapshot.roomState);
     this.wave = createWaveState(snapshot.wave);
     this.stationIntegrity = Number.isFinite(snapshot.stationIntegrity)
       ? snapshot.stationIntegrity
@@ -116,6 +141,10 @@ export class GameState {
       gravityWells: this.gravityWells.map(cloneFieldObject),
       scrapPiles: this.scrapPiles.map(cloneFieldObject),
       wormholes: this.wormholes.map(cloneFieldObject),
+      roomState: {
+        unlockedRoomIds: [...this.roomState.unlockedRoomIds],
+        openDoorIds: [...this.roomState.openDoorIds],
+      },
       wave: createWaveState(this.wave),
       stationIntegrity: this.stationIntegrity,
       settings: { ...this.settings },

@@ -5,12 +5,12 @@ import { GameState } from '../../src/game/simulation/GameState.js';
 import { LEVELS } from '../../src/game/content/map.js';
 import { findHeroPath, isHeroCellBlocked, worldToHeroCell } from '../../src/game/simulation/navigation.js';
 import { buildDistanceField, cellKey, worldToCell } from '../../src/game/simulation/maze.js';
-import { tileAssetSize } from '../../src/phaser/presentation/assetSizing.js';
+import { roomCellCenter } from '../../src/game/simulation/roomNavigation.js';
 for (const map of LEVELS) {
  test(`${map.id}: ladder passage, shop, taunt destruction and saved effects`, () => {
   const sim=createSimulation(new GameState({levelId:map.id,scrap:10000}));
   const {state,systems}=sim;
-  const pos=map.mode==='maze'?{x:map.grid.x+5.5*40,y:map.grid.y+4.5*40}:{x:400,y:350};
+  const pos=map.mode==='maze'?{x:map.grid.x+5.5*40,y:map.grid.y+4.5*40}:map.mode==='rooms'?roomCellCenter(map,{roomId:'arrival-yard',col:5,row:5}):{x:400,y:350};
   const built=systems.towerSystem.placeTower('wall',pos.x,pos.y); assert.equal(built.ok,true);
   const wall=built.tower, cell=worldToHeroCell(map,wall.x,wall.y);
   assert.equal(isHeroCellBlocked(map,state.towers,cell),true);
@@ -32,7 +32,6 @@ for (const map of LEVELS) {
   exchange.hp=1;enemy.attackCooldownMs=0;systems.enemySystem.update(100);assert.equal(state.towers.length,0);
   assert.equal(buy('repair').ok,false);
  });
- test(`${map.id}: frames fit within tiles`,()=>{const size=tileAssetSize(map,Boolean(map.presentation));if(map.presentation){assert.ok(size/2/map.presentation.halfWidth+size/2/map.presentation.halfHeight<=1);}else assert.ok(size<=40);});
 }
 test('invalid purchases are atomic and aura speed does not stack',()=>{
  const sim=createSimulation(new GameState({scrap:10000}));

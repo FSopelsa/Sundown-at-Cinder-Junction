@@ -622,6 +622,8 @@ export class Hud {
         ? `${getHeroSkill(this.targetingSkillId)?.label ?? 'Hero skill'} active: choose a valid target.`
       : this.simulation.map.mode === 'maze'
         ? 'Build a maze on the grid. Keep a route open to the exit. Click a wall while building to replace it and recover 80%.'
+        : this.simulation.map.mode === 'rooms'
+          ? 'Build in either unlocked room. Keep the Arrival Gate and every room route clear.'
         : 'Click clear ground to deploy the selected tower. Click a deployed tower to upgrade.';
   }
 

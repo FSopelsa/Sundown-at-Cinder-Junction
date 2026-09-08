@@ -22,7 +22,7 @@ function distanceBetween(first, second) {
 }
 
 function cellMatches(first, second) {
-  return Boolean(first && second && first.col === second.col && first.row === second.row);
+  return cellsMatch(first, second);
 }
 
 export class HeroSystem {
@@ -250,7 +250,7 @@ export class HeroSystem {
   }
 
   createWormholeEndpoint(x, y) {
-    if (this.map.mode === 'maze') {
+    if (this.map.mode === 'maze' || this.map.mode === 'rooms') {
       const target = this.getOpenGroundTarget(x, y);
       if (!target.ok) return target;
       if (cellMatches(target.cell, this.map.entrance) || cellMatches(target.cell, this.map.exit)) {
@@ -259,8 +259,10 @@ export class HeroSystem {
       if ((this.gameState.wormholes ?? []).some((portal) => cellMatches(portal.cell, target.cell))) {
         return { ok: false, reason: 'That Worm Tunnel endpoint is already set.' };
       }
-      if (this.gameState.enemies.some((enemy) =>
-        [enemy.mazeCell, enemy.mazeNext].some((cell) => cellMatches(cell, target.cell)))) {
+      const occupiedCells = this.map.mode === 'rooms'
+        ? this.gameState.enemies.flatMap((enemy) => [enemy.roomCell, enemy.roomNext])
+        : this.gameState.enemies.flatMap((enemy) => [enemy.mazeCell, enemy.mazeNext]);
+      if (occupiedCells.some((cell) => cellMatches(cell, target.cell))) {
         return { ok: false, reason: 'Wait for enemies to clear that maze cell.' };
       }
       return {
