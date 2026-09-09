@@ -71,7 +71,7 @@
     "tags": [],
     "title": "+ Floor tiles in existing rooms",
     "description": "",
-    "status": "TODO",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -83,6 +83,28 @@
         "minute": 56,
         "second": 53,
         "nano": 833581900
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_15",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Make hero the builder",
+    "description": "Hero needs to be nearby the tower to build and upgrade it",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 8
+      },
+      "time": {
+        "hour": 17,
+        "minute": 24,
+        "second": 34,
+        "nano": 114809300
       }
     },
     "isImported": false
