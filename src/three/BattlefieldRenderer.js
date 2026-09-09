@@ -55,7 +55,7 @@ export class BattlefieldRenderer {
     this.roomScene.build(this.simulation.map);
     this.entities = new EntityPresenter(this.scene, this.modelLibrary);
     this.effects = new EffectsLayer(this.scene);
-    this.audio = new AudioManager();
+    this.audio = new AudioManager(this.simulation.state.settings);
     this.cameraControls = new TacticalCamera(this.camera, this.renderer.domElement, this.simulation.map, this.hud.root);
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
@@ -245,6 +245,7 @@ export class BattlefieldRenderer {
     this.lastFrameAt = now;
     this.cameraControls.update(delta);
     const state = this.simulation.state;
+    this.audio.syncSettings(state.settings);
     const visualSpeed = state.settings.paused || state.stationIntegrity <= 0 ? 0 : state.settings.speed;
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);

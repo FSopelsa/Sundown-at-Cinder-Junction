@@ -24,6 +24,10 @@ function cloneEnemy(enemy) {
     ...(enemy.roomNext ? { roomNext: { ...enemy.roomNext } } : {}) };
 }
 
+function clampUnit(value, fallback) {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
+}
+
 function cloneHero(hero) {
   return {
     ...hero,
@@ -115,6 +119,8 @@ export class GameState {
     this.settings = {
       paused: Boolean(snapshot.settings?.paused),
       speed: snapshot.settings?.speed === 2 ? 2 : 1,
+      audioEnabled: snapshot.settings?.audioEnabled !== false,
+      audioVolume: clampUnit(snapshot.settings?.audioVolume, 0.4),
     };
     this.hero = createHeroState(map, snapshot.hero);
     this.nextEntityId =

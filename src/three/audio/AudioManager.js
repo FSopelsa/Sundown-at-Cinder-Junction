@@ -4,11 +4,17 @@ const TOWER_SOUNDS = Object.freeze({
   coldIronLongshot: AUDIO_KEYS.tower.coldIronLongshot,
 });
 
+function clampUnit(value, fallback = 0.4) {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : fallback;
+}
+
 export class AudioManager {
-  constructor(manifest = ASSET_MANIFEST) {
+  constructor(settings = {}, manifest = ASSET_MANIFEST) {
     this.sources = new Map(manifest.audio.map((asset) => [asset.key, asset.path]));
     this.lastPlayedAt = new Map();
     this.unlocked = false;
+    this.enabled = settings.audioEnabled !== false;
+    this.volume = clampUnit(settings.audioVolume);
     this.combatAmbience = null;
     this.bossMusic = null;
     this.unlock = this.unlock.bind(this);
@@ -18,7 +24,23 @@ export class AudioManager {
 
   unlock() {
     this.unlocked = true;
-    this.startCombatAmbience();
+    if (this.enabled) this.startCombatAmbience();
+  }
+
+  syncSettings(settings = {}) {
+    const wasEnabled = this.enabled;
+    this.enabled = settings.audioEnabled !== false;
+    this.volume = clampUnit(settings.audioVolume, this.volume);
+    for (const audio of [this.combatAmbience, this.bossMusic]) {
+      if (audio) audio.volume = (audio.userVolume ?? 1) * this.volume;
+    }
+    if (!this.enabled) {
+      this.combatAmbience?.pause();
+      this.bossMusic?.pause();
+      return;
+    }
+    if (!wasEnabled && this.unlocked) this.startCombatAmbience();
+    if (!wasEnabled && this.unlocked && this.bossMusic) this.bossMusic.play().catch(() => {});
   }
 
   makeAudio(key, options = {}) {
@@ -27,13 +49,14 @@ export class AudioManager {
     const audio = new Audio(source);
     audio.preload = 'auto';
     audio.loop = Boolean(options.loop);
-    audio.volume = options.volume ?? 1;
+    audio.userVolume = options.volume ?? 1;
+    audio.volume = audio.userVolume * this.volume;
     audio.playbackRate = options.rate ?? 1;
     return audio;
   }
 
   play(key, options = {}) {
-    if (!this.unlocked) return null;
+    if (!this.unlocked || !this.enabled) return null;
     const now = performance.now();
     const cooldownMs = options.cooldownMs ?? 0;
     if (now - (this.lastPlayedAt.get(key) ?? -Infinity) < cooldownMs) return null;
@@ -54,7 +77,7 @@ export class AudioManager {
   playFailure() { this.play(AUDIO_KEYS.ui.failure, { volume: 0.55 }); }
 
   playBossMusic() {
-    if (!this.unlocked) return;
+    if (!this.unlocked || !this.enabled) return;
     this.bossMusic?.pause();
     this.bossMusic = this.makeAudio(AUDIO_KEYS.boss.music, { loop: true, volume: 0.25 });
     this.bossMusic?.play().catch(() => {});
@@ -66,7 +89,7 @@ export class AudioManager {
   }
 
   startCombatAmbience() {
-    if (!this.unlocked || this.combatAmbience) return;
+    if (!this.unlocked || !this.enabled || this.combatAmbience) return;
     this.combatAmbience = this.makeAudio(AUDIO_KEYS.ambience.combat, { loop: true, volume: 0.12 });
     this.combatAmbience?.play().catch(() => {});
   }

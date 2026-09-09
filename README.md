@@ -7,7 +7,7 @@ remain in the existing serializable JavaScript simulation.
 ## First 3D milestone
 
 The default level, **Cinder Threshold · 3D Trial**, contains two connected
-rooms: Arrival Yard and Relay Hall. They retain separate grid coordinates and
+15 × 20-cell rooms: Arrival Yard and Relay Hall. They retain separate grid coordinates and
 are joined by the open Arrival Gate. This proves the intended expansion model:
 
 - enemy routing crosses the room-aware graph from the first room to the final
@@ -51,12 +51,16 @@ PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
   cell and the hero will cross open doors as needed.
 - **Start raid** (or `Space`) begins the next raid. `P`, `1`, and `2` control
   pause and simulation speed.
+- The top-right audio control mutes/unmutes HTML audio and sets the master
+  volume. Select a Scrap Exchange to buy its relay aura, then expand the aura
+  twice; the final 360-unit radius reaches roughly a quarter of the threshold.
 - Use the mouse wheel, camera buttons, arrow keys, or right/middle drag to pan
   and zoom. **Overview** recenters both rooms.
 
 Escaped enemies still reduce station integrity, then return first in the next
-raid. Enemy hull grows by 18% per completed raid, and the DOM HUD preserves the
-raid-result and failure states.
+raid. Enemy hull grows by 18% per completed raid, hero auto-attack damage gains
+a small late-level acceleration, and the DOM HUD preserves the raid-result and
+failure states.
 
 ## Blender and GLB exports
 

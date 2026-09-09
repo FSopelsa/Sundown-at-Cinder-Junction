@@ -5,6 +5,8 @@ import {
   MAX_TOWER_LEVEL,
   getTowerSellValue,
   getUpgradeCost,
+  getAuraRangeUpgradeCost,
+  SCRAP_EXCHANGE_AURA_MAX_LEVEL,
 } from '../../game/content/towers.js';
 import { getHeroSkill, HERO_DEFINITION } from '../../game/content/heroes.js';
 import { LEVELS } from '../../game/content/map.js';
@@ -72,6 +74,10 @@ export class Hud {
             <button type="button" data-action="pause">Pause</button>
             <button type="button" data-action="speed-1">1×</button>
             <button type="button" data-action="speed-2">2×</button>
+            <div class="audio-control" aria-label="Audio controls">
+              <button type="button" data-action="audio-toggle" aria-pressed="true">Audio on</button>
+              <label>Vol <input data-hud="audio-volume" type="range" min="0" max="1" step="0.05" value="0.4" aria-label="Master volume"></label>
+            </div>
           </div>
         </header>
 
@@ -152,6 +158,8 @@ export class Hud {
       pause: this.root.querySelector('[data-action="pause"]'),
       speed1: this.root.querySelector('[data-action="speed-1"]'),
       speed2: this.root.querySelector('[data-action="speed-2"]'),
+      audioToggle: this.root.querySelector('[data-action="audio-toggle"]'),
+      audioVolume: this.root.querySelector('[data-hud="audio-volume"]'),
       commandHero: this.root.querySelector('[data-action="command-hero"]'),
       heroName: this.root.querySelector('[data-hud="hero-name"]'),
       heroLevel: this.root.querySelector('[data-hud="hero-level"]'),
@@ -185,12 +193,16 @@ export class Hud {
       this.render(true);
     });
     this.root.querySelector('[data-hud="structure-actions"]').addEventListener('click', event => {
-      const button = event.target.closest('[data-support], [data-ladder]');
+      const button = event.target.closest('[data-support], [data-ladder], [data-upgrade]');
       if (!button) return;
-      const result = button.hasAttribute('data-ladder')
-        ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: 'ladder' })
-        : this.simulation.dispatch(ACTIONS.purchaseSupport, { towerId: this.selectedTowerId, item: button.dataset.support });
-      this.showNotice(result.ok ? result.message ?? 'Ladder installed. The hero can cross this wall.' : result.reason, result.ok ? 'success' : 'warning');
+      const result = button.hasAttribute('data-upgrade')
+        ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: button.dataset.upgrade })
+        : button.hasAttribute('data-ladder')
+          ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: 'ladder' })
+          : this.simulation.dispatch(ACTIONS.purchaseSupport, { towerId: this.selectedTowerId, item: button.dataset.support });
+      this.showNotice(result.ok
+        ? result.message ?? (button.hasAttribute('data-upgrade') ? 'Relay aura expanded.' : 'Ladder installed. The hero can cross this wall.')
+        : result.reason, result.ok ? 'success' : 'warning');
       this.render(true);
     });
     this.elements.commandHero.addEventListener('click', () => this.commandHero());
@@ -241,6 +253,17 @@ export class Hud {
 
     this.elements.speed2.addEventListener('click', () => {
       this.simulation.dispatch(ACTIONS.setSpeed, { speed: 2 });
+      this.render(true);
+    });
+
+    this.elements.audioToggle.addEventListener('click', () => {
+      this.simulation.state.settings.audioEnabled = !this.simulation.state.settings.audioEnabled;
+      this.showNotice(this.simulation.state.settings.audioEnabled ? 'Audio enabled.' : 'Audio muted.', 'neutral');
+      this.render(true);
+    });
+
+    this.elements.audioVolume.addEventListener('input', (event) => {
+      this.simulation.state.settings.audioVolume = Math.min(1, Math.max(0, Number(event.target.value)));
       this.render(true);
     });
 
@@ -464,7 +487,7 @@ export class Hud {
   render(force = false) {
     const state = this.simulation.state;
     const renderKey = [
-      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}`).join(),
+      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}`).join(),
       state.scrap,
       state.stationIntegrity,
       state.wave.index,
@@ -476,6 +499,8 @@ export class Hud {
       state.enemies.some((enemy) => (enemy.shield ?? 0) > 0),
       state.settings.paused,
       state.settings.speed,
+      state.settings.audioEnabled,
+      state.settings.audioVolume,
       this.selectedTowerType,
       this.selectedTowerId,
       this.inputMode,
@@ -520,17 +545,27 @@ export class Hud {
       const structure = tower.type === 'wall' || tower.type === 'scrapExchange';
       for (const button of this.elements.upgradeButtons) button.hidden = structure;
       const actions = this.root.querySelector('[data-hud="structure-actions"]');
+      const auraLevel = Math.max(0, Number.isInteger(tower.auraLevel) ? tower.auraLevel : (tower.aura ? 1 : 0));
+      const auraRange = tower.auraRange ?? 180;
+      const auraCost = tower.aura ? getAuraRangeUpgradeCost(tower) : null;
+      const auraUpgrade = tower.type === 'scrapExchange' && tower.aura
+        ? `<button data-upgrade="range" ${auraCost === null || state.scrap < auraCost ? 'disabled' : ''}>${auraCost === null ? `Relay aura maximum · ${auraRange}` : `Expand relay aura to ${auraRange + 90} · ${auraCost} Scrap`}</button>`
+        : '';
       actions.innerHTML = tower.type === 'wall'
         ? `<button data-ladder ${tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
-        : tower.type === 'scrapExchange' ? Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
+        : tower.type === 'scrapExchange' ? auraUpgrade + Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
           const price = offer.cost * (id === 'buyback' ? hero.level : id === 'xp' ? 1 + (hero.trainingPurchases ?? 0) : 1);
           const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
           return `<button data-support="${id}" ${unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
         }).join('') : '';
       if (structure) {
         this.elements.towerName.textContent = tower.name;
-        this.elements.towerStats.textContent = tower.type === 'wall' ? 'Blocks enemies. Ladder allows hero passage.' : `${Math.ceil(tower.hp)} / ${tower.maxHp} hull · Taunt range 100${tower.aura ? ' · Relay radius 180' : ''}`;
-        this.elements.towerHistory.textContent = tower.type === 'wall' ? 'Select a combat tower, then click this wall to replace it.' : 'Taunted enemies bombard the Exchange until it falls. Auras do not stack. Training price increases after each purchase.';
+        this.elements.towerStats.textContent = tower.type === 'wall'
+          ? 'Blocks enemies. Ladder allows hero passage.'
+          : `${Math.ceil(tower.hp)} / ${tower.maxHp} hull · Taunt range 100 · Relay radius ${tower.aura ? `${auraRange} (${auraLevel}/${SCRAP_EXCHANGE_AURA_MAX_LEVEL})` : 'inactive'}`;
+        this.elements.towerHistory.textContent = tower.type === 'wall'
+          ? 'Select a combat tower, then click this wall to replace it.'
+          : 'Taunted enemies bombard the Exchange until it falls. Install the aura, then expand its radius. Auras do not stack.';
       }
       const sellValue = getTowerSellValue(tower);
       this.elements.sellTower.textContent = `Sell for ${sellValue} Scrap (80% return)`;
@@ -556,6 +591,9 @@ export class Hud {
       'aria-pressed',
       String(state.settings.speed === 2),
     );
+    this.elements.audioToggle.setAttribute('aria-pressed', String(state.settings.audioEnabled));
+    this.elements.audioToggle.textContent = state.settings.audioEnabled ? 'Audio on' : 'Audio off';
+    this.elements.audioVolume.value = String(state.settings.audioVolume);
     this.elements.startWave.disabled =
       state.wave.inProgress ||
       state.enemies.length > 0 ||

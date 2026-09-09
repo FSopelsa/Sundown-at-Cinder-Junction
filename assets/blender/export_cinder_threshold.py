@@ -108,18 +108,22 @@ def add_uv_sphere(name, location, radius, material_name, parent=None):
     return obj
 
 
+ROOM_COLUMNS = 15
+ROOM_ROWS = 20
+
+
 def add_room(name, floor_material, wall_material, light_material, left_door, right_door):
-    """Build a 12 x 8 metre room module at a local origin."""
+    """Build a 15 x 20 metre room module at a local origin."""
     room = make_group(name)
     room["cell_scale_meters"] = 1.0
-    room["navigation_width_cells"] = 12
-    room["navigation_depth_cells"] = 8
+    room["navigation_width_cells"] = ROOM_COLUMNS
+    room["navigation_depth_cells"] = ROOM_ROWS
 
-    add_box("Floor slab", (6, -0.10, 4), (12, 0.20, 8), floor_material, room, 0.03)
+    add_box("Floor slab", (ROOM_COLUMNS / 2, -0.10, ROOM_ROWS / 2), (ROOM_COLUMNS, 0.20, ROOM_ROWS), floor_material, room, 0.03)
     # Uneven inset plating makes the travel surface read as a built space
     # without using bitmap placeholder textures.
-    for col in range(12):
-        for row in range(8):
+    for col in range(ROOM_COLUMNS):
+        for row in range(ROOM_ROWS):
             tone = floor_material if (col + row) % 3 else "floor_dark"
             add_box(
                 f"Floor plate {col}-{row}",
@@ -135,14 +139,14 @@ def add_room(name, floor_material, wall_material, light_material, left_door, rig
         segment.rotation_euler[2] = rotation
         return segment
 
-    for col in range(12):
+    for col in range(ROOM_COLUMNS):
         wall_segment(f"North wall {col}", (col + 0.5, 0.75, 0.0))
-        wall_segment(f"South wall {col}", (col + 0.5, 0.75, 8.0))
-    for row in range(8):
+        wall_segment(f"South wall {col}", (col + 0.5, 0.75, ROOM_ROWS))
+    for row in range(ROOM_ROWS):
         if row != left_door:
             wall_segment(f"West wall {row}", (0.0, 0.75, row + 0.5), math.pi / 2)
         if row != right_door:
-            wall_segment(f"East wall {row}", (12.0, 0.75, row + 0.5), math.pi / 2)
+            wall_segment(f"East wall {row}", (ROOM_COLUMNS, 0.75, row + 0.5), math.pi / 2)
 
     def doorway(label, x, row, flip=False):
         direction = -1 if flip else 1
@@ -153,37 +157,9 @@ def add_room(name, floor_material, wall_material, light_material, left_door, rig
         lamp.rotation_euler[2] = math.pi / 2
 
     doorway("West entry", 0.0, left_door, True)
-    doorway("East entry", 12.0, right_door)
-
-    # A sparse, symmetric prop rhythm leaves traversal and tower cells legible.
-    for x, z in ((2.0, 1.3), (2.0, 6.7), (10.0, 1.3), (10.0, 6.7)):
-        add_cylinder("Signal pylon", (x, 0.75, z), 0.18, 1.5, "metal", room)
-        add_box("Pylon lamp", (x, 1.52, z), (0.34, 0.12, 0.34), light_material, room, 0.03)
+    doorway("East entry", float(ROOM_COLUMNS), right_door)
 
     return room
-
-
-def add_crate(parent, location, scale, material_name="rust"):
-    crate = add_box("Salvage crate", location, scale, material_name, parent, 0.04)
-    for offset in (-0.30, 0.30):
-        add_box("Crate band", (location[0] + offset, location[1], location[2]), (0.06, scale[1] + 0.02, scale[2] + 0.02), "brass", parent, 0.01)
-    return crate
-
-
-def decorate_arrival_yard(room):
-    add_crate(room, (4.0, 0.38, 2.0), (0.9, 0.72, 0.8))
-    add_crate(room, (4.85, 0.28, 2.15), (0.55, 0.52, 0.55), "metal")
-    add_cylinder("Water tank", (8.3, 0.65, 5.8), 0.65, 1.3, "teal", room, vertices=16)
-    add_box("Crane beam", (6.0, 2.1, 1.1), (3.8, 0.16, 0.16), "metal", room, 0.02)
-    add_box("Crane post", (4.15, 1.1, 1.1), (0.16, 2.2, 0.16), "metal", room, 0.02)
-
-
-def decorate_relay_hall(room):
-    add_cylinder("Relay core", (6.0, 1.1, 4.0), 0.80, 2.2, "dark_metal", room, vertices=16)
-    add_cylinder("Relay glow", (6.0, 1.1, 4.0), 0.48, 2.28, "violet", room, vertices=16)
-    for x, z in ((4.2, 4.0), (7.8, 4.0)):
-        add_box("Relay conduit", (x, 0.22, z), (1.4, 0.20, 0.34), "teal", room, 0.02)
-    add_crate(room, (9.3, 0.32, 2.0), (0.75, 0.62, 0.75), "dark_metal")
 
 
 def make_unit(parent, name, color, body_radius, height, accent=None):
@@ -271,10 +247,8 @@ def main():
         "teal": make_material("Oxidized_Teal", (0.03, 0.36, 0.38), metallic=0.66, roughness=0.36, emission=(0.01, 0.08, 0.09)),
         "violet": make_material("Arc_Violet", (0.24, 0.06, 0.42), metallic=0.44, roughness=0.25, emission=(0.22, 0.02, 0.55)),
     })
-    arrival = add_room("CinderArrivalYard", "floor_rust", "rust", "teal", left_door=3, right_door=3)
-    relay = add_room("CinderRelayHall", "floor_teal", "metal", "violet", left_door=3, right_door=3)
-    decorate_arrival_yard(arrival)
-    decorate_relay_hall(relay)
+    arrival = add_room("CinderArrivalYard", "floor_rust", "rust", "teal", left_door=10, right_door=10)
+    relay = add_room("CinderRelayHall", "floor_teal", "metal", "violet", left_door=10, right_door=10)
     unit_kit = build_units()
     add_authoring_camera()
 

@@ -44,6 +44,20 @@ test('invalid purchases are atomic and aura speed does not stack',()=>{
  sim.state.scrap=0;const before=sim.state.toJSON();assert.equal(sim.dispatch('purchase-support',{towerId:exchange.id,item:'xp'}).ok,false);assert.deepEqual(sim.state.toJSON(),before);
 });
 
+test('Scrap Exchange relay aura can be expanded to a quarter-map radius', () => {
+ const sim=createSimulation(new GameState({levelId:'cinder-maze',scrap:10000}));
+ const exchange=sim.systems.towerSystem.placeTower('scrapExchange',420,220).tower;
+ assert.ok(exchange);
+ assert.equal(sim.dispatch('purchase-support',{towerId:exchange.id,item:'aura'}).ok,true);
+ assert.equal(exchange.auraRange,180);
+ assert.equal(sim.systems.towerSystem.upgradeTower(exchange.id,'range').ok,true);
+ assert.equal(exchange.auraRange,270);
+ assert.equal(sim.systems.towerSystem.upgradeTower(exchange.id,'range').ok,true);
+ assert.equal(exchange.auraRange,360);
+ assert.equal(sim.systems.towerSystem.upgradeTower(exchange.id,'range').ok,false);
+ assert.equal(GameState.fromJSON(sim.state.toJSON()).towers[0].auraRange,360);
+});
+
 test('hero physically crosses a ladder wall while ordinary wall remains impassable', () => {
  const sim=createSimulation(new GameState({levelId:'cinder-maze',scrap:500}));
  const wall=sim.systems.towerSystem.placeTower('wall',340,420).tower;

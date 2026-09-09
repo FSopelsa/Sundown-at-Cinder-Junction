@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { getMapWorldBounds } from './coordinates.js';
 
 const MIN_DISTANCE = 9;
-const MAX_DISTANCE = 44;
+const MAX_DISTANCE = 70;
 
 export class TacticalCamera {
   constructor(camera, domElement, map, hudRoot) {

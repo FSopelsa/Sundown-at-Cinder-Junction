@@ -139,6 +139,13 @@ test('hero level-ups scale hull and damage, heal from the level gain, and unlock
   assert.equal(hero.skillSlots.find((slot) => slot.id === 'void-rend').unlocked, true);
 });
 
+test('hero auto-attack damage accelerates at higher levels', () => {
+  const earlyStep = getHeroStats(2).damage - getHeroStats(1).damage;
+  const lateStep = getHeroStats(10).damage - getHeroStats(9).damage;
+  assert.ok(lateStep > earlyStep);
+  assert.ok(getHeroStats(10).damage > Math.round(15 * (1 + 0.18 * 9)));
+});
+
 test('Singularity earns kill XP for ranged casts beyond the nearby tower-kill XP radius', () => {
   const simulation = mazeSimulation();
   const hero = simulation.state.hero;

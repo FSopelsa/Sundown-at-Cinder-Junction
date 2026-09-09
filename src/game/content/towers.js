@@ -3,9 +3,19 @@ import { ASSET_KEYS } from '../assets/manifest.js';
 export const MAX_TOWER_LEVEL = 3;
 export const UPGRADE_MULTIPLIER = 1.5;
 export const TOWER_SELL_RATE = 0.8;
+export const SCRAP_EXCHANGE_AURA_BASE_RANGE = 180;
+export const SCRAP_EXCHANGE_AURA_RANGE_STEP = 90;
+export const SCRAP_EXCHANGE_AURA_MAX_RANGE = 360;
+export const SCRAP_EXCHANGE_AURA_MAX_LEVEL = 3;
 
 export function getUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower.type]) {
   return tower.level >= MAX_TOWER_LEVEL ? null : Math.ceil(definition.cost * tower.level * 0.75);
+}
+
+export function getAuraRangeUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower.type]) {
+  const auraLevel = Math.max(1, Number.isInteger(tower.auraLevel) ? tower.auraLevel : 1);
+  if (auraLevel >= SCRAP_EXCHANGE_AURA_MAX_LEVEL || !definition) return null;
+  return Math.ceil(definition.cost * auraLevel * 0.75);
 }
 
 // New towers keep the exact amount paid so a sell value is unambiguous. Older
@@ -87,8 +97,9 @@ export const TOWER_DEFINITIONS = Object.freeze({
   scrapExchange: Object.freeze({
     id: 'scrapExchange', name: 'Scrap Exchange', cost: 100, range: 100,
     damage: 0, shotsPerSecond: 0, damageType: 'neutral',
-    assetKey: ASSET_KEYS.towers.teslaCoil,
-    description: '600 hull. Taunts enemies within 100 range; they stop and bombard it. Sells recovery, XP and a tower aura.',
+    assetKey: ASSET_KEYS.towers.scrapExchange,
+    auraRange: SCRAP_EXCHANGE_AURA_BASE_RANGE,
+    description: '600 hull. Taunts enemies within 100 range; they stop and bombard it. Sells recovery, XP and a relay aura.',
   }),
   wall: Object.freeze({
     id: 'wall',
@@ -98,7 +109,7 @@ export const TOWER_DEFINITIONS = Object.freeze({
     damage: 0,
     shotsPerSecond: 0,
     damageType: 'neutral',
-    assetKey: ASSET_KEYS.towers.coldIronLongshot,
+    assetKey: ASSET_KEYS.towers.wall,
     description: 'A sturdy wall to block enemy advances.',
   })
 });

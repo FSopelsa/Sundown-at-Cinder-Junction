@@ -194,6 +194,32 @@ button:disabled {
   font-size: 0.82rem;
 }
 
+.audio-control {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 0.68rem;
+}
+
+.audio-control button {
+  padding: 0.42rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.72rem;
+}
+
+.audio-control label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.audio-control input {
+  width: 5rem;
+  accent-color: var(--teal);
+}
+
 .build-palette {
   position: absolute;
   bottom: 0.75rem;
@@ -547,6 +573,8 @@ button:disabled {
     padding: 0.4rem 0.5rem;
     font-size: 0.74rem;
   }
+
+  .audio-control input { width: 4rem; }
 
   .build-palette {
     right: 0.45rem;

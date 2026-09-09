@@ -17,13 +17,13 @@ const THRESHOLD_ROOMS = Object.freeze([
   Object.freeze({
     id: 'arrival-yard',
     name: 'Arrival Yard',
-    grid: Object.freeze({ x: 40, y: 200, columns: 12, rows: 8, cellSize: 40 }),
+    grid: Object.freeze({ x: 40, y: 80, columns: 15, rows: 20, cellSize: 40 }),
     environment: Object.freeze({ palette: 'rust', hero: 'scrap-crane' }),
   }),
   Object.freeze({
     id: 'relay-hall',
     name: 'Relay Hall',
-    grid: Object.freeze({ x: 600, y: 200, columns: 12, rows: 8, cellSize: 40 }),
+    grid: Object.freeze({ x: 760, y: 80, columns: 15, rows: 20, cellSize: 40 }),
     environment: Object.freeze({ palette: 'teal', hero: 'power-relay' }),
   }),
 ]);
@@ -32,8 +32,8 @@ const THRESHOLD_CONNECTIONS = Object.freeze([
   Object.freeze({
     id: 'arrival-gate',
     name: 'Arrival Gate',
-    from: roomCell('arrival-yard', 11, 3),
-    to: roomCell('relay-hall', 0, 3),
+    from: roomCell('arrival-yard', 14, 10),
+    to: roomCell('relay-hall', 0, 10),
     initiallyOpen: true,
   }),
 ]);
@@ -87,14 +87,14 @@ export const THRESHOLD_MAP = Object.freeze({
   id: 'cinder-threshold',
   name: 'Cinder Threshold · 3D Trial',
   mode: 'rooms',
-  width: 1120,
-  height: 720,
+  width: 1440,
+  height: 960,
   startingScrap: 560,
   rooms: THRESHOLD_ROOMS,
   roomConnections: THRESHOLD_CONNECTIONS,
-  entrance: roomCell('arrival-yard', 0, 3),
-  exit: roomCell('relay-hall', 11, 3),
-  heroSpawn: Object.freeze({ x: 140, y: 420 }),
+  entrance: roomCell('arrival-yard', 0, 10),
+  exit: roomCell('relay-hall', 14, 10),
+  heroSpawn: Object.freeze({ x: 140, y: 520 }),
   roomState: Object.freeze({
     unlockedRoomIds: Object.freeze(THRESHOLD_ROOMS.map((room) => room.id)),
     openDoorIds: Object.freeze(THRESHOLD_CONNECTIONS

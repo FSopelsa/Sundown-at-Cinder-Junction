@@ -9,7 +9,9 @@ Blender and exports three GLB files into `public/assets/models/`:
 
 The source uses **one Blender unit per navigation cell**. In the simulation,
 one cell is 40 units, so the Three.js adapter converts simulation positions by
-`1 / 40` when it places a model.
+`1 / 40` when it places a model. Both room exports are currently clean,
+15 × 20-cell floor-tile blockouts; temporary crates, pylons, tanks, and relay
+props are intentionally omitted until authored obstacle assets are ready.
 
 Open the generated `cinder-threshold-prototype.blend` to refine the materials,
 geometry, and lighting. Re-run the script after changes that should replace the

@@ -1,3 +1,5 @@
+import { SCRAP_EXCHANGE_AURA_BASE_RANGE } from '../../content/towers.js';
+
 // Shop effects belong to simulation state and survive serialization.
 export const SUPPORT_ITEMS = Object.freeze({
   heal: { label: 'Restore hero hull', cost: 30 },
@@ -26,6 +28,11 @@ export function purchaseSupport(state, economy, heroes, towerId, item) {
   if (item === 'buyback') heroes.reviveForNextWave();
   if (item === 'xp') { heroes.awardExperience(25); hero.trainingPurchases = (hero.trainingPurchases ?? 0) + 1; }
   if (item === 'repair') tower.hp = tower.maxHp;
-  if (item === 'aura') { tower.aura = true; tower.investedScrap += cost; }
+  if (item === 'aura') {
+    tower.aura = true;
+    tower.auraLevel = 1;
+    tower.auraRange = SCRAP_EXCHANGE_AURA_BASE_RANGE;
+    tower.investedScrap += cost;
+  }
   return { ok: true, cost, message: `${offer.label} purchased.` };
 }

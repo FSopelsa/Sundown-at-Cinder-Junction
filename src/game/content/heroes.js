@@ -9,6 +9,7 @@ export const HERO_DEFINITION = Object.freeze({
   baseDamage: 15,
   hpGrowthPerLevel: 0.16,
   damageGrowthPerLevel: 0.18,
+  damageAccelerationPerLevel: 0.01,
   moveSpeed: 180,
   attackRange: 120,
   attackIntervalMs: 500,
@@ -102,7 +103,11 @@ export function getHeroStats(level) {
       HERO_DEFINITION.baseMaxHp * (1 + HERO_DEFINITION.hpGrowthPerLevel * levelsGained),
     ),
     damage: Math.round(
-      HERO_DEFINITION.baseDamage * (1 + HERO_DEFINITION.damageGrowthPerLevel * levelsGained),
+      HERO_DEFINITION.baseDamage * (
+        1 +
+        HERO_DEFINITION.damageGrowthPerLevel * levelsGained +
+        HERO_DEFINITION.damageAccelerationPerLevel * levelsGained ** 2
+      ),
     ),
   };
 }

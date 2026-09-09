@@ -6,6 +6,11 @@ import {
   getTowerInvestment,
   getTowerSellValue,
   getUpgradeCost,
+  getAuraRangeUpgradeCost,
+  SCRAP_EXCHANGE_AURA_BASE_RANGE,
+  SCRAP_EXCHANGE_AURA_RANGE_STEP,
+  SCRAP_EXCHANGE_AURA_MAX_RANGE,
+  SCRAP_EXCHANGE_AURA_MAX_LEVEL,
 } from '../../content/towers.js';
 import { validateMazePlacement, worldToCell } from '../maze.js';
 import {
@@ -138,7 +143,9 @@ export class TowerSystem {
       x,
       y,
       level: 1,
-      ...(towerType === 'scrapExchange' ? { hp: 600, maxHp: 600, aura: false } : {}),
+      ...(towerType === 'scrapExchange'
+        ? { hp: 600, maxHp: 600, aura: false, auraLevel: 0, auraRange: SCRAP_EXCHANGE_AURA_BASE_RANGE }
+        : {}),
       upgrades: [],
       investedScrap: definition.cost,
       range: definition.range,
@@ -165,6 +172,23 @@ export class TowerSystem {
       tower.investedScrap = getTowerInvestment(tower) + 12;
       tower.ladder = true;
       return { ok: true, tower, cost: 12 };
+    }
+    if (upgrade === 'range' && tower.type === 'scrapExchange') {
+      if (!tower.aura) return { ok: false, reason: 'Install the relay aura first.' };
+      const auraLevel = Math.max(1, Number.isInteger(tower.auraLevel) ? tower.auraLevel : 1);
+      if (auraLevel >= SCRAP_EXCHANGE_AURA_MAX_LEVEL) {
+        return { ok: false, reason: 'Relay aura is already at maximum range.' };
+      }
+      const cost = getAuraRangeUpgradeCost(tower, this.definitions[tower.type]);
+      if (!this.economySystem.spendScrap(cost)) return { ok: false, reason: 'Not enough Scrap.' };
+      tower.auraLevel = auraLevel + 1;
+      tower.auraRange = Math.min(
+        SCRAP_EXCHANGE_AURA_MAX_RANGE,
+        SCRAP_EXCHANGE_AURA_BASE_RANGE + (tower.auraLevel - 1) * SCRAP_EXCHANGE_AURA_RANGE_STEP,
+      );
+      tower.investedScrap = getTowerInvestment(tower, this.definitions[tower.type]) + cost;
+      (tower.upgrades ??= []).push('range');
+      return { ok: true, tower, cost };
     }
     if (tower.damage === 0) return { ok: false, reason: 'Use this structure’s special upgrades.' };
     if (upgrade !== 'damage' && upgrade !== 'speed') return { ok: false, reason: 'Choose damage or attack speed.' };
@@ -200,7 +224,7 @@ export class TowerSystem {
   update(deltaMs) {
     for (const tower of this.gameState.towers) {
       tower.timeDilationRemainingMs = Math.max(0, (tower.timeDilationRemainingMs ?? 0) - deltaMs);
-      const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && distanceBetween(source, tower) <= 180) ? 1.2 : 1;
+      const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && distanceBetween(source, tower) <= (source.auraRange ?? SCRAP_EXCHANGE_AURA_BASE_RANGE)) ? 1.2 : 1;
       const attackSpeedMultiplier = auraMultiplier * (tower.timeDilationRemainingMs > 0
         ? tower.timeDilationMultiplier ?? 1
         : 1);
