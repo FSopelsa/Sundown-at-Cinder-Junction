@@ -249,7 +249,7 @@ export class BattlefieldRenderer {
     const visualSpeed = state.settings.paused || state.stationIntegrity <= 0 ? 0 : state.settings.speed;
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);
-    this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime);
+    this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime, this.simulation.map);
     const combatEvents = this.simulation.systems.combatSystem.drainEvents();
     for (const event of combatEvents) {
       if (event.type === 'tower-fire') this.audio.playTowerAttack(event.towerType);

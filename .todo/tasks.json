@@ -121,5 +121,27 @@
       }
     },
     "isImported": false
+  },
+  {
+    "id": "TASK_21",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Clean up old code",
+    "description": "",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 12
+      },
+      "time": {
+        "hour": 4,
+        "minute": 10,
+        "second": 17,
+        "nano": 404348500
+      }
+    },
+    "isImported": false
   }
 ]

@@ -1,14 +1,61 @@
 {
-  "schema": "game-room.prop-manifest.v1",
+  "schema": "sundown.prop-manifest.v2",
   "roomId": "cinder-threshold",
   "generation": {
-    "provider": "meshy",
-    "apiModel": "meshy-5",
-    "pricingSource": "https://docs.meshy.ai/en/api/pricing",
-    "pricingVerifiedAt": "",
-    "creditsPerTexturedTask": 15,
+    "mode": "procedural-blender",
+    "paidProviderAllowed": false,
     "hardCreditCeiling": 0,
-    "maxChargedAttemptsPerAsset": 2
+    "reason": "Grid modules need exact size, joins, pivots, and collision alignment."
   },
-  "assets": []
+  "assets": [
+    {
+      "id": "defensive-wall",
+      "status": "functional-prototype",
+      "role": "buildable route-blocking wall",
+      "styleReference": {
+        "path": "assets/walls/wall_template.jpg",
+        "use": "weathered industrial sci-fi proportions, layered rails, reinforced posts, and muted teal/rust accents",
+        "licenceStatus": "reference only; do not use as a runtime texture or claim as original source art"
+      },
+      "source": {
+        "blenderScript": "assets/blender/export_cinder_threshold.py",
+        "runtimeModel": "public/assets/models/cinder-prototype-units.glb",
+        "manifestKey": "prototype-units"
+      },
+      "gridContract": {
+        "cellSizeMeters": [1, 1],
+        "longAxis": "+X",
+        "pivot": "cell centre on ground plane",
+        "groundContact": "local Y=0",
+        "defaultHeightMeters": 1,
+        "depthMeters": 0.18
+      },
+      "runtimeNodes": {
+        "root": "Tower_Wall",
+        "core": "Tower_Wall_Core",
+        "negativeEndCap": "Tower_Wall_End_Negative",
+        "positiveEndCap": "Tower_Wall_End_Positive"
+      },
+      "joining": {
+        "straightRuns": "Adjacent cells hide their shared end caps so the rail and base read as one continuous barricade.",
+        "junctions": "The presenter adds a perpendicular core for cross or T layouts; a future dedicated corner/end kit may replace this overlap."
+      },
+      "budgets": {
+        "targetTrianglesPerCell": 300,
+        "texturePolicy": "procedural vertex/material colour only for the functional prototype; use a small shared PBR atlas for final art"
+      },
+      "rejectionCriteria": [
+        "does not fill exactly one simulation cell",
+        "pivot or ground contact causes placement drift",
+        "inner caps remain visible in a two-wall straight run",
+        "runtime uses the reference photo as a texture",
+        "model has no semantic nodes for runtime joining"
+      ],
+      "review": {
+        "function": "requested 2026-09-12",
+        "form": "pending human art-direction review",
+        "runtime": "pending browser smoke test"
+      }
+    }
+  ]
 }

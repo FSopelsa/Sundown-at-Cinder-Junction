@@ -179,6 +179,42 @@ def make_tower(parent, name, base_color, accent_color, barrel_length=0.9):
     return root
 
 
+def make_defensive_wall(parent):
+    """Build one 1 x 1 metre wall cell with independently hideable end caps."""
+    wall = make_group("Tower_Wall", parent)
+    wall["asset_role"] = "buildable-grid-wall"
+    wall["cell_width_m"] = 1.0
+    wall["long_axis"] = "+X"
+
+    core = make_group("Tower_Wall_Core", wall)
+    # The core reads as a weathered industrial barricade: a heavy plinth,
+    # framed open bays, oxidized plate inserts, and a reinforced top rail.
+    add_box("Tower_Wall foundation", (0, 0.10, 0), (0.86, 0.20, 0.20), "dark_metal", core, 0.018)
+    add_box("Tower_Wall lower rail", (0, 0.30, 0), (0.78, 0.15, 0.16), "metal", core, 0.018)
+    add_box("Tower_Wall upper rail", (0, 0.90, 0), (0.78, 0.16, 0.17), "metal", core, 0.018)
+    add_box("Tower_Wall left upright", (-0.34, 0.60, 0), (0.12, 0.66, 0.17), "rust", core, 0.014)
+    add_box("Tower_Wall right upright", (0.34, 0.60, 0), (0.12, 0.66, 0.17), "rust", core, 0.014)
+    add_box("Tower_Wall left inset", (-0.16, 0.57, -0.015), (0.18, 0.36, 0.08), "teal", core, 0.012)
+    add_box("Tower_Wall right inset", (0.16, 0.57, -0.015), (0.18, 0.36, 0.08), "teal", core, 0.012)
+    add_box("Tower_Wall warning plate", (0, 0.56, -0.035), (0.12, 0.42, 0.07), "brass", core, 0.010)
+    add_box("Tower_Wall lower brace", (0, 0.46, 0.055), (0.62, 0.07, 0.09), "dark_metal", core, 0.010)
+
+    def add_end_cap(name, x):
+        end_cap = make_group(name, wall)
+        add_box(f"{name} post", (x, 0.54, 0), (0.14, 1.08, 0.26), "dark_metal", end_cap, 0.020)
+        add_box(f"{name} collar", (x, 0.37, -0.005), (0.18, 0.11, 0.29), "rust", end_cap, 0.012)
+        add_box(f"{name} crown", (x, 1.08, 0), (0.20, 0.12, 0.30), "metal", end_cap, 0.016)
+        add_box(f"{name} foot", (x, 0.08, 0), (0.22, 0.16, 0.34), "dark_metal", end_cap, 0.014)
+        add_cylinder(f"{name} signal bolt", (x, 0.98, -0.15), 0.035, 0.08, "brass", end_cap, vertices=8)
+        return end_cap
+
+    # The posts stop precisely at the cell boundaries. When two cells touch,
+    # Three.js hides their shared cap groups so a straight run becomes one rail.
+    add_end_cap("Tower_Wall_End_Negative", -0.43)
+    add_end_cap("Tower_Wall_End_Positive", 0.43)
+    return wall
+
+
 def build_units():
     kit = make_group("CinderPrototypeUnits")
     make_unit(kit, "Unit_Hero", "brass", 0.28, 1.30, "teal")
@@ -194,8 +230,7 @@ def build_units():
     make_tower(kit, "Tower_ColdIronLongshot", "teal", "teal", 1.28)
     make_tower(kit, "Tower_TeslaCoil", "metal", "violet", 0.72)
     make_tower(kit, "Tower_ScrapExchange", "rust", "teal", 0.35)
-    wall = make_group("Tower_Wall", kit)
-    add_box("Tower_Wall slab", (0, 0.62, 0), (0.94, 1.24, 0.20), "metal", wall, 0.03)
+    make_defensive_wall(kit)
     return kit
 
 

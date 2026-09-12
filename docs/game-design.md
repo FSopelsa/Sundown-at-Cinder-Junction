@@ -3,7 +3,7 @@
 This document preserves the original concept and first-playable plan for the
 project.
 
-A 2D tower-defense game about defending a battered jump-rail station on the edge of settled space.
+A browser-native 3D tower-defense game about defending a battered jump-rail station on the edge of settled space.
 
 You are the last Circuit Marshal at Cinder Junction. Raiders, war machines, and alien stampedes are converging on the station while an evacuation ship prepares to launch. You build improvised gun towers, collect elemental cores from notorious outlaws, and fuse those cores into increasingly dangerous frontier weapons.
 
@@ -207,7 +207,7 @@ validation and saves.
 
 The production order is:
 
-1. Retire the isometric renderer.
+1. The isometric renderer has been retired.
 2. Define rooms, doors, and persistent IDs in the simulation.
 3. Prove two connected rooms in 3D.
 4. Make one enemy and the hero traverse both.

@@ -1,57 +1,20 @@
-# Coordination Rules
+# Working Agreement
 
-These rules govern how the studio model should coordinate work.
+Sundown is developed in small, playable increments. Keep the existing
+simulation-first style rather than introducing a large production framework.
 
-## 1. Match authority to the decision
-
-- directors own cross-discipline direction
-- leads own domain coherence
-- specialists own focused execution
-
-## 2. Keep delegation intentional
-
-Delegate only when it improves quality, speed, or clarity.
-
-Bad delegation:
-
-- handing off the immediate blocking task with no parallel work left
-- splitting tightly coupled tasks across too many agents
-- duplicating analysis across several agents without a synthesis plan
-
-Good delegation:
-
-- bounded subproblems with clear ownership
-- one lead synthesizing multiple specialist inputs
-- team skills for recurring cross-discipline flows
-
-## 3. Treat artifacts as contracts
-
-Skills and agents should anchor to the actual repo artifacts.
-
-- design decisions belong in `design/`
-- technical decisions belong in `docs/architecture/`
-- sprint and release state belongs in `production/`
-- implementation belongs in `src/`
-
-## 4. Prefer explicit workflows
-
-Use a named skill when one exists. This keeps behavior stable and makes validation possible.
-
-## 5. Resolve conflicts in public
-
-When design, technical, or production constraints clash, make the tradeoff visible:
-
-- state the conflict
-- present options
-- explain the consequences
-- recommend a path
-
-## 6. Keep context small and useful
-
-- read only the artifacts needed for the current task
-- summarize before delegating
-- avoid loading large unrelated areas of the repo
-
-## 7. Preserve runtime integrity
-
-If you change shared skills, agents, or hooks, update the matching docs and rerun validation.
+- Inspect the active checkout and current runtime before proposing a change.
+- Keep a gameplay rule in `src/game/`; let `src/three/` translate that state to
+  presentation only.
+- Use a focused skill when it materially improves the task: asset audit for
+  admission, the Three.js/GLB pipeline for shippable models, and browser
+  playtest for player-facing changes.
+- Record only durable decisions: design scope in `docs/game-design.md`, system
+  rules beside their code or in a small design note, and technical boundaries
+  in `docs/architecture/`.
+- Before new dependencies, paid generation, or a broad scaffold, present the
+  cost, ownership, and rollback path. Do not silently install or replace a
+  workflow.
+- Validate code and assets with `npm.cmd run check`; smoke-test any change the
+  player can see or control.
+- Preserve unrelated work and do not commit or push unless the user asks.

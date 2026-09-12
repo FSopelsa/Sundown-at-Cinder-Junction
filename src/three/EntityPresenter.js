@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MODEL_KEYS } from '../game/assets/manifest.js';
 import { simulationToWorld } from './coordinates.js';
+import { getWallTopology } from './wallTopology.js';
 
 const ENEMY_MODEL_NAMES = Object.freeze({
   dustMite: 'Unit_DustMite',
@@ -120,8 +121,45 @@ export class EntityPresenter {
     const root = setShadowFlags(
       this.modelLibrary.cloneNamed(MODEL_KEYS.units, TOWER_MODEL_NAMES[tower.type]) ?? fallbackModel(color, 0.42, 0.65),
     );
+    const wallParts = tower.type === 'wall' ? {
+      core: root.getObjectByName('Tower_Wall_Core'),
+      negativeEndCap: root.getObjectByName('Tower_Wall_End_Negative'),
+      positiveEndCap: root.getObjectByName('Tower_Wall_End_Positive'),
+      junctionCore: null,
+    } : null;
     this.group.add(root);
-    return { root, last: new THREE.Vector3() };
+    return { root, last: new THREE.Vector3(), wallParts };
+  }
+
+  syncWallView(view, tower, towers, map) {
+    if (!view.wallParts) return;
+    const topology = getWallTopology(map, tower, towers);
+    view.root.rotation.y = topology.axis === 'z' ? Math.PI / 2 : 0;
+    if (view.wallParts.negativeEndCap) view.wallParts.negativeEndCap.visible = topology.showNegativeEndCap;
+    if (view.wallParts.positiveEndCap) view.wallParts.positiveEndCap.visible = topology.showPositiveEndCap;
+
+    if (topology.cross && view.wallParts.core) {
+      if (!view.wallParts.junctionCore) {
+        view.wallParts.junctionCore = view.wallParts.core.clone(true);
+        view.wallParts.junctionCore.name = 'Tower_Wall_Cross_Core';
+        view.wallParts.junctionCore.rotation.y = Math.PI / 2;
+        view.root.add(view.wallParts.junctionCore);
+      }
+      view.wallParts.junctionCore.visible = true;
+    } else if (view.wallParts.junctionCore) {
+      view.wallParts.junctionCore.visible = false;
+    }
+  }
+
+  placeTower(view, tower, towers, map) {
+    if (tower.type !== 'wall') {
+      this.place(view, tower, 0, false);
+      return;
+    }
+    const world = simulationToWorld(tower.x, tower.y);
+    view.root.position.set(world.x, 0.02, world.z);
+    view.last.copy(view.root.position);
+    this.syncWallView(view, tower, towers, map);
   }
 
   place(view, entity, timeMs, animate = false) {
@@ -136,9 +174,9 @@ export class EntityPresenter {
     view.last.copy(next);
   }
 
-  sync(state, selectedTowerId, camera, timeMs) {
+  sync(state, selectedTowerId, camera, timeMs, map) {
     this.syncHero(state.hero, timeMs);
-    this.syncTowers(state.towers, selectedTowerId);
+    this.syncTowers(state.towers, selectedTowerId, map);
     this.syncEnemies(state.enemies, camera, timeMs);
   }
 
@@ -151,13 +189,13 @@ export class EntityPresenter {
     this.heroView.ring.material.color.set(0x82eaff);
   }
 
-  syncTowers(towers, selectedTowerId) {
+  syncTowers(towers, selectedTowerId, map) {
     const active = new Set();
     for (const tower of towers) {
       active.add(tower.id);
       const view = this.towerViews.get(tower.id) ?? this.createTowerView(tower);
       this.towerViews.set(tower.id, view);
-      this.place(view, tower, 0, false);
+      this.placeTower(view, tower, towers, map);
       const selected = tower.id === selectedTowerId;
       if (selected) {
         this.selection.visible = true;
