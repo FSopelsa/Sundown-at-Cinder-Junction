@@ -19,14 +19,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both  ends of the supported range in package.json "engines":
+        # "^20.1                                                                                                     9.0 || >=22.12.0". Quoted so YAML keeps them as strings.
+        node-version: ["20", "22"]
+
+    name: test-and-build (Node ${{ matrix.node-version }})
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 22
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - name: Install dependencies

@@ -240,6 +240,103 @@ export function roomRoutePoints(map, distances, wormholes = [], roomState = null
   return points;
 }
 
+function roomBounds(room) {
+  const { grid } = room;
+  return {
+    minX: grid.x,
+    maxX: grid.x + grid.columns * grid.cellSize,
+    minY: grid.y,
+    maxY: grid.y + grid.rows * grid.cellSize,
+  };
+}
+
+function boundsOverlap(first, second) {
+  return first.minX < second.maxX && second.minX < first.maxX &&
+    first.minY < second.maxY && second.minY < first.maxY;
+}
+
+// Room reachability ignoring door state: a room no unlock could ever connect
+// is dead content rather than locked content.
+function connectedRoomIds(map) {
+  const start = map.entrance?.roomId;
+  const seen = new Set(start ? [start] : []);
+  const queue = [...seen];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const connection of map.roomConnections ?? []) {
+      const pair = [connection.from?.roomId, connection.to?.roomId];
+      if (!pair.includes(queue[index])) continue;
+      const next = pair.find((roomId) => roomId !== queue[index]);
+      if (next && !seen.has(next)) {
+        seen.add(next);
+        queue.push(next);
+      }
+    }
+  }
+  return seen;
+}
+
+// Authoring guard for room maps. Every problem here would otherwise surface
+// only at runtime as an unreachable exit, a stuck enemy, or a room the pointer
+// silently resolves to the wrong grid.
+export function validateRoomMap(map) {
+  const problems = [];
+  if (!isRoomMap(map)) problems.push('Map mode must be "rooms".');
+  const rooms = map.rooms ?? [];
+  if (rooms.length === 0) problems.push('A room map needs at least one room.');
+
+  const seenRoomIds = new Set();
+  for (const room of rooms) {
+    if (seenRoomIds.has(room.id)) problems.push(`Duplicate room ID: ${room.id}.`);
+    seenRoomIds.add(room.id);
+    const { grid } = room;
+    if (!(grid?.columns > 0 && grid?.rows > 0 && grid?.cellSize > 0)) {
+      problems.push(`Room ${room.id} needs positive grid dimensions.`);
+    }
+  }
+  for (let index = 0; index < rooms.length; index += 1) {
+    for (let other = index + 1; other < rooms.length; other += 1) {
+      if (boundsOverlap(roomBounds(rooms[index]), roomBounds(rooms[other]))) {
+        problems.push(`Rooms ${rooms[index].id} and ${rooms[other].id} overlap in world space.`);
+      }
+    }
+  }
+
+  const seenDoorIds = new Set();
+  for (const connection of map.roomConnections ?? []) {
+    if (seenDoorIds.has(connection.id)) problems.push(`Duplicate door ID: ${connection.id}.`);
+    seenDoorIds.add(connection.id);
+    for (const cell of [connection.from, connection.to]) {
+      if (!isInsideRoomGrid(map, cell)) {
+        problems.push(`Door ${connection.id} points outside room ${cell?.roomId ?? 'unknown'}.`);
+      }
+    }
+    if (connection.from?.roomId === connection.to?.roomId) {
+      problems.push(`Door ${connection.id} must join two different rooms.`);
+    }
+  }
+
+  for (const [label, cell] of [['entrance', map.entrance], ['exit', map.exit]]) {
+    if (!isInsideRoomGrid(map, cell)) problems.push(`The ${label} cell is outside every room grid.`);
+  }
+  if (roomCellsMatch(map.entrance, map.exit)) problems.push('The entrance and the exit share a cell.');
+  if (!worldToRoomCell(map, map.heroSpawn?.x, map.heroSpawn?.y)) {
+    problems.push('The hero spawn is outside every room.');
+  }
+
+  const connected = connectedRoomIds(map);
+  for (const room of rooms) {
+    if (!connected.has(room.id)) {
+      problems.push(`Room ${room.id} is not connected to the entrance room.`);
+    }
+  }
+  const distances = buildRoomDistanceField(map, [], null, [], map.roomState);
+  if (!distances.has(roomCellKey(map.entrance))) {
+    problems.push('No open route leads from the entrance to the exit.');
+  }
+
+  return { ok: problems.length === 0, problems };
+}
+
 export function validateRoomPlacement(map, state, x, y, options = {}) {
   const { ignoreTowerId = null, roomState = state.roomState } = options;
   const cell = worldToRoomCell(map, x, y);

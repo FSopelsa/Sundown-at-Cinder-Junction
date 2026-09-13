@@ -52,7 +52,8 @@ export class BattlefieldRenderer {
 
     this.modelLibrary = await ModelLibrary.load();
     this.roomScene = new RoomScene(this.scene, this.modelLibrary);
-    this.roomScene.build(this.simulation.map);
+    this.doorRevision = this.getDoorRevision();
+    this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
     this.entities = new EntityPresenter(this.scene, this.modelLibrary);
     this.effects = new EffectsLayer(this.scene);
     this.audio = new AudioManager(this.simulation.state.settings);
@@ -71,12 +72,36 @@ export class BattlefieldRenderer {
     if (this.modelLibrary.failures.length > 0) {
       this.hud.showNotice('Some 3D assets could not load; using fallback geometry.', 'warning');
     } else {
-      this.hud.showNotice('3D prototype ready. The open gate links Arrival Yard to Relay Hall.', 'success');
+      this.hud.showNotice(this.describeMap(), 'success');
     }
     this.running = true;
     this.lastFrameAt = performance.now();
     this.frame(this.lastFrameAt);
     return this;
+  }
+
+  describeMap() {
+    const map = this.simulation.map;
+    if (!isRoomMap(map)) return `${map.name} ready.`;
+    const doors = map.roomConnections ?? [];
+    const open = doors.filter((connection) =>
+      this.simulation.state.roomState.openDoorIds.includes(connection.id)).length;
+    const sealed = doors.length - open;
+    return `${map.name} ready: ${map.rooms.length} rooms, ${open} open door${open === 1 ? '' : 's'}` +
+      `${sealed > 0 ? `, ${sealed} sealed` : ''}.`;
+  }
+
+  getDoorRevision() {
+    return this.simulation.state.roomState?.openDoorIds?.join('|') ?? '';
+  }
+
+  // Doors live in simulation state, so an unlock only has to change
+  // `roomState.openDoorIds` and the blockout rebuilds itself from that.
+  syncRooms() {
+    const revision = this.getDoorRevision();
+    if (revision === this.doorRevision) return;
+    this.doorRevision = revision;
+    this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
   }
 
   addLights() {
@@ -249,6 +274,7 @@ export class BattlefieldRenderer {
     const visualSpeed = state.settings.paused || state.stationIntegrity <= 0 ? 0 : state.settings.speed;
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);
+    this.syncRooms();
     this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime, this.simulation.map);
     const combatEvents = this.simulation.systems.combatSystem.drainEvents();
     for (const event of combatEvents) {
