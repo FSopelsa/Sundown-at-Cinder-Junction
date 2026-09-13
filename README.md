@@ -1,8 +1,35 @@
 # Sundown at Cinder Junction
 
-A space-western elemental tower-defense prototype. The battlefield now uses
-**Three.js + WebGL**, with Blender-authored GLB assets, while the game rules
-remain in the existing serializable JavaScript simulation.
+A hobby project where I'm building a space-western elemental tower-defense
+game. It currently uses **Three.js + WebGL**, Blender-made GLB assets, and a
+plain JavaScript simulation for the game rules.
+
+## Quick start
+
+Start with `main`:
+
+```powershell
+git clone https://github.com/FSopelsa/Sundown-at-Cinder-Junction.git
+Set-Location Sundown-at-Cinder-Junction
+npm.cmd ci
+npm.cmd run check
+npm.cmd run dev -- --host 127.0.0.1
+```
+
+Open the URL printed by Vite, then try this:
+
+1. Build a Sunspitter without blocking the route through the Arrival Gate.
+2. Move Singularity to a reachable cell in the second room.
+3. Start Raid 1, switch between normal and double speed, and pause once.
+4. Select the tower and try its upgrade or sell action.
+
+Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
+
+## Branches
+
+- `main` is the best place to start.
+- `prel/selective-studio-workflow` has the newer wall experiment.
+- `prel/isometric-proving-ground` is the older Phaser version, kept for comparison.
 
 ## First 3D milestone
 
@@ -85,6 +112,9 @@ This runs the simulation test suite and a production Vite build. The room
 navigation tests cover a cross-room enemy route, hero traversal/save round
 trip, and path-safe placement on both sides of the Arrival Gate.
 
+Pull requests run the same check automatically. For visual changes, also open
+the game and make sure the changed part actually looks right.
+
 ## Architecture
 
 ```text
@@ -106,3 +136,8 @@ text-heavy UI. No scene or Three.js object enters save data.
 
 The broader design and the 3D migration direction are documented in
 [`docs/game-design.md`](docs/game-design.md).
+
+## Contributing
+
+If you want to help me try or improve something, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). It is intentionally short.

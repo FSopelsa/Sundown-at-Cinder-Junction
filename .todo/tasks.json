@@ -143,5 +143,115 @@
       }
     },
     "isImported": false
+  },
+  {
+    "id": "TASK_28",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Set up Git LFS för assets",
+    "description": "",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 12
+      },
+      "time": {
+        "hour": 6,
+        "minute": 51,
+        "second": 42,
+        "nano": 707842900
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_36",
+    "priority": "LOW",
+    "tags": [],
+    "title": "fixa gitignore för assets",
+    "description": "",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 12
+      },
+      "time": {
+        "hour": 6,
+        "minute": 56,
+        "second": 37,
+        "nano": 979434000
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_45",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Add line--shortest path ",
+    "description": "Line in the ground marking the current shortest path from enemy to end",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 13
+      },
+      "time": {
+        "hour": 4,
+        "minute": 0,
+        "second": 5,
+        "nano": 550553000
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_55",
+    "priority": "LOW",
+    "tags": [],
+    "title": "vNär vi har fler rum och ser långsam första laddning bör vi dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
+    "description": "c dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 13
+      },
+      "time": {
+        "hour": 7,
+        "minute": 10,
+        "second": 26,
+        "nano": 799447700
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_66",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Assets host",
+    "description": "",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 13
+      },
+      "time": {
+        "hour": 7,
+        "minute": 12,
+        "second": 40,
+        "nano": 917426300
+      }
+    },
+    "isImported": false
   }
 ]

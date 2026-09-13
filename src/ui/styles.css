@@ -110,7 +110,7 @@ button:disabled {
 }
 
 #game-root {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
 }
 
@@ -516,7 +516,10 @@ button:disabled {
     min-height: 120px;
   }
 
-  body { overflow: auto; }
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
   #app, .hud { min-height: max(100dvh, 500px); }
   #hud-root { position: absolute; }
   .hud__topbar {

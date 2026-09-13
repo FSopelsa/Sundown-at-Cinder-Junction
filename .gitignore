@@ -6,6 +6,23 @@ artifacts/playtest/
 .idea/
 *.iml
 
+# Ignore local image assets until they are hosted elsewhere.
+*.png
+*.png.*
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.avif
+*.bmp
+*.ico
+*.svg
+*.tif
+*.tiff
+*.jfif
+*.heic
+*.heif
+
 .env
 .env.*
 !.env.example
