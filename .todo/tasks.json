@@ -4,8 +4,8 @@
     "priority": "LOW",
     "tags": [],
     "title": "+range Scrap Exchange",
-    "description": "1/4 av kartan, 1/3?",
-    "status": "IN_PROGRESS",
+    "description": "-Enhance the range of Scrap Exchange, -1/4 of the map, perhhaps even 1/3? /Same range for taunt and auras?",
+    "status": "TODO",
     "date": {
       "date": {
         "year": 2026,
@@ -25,8 +25,8 @@
     "id": "TASK_3",
     "priority": "LOW",
     "tags": [],
-    "title": "Fix Worm Tunnel",
-    "description": "-Worm tunnel should not be optinal for enemies unless they can fit to go around\n-First hole always entrance, 2nd exit\n-Lasts for 5sec /can be extended by upgrade",
+    "title": "Assets and tweaksfor Worm Tunnel",
+    "description": "- Implement assets for Worm tunnel (Portals probably,   different colours for in- and out portal.\n- Should be more expensive/needs unlocking(e.g. at a higher lvl)",
     "status": "TODO",
     "date": {
       "date": {
@@ -49,7 +49,7 @@
     "tags": [],
     "title": "Audio on/off button",
     "description": "+Volume controller",
-    "status": "IN_PROGRESS",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -67,13 +67,13 @@
       "date": {
         "year": 2026,
         "month": 9,
-        "day": 9
+        "day": 14
       },
       "time": {
-        "hour": 15,
-        "minute": 24,
-        "second": 31,
-        "nano": 797231000
+        "hour": 1,
+        "minute": 3,
+        "second": 42,
+        "nano": 213542300
       }
     },
     "isImported": false
@@ -105,7 +105,7 @@
     "priority": "LOW",
     "tags": [],
     "title": "Make hero the builder",
-    "description": "Hero needs to be nearby the tower to build and upgrade it",
+    "description": "The hero should also be the builder, meaning the Hero needs to be nearby a tower to build and upgrade it.",
     "status": "TODO",
     "date": {
       "date": {
@@ -127,7 +127,7 @@
     "priority": "LOW",
     "tags": [],
     "title": "Clean up old code",
-    "description": "",
+    "description": "Code/documents/comments/assets that was there for an older version that is no longer in development.",
     "status": "TODO",
     "date": {
       "date": {
@@ -148,8 +148,8 @@
     "id": "TASK_28",
     "priority": "LOW",
     "tags": [],
-    "title": "Set up Git LFS för assets",
-    "description": "",
+    "title": "Set up Git LFS for assets",
+    "description": "When asssets get big enough that they should not just be pushed to ordinary github repo, try out Git LFS ??",
     "status": "TODO",
     "date": {
       "date": {
@@ -167,33 +167,11 @@
     "isImported": false
   },
   {
-    "id": "TASK_36",
-    "priority": "LOW",
-    "tags": [],
-    "title": "fixa gitignore för assets",
-    "description": "",
-    "status": "TODO",
-    "date": {
-      "date": {
-        "year": 2026,
-        "month": 9,
-        "day": 12
-      },
-      "time": {
-        "hour": 6,
-        "minute": 56,
-        "second": 37,
-        "nano": 979434000
-      }
-    },
-    "isImported": false
-  },
-  {
     "id": "TASK_45",
     "priority": "LOW",
     "tags": [],
     "title": "Add line--shortest path ",
-    "description": "Line in the ground marking the current shortest path from enemy to end",
+    "description": "Line in the ground marking the current shortest path from enemy to their goal end. The line should dynamicaly update when new towers are built that changes the path the enemies needs t take. It would be nice if the lina is dashed (like in css) and looks like it is slowly moving towards the goal.",
     "status": "TODO",
     "date": {
       "date": {
@@ -216,7 +194,7 @@
     "tags": [],
     "title": "vNär vi har fler rum och ser långsam första laddning bör vi dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
     "description": "c dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
-    "status": "TODO",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -233,23 +211,155 @@
     "isImported": false
   },
   {
-    "id": "TASK_66",
+    "id": "TASK_89",
     "priority": "LOW",
     "tags": [],
-    "title": "Assets host",
-    "description": "",
+    "title": "Vague grid lines on the ground",
+    "description": "to show the squares where towers can be built etc. Perhaps a grey-ish colour compared to the surrounding floor",
     "status": "TODO",
     "date": {
       "date": {
         "year": 2026,
         "month": 9,
-        "day": 13
+        "day": 14
       },
       "time": {
-        "hour": 7,
-        "minute": 12,
-        "second": 40,
-        "nano": 917426300
+        "hour": 0,
+        "minute": 45,
+        "second": 52,
+        "nano": 530865400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_102",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Change shape of tile target market",
+    "description": "Right now its round but it should indicate what tile on the floors grid that is targeted for a tower build",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 14
+      },
+      "time": {
+        "hour": 0,
+        "minute": 49,
+        "second": 24,
+        "nano": 97352400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_279",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Try out time delay for building towers",
+    "description": "- Different variations\n- Perhaps game time only moves while towers are being built",
+    "status": "IN_PROGRESS",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 14
+      },
+      "time": {
+        "hour": 1,
+        "minute": 15,
+        "second": 21,
+        "nano": 903022400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_292",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Fix the  Taunt ",
+    "description": "The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 14
+      },
+      "time": {
+        "hour": 20,
+        "minute": 33,
+        "second": 51,
+        "nano": 126978000
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_332",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Longer rounds (tweak enemies)",
+    "description": "- More enemies per round\n- Stronger enemies?\n- Slower?",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 14
+      },
+      "time": {
+        "hour": 22,
+        "minute": 26,
+        "second": 13,
+        "nano": 122010600
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_347",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Fix targetting for hero/builder",
+    "description": "- Player need better control over hero/builder-\t\n eg. hold ctrl to move around, or a hot key that shifts target to the hero",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 1,
+        "minute": 15,
+        "second": 55,
+        "nano": 305221400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_363",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Brush UI",
+    "description": "- Maybe look for insporation\n- Should be tidier, not bigger than it has to\n- Better info when overing\n- Clearer CD, cost etc.",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 1,
+        "minute": 30,
+        "second": 24,
+        "nano": 388346400
       }
     },
     "isImported": false
