@@ -4,7 +4,7 @@ A hobby project where I'm building a space-western elemental tower-defense
 game. It currently uses **Three.js + WebGL**, Blender-made GLB assets, and a
 plain JavaScript simulation for the game rules.
 
-## Quick start
+### Quick start
 
 Start with `main`:
 
@@ -19,7 +19,12 @@ Open the URL printed by Vite.
 
 Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
 
-## Branches
+## Contributing
+
+If you want to help me try or improve something, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). It is intentionally short.
+
+### Branches
 
 - `main` is the best place to start.
 - `prel/selective-studio-workflow` has the newer wall experiment.
