@@ -75,6 +75,17 @@ function makeHealthBar() {
   return { group, fill };
 }
 
+function makeConstructionFrame() {
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(0.84, 0.48, 0.84)),
+    new THREE.LineBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0.9 }),
+  );
+  frame.name = 'Construction frame';
+  frame.position.y = 0.24;
+  frame.visible = false;
+  return frame;
+}
+
 export class EntityPresenter {
   constructor(scene, modelLibrary) {
     this.scene = scene;
@@ -127,8 +138,10 @@ export class EntityPresenter {
       positiveEndCap: root.getObjectByName('Tower_Wall_End_Positive'),
       junctionCore: null,
     } : null;
+    const construction = makeConstructionFrame();
+    root.add(construction);
     this.group.add(root);
-    return { root, last: new THREE.Vector3(), wallParts };
+    return { root, last: new THREE.Vector3(), wallParts, construction };
   }
 
   syncWallView(view, tower, towers, map) {
@@ -176,7 +189,7 @@ export class EntityPresenter {
 
   sync(state, selectedTowerId, camera, timeMs, map) {
     this.syncHero(state.hero, timeMs);
-    this.syncTowers(state.towers, selectedTowerId, map);
+    this.syncTowers(state.towers, selectedTowerId, map, timeMs);
     this.syncEnemies(state.enemies, camera, timeMs);
   }
 
@@ -189,13 +202,14 @@ export class EntityPresenter {
     this.heroView.ring.material.color.set(0x82eaff);
   }
 
-  syncTowers(towers, selectedTowerId, map) {
+  syncTowers(towers, selectedTowerId, map, timeMs) {
     const active = new Set();
     for (const tower of towers) {
       active.add(tower.id);
       const view = this.towerViews.get(tower.id) ?? this.createTowerView(tower);
       this.towerViews.set(tower.id, view);
       this.placeTower(view, tower, towers, map);
+      this.syncConstruction(view, tower, timeMs);
       const selected = tower.id === selectedTowerId;
       if (selected) {
         this.selection.visible = true;
@@ -208,6 +222,18 @@ export class EntityPresenter {
       this.group.remove(view.root);
       this.towerViews.delete(id);
     }
+  }
+
+  syncConstruction(view, tower, timeMs) {
+    const construction = tower.construction;
+    view.construction.visible = Boolean(construction);
+    if (!construction) return;
+    const progress = Math.max(0, Math.min(1,
+      1 - construction.remainingMs / construction.durationMs,
+    ));
+    view.construction.rotation.y = timeMs * 0.002;
+    view.construction.scale.set(0.72 + progress * 0.28, 0.35 + progress * 0.65, 0.72 + progress * 0.28);
+    view.construction.material.opacity = 0.55 + (1 - progress) * 0.35;
   }
 
   syncEnemies(enemies, camera, timeMs) {

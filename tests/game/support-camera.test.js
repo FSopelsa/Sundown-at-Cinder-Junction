@@ -6,20 +6,30 @@ import { LEVELS } from '../../src/game/content/map.js';
 import { findHeroPath, isHeroCellBlocked, worldToHeroCell } from '../../src/game/simulation/navigation.js';
 import { buildDistanceField, cellKey, worldToCell } from '../../src/game/simulation/maze.js';
 import { roomCellCenter } from '../../src/game/simulation/roomNavigation.js';
+
+function finishConstruction(simulation) {
+ for(let frame=0;frame<1200 && simulation.state.towers.some((tower) => tower.construction);frame+=1) simulation.update(1000/60);
+ assert.equal(simulation.state.towers.some((tower) => tower.construction),false);
+}
+
 for (const map of LEVELS) {
  test(`${map.id}: ladder passage, shop, taunt destruction and saved effects`, () => {
   const sim=createSimulation(new GameState({levelId:map.id,scrap:10000}));
   const {state,systems}=sim;
-  const pos=map.mode==='maze'?{x:map.grid.x+5.5*40,y:map.grid.y+4.5*40}:map.mode==='rooms'?roomCellCenter(map,{roomId:'arrival-yard',col:5,row:5}):{x:400,y:350};
+  const firstRoom=map.rooms?.[0];
+  const pos=map.mode==='maze'?{x:map.grid.x+5.5*40,y:map.grid.y+4.5*40}:map.mode==='rooms'?roomCellCenter(map,{roomId:firstRoom.id,col:Math.min(5,firstRoom.grid.columns-2),row:Math.min(5,firstRoom.grid.rows-2)}):{x:400,y:350};
   const built=systems.towerSystem.placeTower('wall',pos.x,pos.y); assert.equal(built.ok,true);
   const wall=built.tower, cell=worldToHeroCell(map,wall.x,wall.y);
+  finishConstruction(sim);
   assert.equal(isHeroCellBlocked(map,state.towers,cell),true);
   assert.equal(systems.towerSystem.upgradeTower(wall.id,'ladder').ok,true);
+  finishConstruction(sim);
   assert.equal(isHeroCellBlocked(map,state.towers,cell),false);
   assert.ok(findHeroPath(map,state.towers,state.hero,wall));
   if(map.mode==='maze') assert.equal(buildDistanceField(map,state.towers).has(cellKey(worldToCell(map,wall.x,wall.y))),false);
   assert.equal(systems.towerSystem.upgradeTower(wall.id,'ladder').ok,false);
   const exchange=systems.towerSystem.placeTower('scrapExchange',wall.x,wall.y).tower;assert.ok(exchange);
+  finishConstruction(sim);
   const buy=item=>sim.dispatch('purchase-support',{towerId:exchange.id,item});
   state.hero.hp-=100;assert.equal(buy('heal').ok,true);assert.equal(state.hero.hp,state.hero.maxHp);
   assert.equal(buy('buff').ok,true);systems.heroSystem.takeDamage(40);assert.equal(state.hero.hp,state.hero.maxHp-20);

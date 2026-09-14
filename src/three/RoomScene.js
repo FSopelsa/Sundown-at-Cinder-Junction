@@ -56,6 +56,35 @@ function makeProceduralRoom(room, palette) {
   return group;
 }
 
+function makeBuildGrid(room, palette) {
+  const { grid } = room;
+  const cell = grid.cellSize * METERS_PER_SIMULATION_UNIT;
+  const width = grid.columns * cell;
+  const depth = grid.rows * cell;
+  const vertices = [];
+  for (let column = 0; column <= grid.columns; column += 1) {
+    const x = column * cell;
+    vertices.push(x, 0.016, 0, x, 0.016, depth);
+  }
+  for (let row = 0; row <= grid.rows; row += 1) {
+    const z = row * cell;
+    vertices.push(0, 0.016, z, width, 0.016, z);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  const gridLines = new THREE.LineSegments(
+    geometry,
+    new THREE.LineBasicMaterial({
+      color: palette.trim,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    }),
+  );
+  gridLines.name = `${room.id} build grid`;
+  return gridLines;
+}
+
 function isDoorOpen(connection, roomState) {
   if (Array.isArray(roomState?.openDoorIds)) return roomState.openDoorIds.includes(connection.id);
   return connection.initiallyOpen !== false;
@@ -127,6 +156,9 @@ export class RoomScene {
       environment.name = `${room.id} environment`;
       environment.position.set(position.x, 0, position.z);
       this.group.add(environment);
+      const gridLines = makeBuildGrid(room, palette);
+      gridLines.position.set(position.x, 0, position.z);
+      this.group.add(gridLines);
       this.addFloorSurface(room);
       this.addRoomLight(room, palette);
     }

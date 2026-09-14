@@ -166,10 +166,17 @@ export function findRoomHeroPath(map, towers, startPosition, targetPosition, roo
 
 function getRoomWormholePeer(cell, wormholes = []) {
   if (!Array.isArray(wormholes) || wormholes.length !== 2) return null;
-  const [first, second] = wormholes;
-  if (!first?.cell || !second?.cell) return null;
-  if (roomCellsMatch(first.cell, cell)) return { ...second.cell };
-  if (roomCellsMatch(second.cell, cell)) return { ...first.cell };
+  const [entry, exit] = wormholes;
+  if (!entry?.cell || !exit?.cell || entry.remainingMs <= 0 || exit.remainingMs <= 0) return null;
+  if (roomCellsMatch(entry.cell, cell)) return { ...exit.cell };
+  return null;
+}
+
+function getRoomWormholeEntryForExit(cell, wormholes = []) {
+  if (!Array.isArray(wormholes) || wormholes.length !== 2) return null;
+  const [entry, exit] = wormholes;
+  if (!entry?.cell || !exit?.cell || entry.remainingMs <= 0 || exit.remainingMs <= 0) return null;
+  if (roomCellsMatch(exit.cell, cell)) return { ...entry.cell };
   return null;
 }
 
@@ -182,6 +189,14 @@ function roomTransitions(map, cell, wormholes, roomState) {
   return [
     ...getRoomNeighbors(map, cell, roomState).map((next) => ({ next, cost: 1 })),
     ...(portalPeer ? [{ next: portalPeer, cost: 0 }] : []),
+  ];
+}
+
+function reverseRoomTransitions(map, cell, wormholes, roomState) {
+  const portalEntry = getRoomWormholeEntryForExit(cell, wormholes);
+  return [
+    ...getRoomNeighbors(map, cell, roomState).map((next) => ({ next, cost: 1 })),
+    ...(portalEntry ? [{ next: portalEntry, cost: 0 }] : []),
   ];
 }
 
@@ -208,7 +223,7 @@ export function buildRoomDistanceField(
     frontier.sort((first, second) => first.distance - second.distance);
     const { cell, distance } = frontier.shift();
     if (distance !== distances.get(roomCellKey(cell))) continue;
-    for (const { next, cost } of roomTransitions(map, cell, wormholes, roomState)) {
+    for (const { next, cost } of reverseRoomTransitions(map, cell, wormholes, roomState)) {
       const key = roomCellKey(next);
       const nextDistance = distance + cost;
       if (blocked.has(key) || (distances.has(key) && distances.get(key) <= nextDistance)) continue;
@@ -222,8 +237,10 @@ export function buildRoomDistanceField(
 export function nextRoomRouteCell(cell, distances, wormholes = [], map, roomState = null) {
   const distance = distances.get(roomCellKey(cell));
   if (!Number.isFinite(distance)) return null;
-  return roomTransitions(map, cell, wormholes, roomState)
-    .find(({ next, cost }) => distances.get(roomCellKey(next)) === distance - cost)?.next ?? null;
+  const portalExit = getRoomWormholePeer(cell, wormholes);
+  if (portalExit && distances.get(roomCellKey(portalExit)) === distance) return portalExit;
+  return getRoomNeighbors(map, cell, roomState)
+    .find((next) => distances.get(roomCellKey(next)) === distance - 1) ?? null;
 }
 
 export function roomRoutePoints(map, distances, wormholes = [], roomState = null) {

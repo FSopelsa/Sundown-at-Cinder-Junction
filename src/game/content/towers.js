@@ -7,6 +7,18 @@ export const SCRAP_EXCHANGE_AURA_BASE_RANGE = 180;
 export const SCRAP_EXCHANGE_AURA_RANGE_STEP = 90;
 export const SCRAP_EXCHANGE_AURA_MAX_RANGE = 360;
 export const SCRAP_EXCHANGE_AURA_MAX_LEVEL = 3;
+export const BUILDER_CONSTRUCTION = Object.freeze({
+  wallBuildMs: 650,
+  towerBuildMs: 1400,
+  upgradeMs: 1000,
+  workingRange: 82,
+});
+
+export function getTowerBuildTimeMs(definition) {
+  return definition?.id === 'wall'
+    ? BUILDER_CONSTRUCTION.wallBuildMs
+    : BUILDER_CONSTRUCTION.towerBuildMs;
+}
 
 export function getUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower.type]) {
   return tower.level >= MAX_TOWER_LEVEL ? null : Math.ceil(definition.cost * tower.level * 0.75);

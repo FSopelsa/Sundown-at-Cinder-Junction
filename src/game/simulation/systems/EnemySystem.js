@@ -15,6 +15,7 @@ import {
 import {
   buildRoomDistanceField,
   getRoom,
+  getRoomNeighbors,
   isRoomWormholeTransition,
   nextRoomRouteCell,
   roomCellCenter,
@@ -28,10 +29,12 @@ function distanceBetween(first, second) {
 
 function getForwardWormholePair(wormholes = []) {
   if (!Array.isArray(wormholes) || wormholes.length !== 2 ||
-    !wormholes.every((portal) => Number.isFinite(portal.progress))) {
+    !wormholes.every((portal) => Number.isFinite(portal.progress)) ||
+    wormholes.some((portal) => portal.remainingMs <= 0)) {
     return null;
   }
-  return [...wormholes].sort((first, second) => first.progress - second.progress);
+  const [entry, exit] = wormholes;
+  return exit.progress > entry.progress ? [entry, exit] : null;
 }
 
 export class EnemySystem {
@@ -181,7 +184,7 @@ export class EnemySystem {
   }
 
   attackExchange(enemy) {
-    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && tower.hp > 0 && distanceBetween(tower, enemy) <= tower.range)
+    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && !tower.construction && tower.hp > 0 && distanceBetween(tower, enemy) <= tower.range)
       .sort((a, b) => distanceBetween(a, enemy) - distanceBetween(b, enemy) || a.id.localeCompare(b.id))[0];
     enemy.tauntedBy = exchange?.id ?? null;
     if (!exchange) return false;
@@ -258,6 +261,13 @@ export class EnemySystem {
   moveThroughMaze(enemy, distance) {
     // Finish the current cell-to-cell segment before following the latest
     // shortest route. This prevents teleporting or corner cutting on rebuilds.
+    if (enemy.mazeNext &&
+      Math.abs(enemy.mazeNext.col - enemy.mazeCell.col) + Math.abs(enemy.mazeNext.row - enemy.mazeCell.row) !== 1) {
+      // A just-expired tunnel can leave the old remote exit cached as the next
+      // cell. Discard only that impossible segment; ordinary reroutes still
+      // finish their current adjacent movement without a visible snap.
+      enemy.mazeNext = null;
+    }
     while (distance > 0 && cellKey(enemy.mazeCell) !== cellKey(this.map.exit)) {
       enemy.mazeNext ??= nextRouteCell(
         enemy.mazeCell,
@@ -322,6 +332,10 @@ export class EnemySystem {
   }
 
   moveThroughRooms(enemy, distance) {
+    if (enemy.roomNext && !getRoomNeighbors(this.map, enemy.roomCell, this.gameState.roomState)
+      .some((cell) => roomCellsMatch(cell, enemy.roomNext))) {
+      enemy.roomNext = null;
+    }
     while (distance > 0 && !roomCellsMatch(enemy.roomCell, this.map.exit)) {
       enemy.roomNext ??= nextRoomRouteCell(
         enemy.roomCell,

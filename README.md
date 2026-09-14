@@ -15,13 +15,7 @@ npm.cmd ci
 npm.cmd run check
 npm.cmd run dev -- --host 127.0.0.1
 ```
-
-Open the URL printed by Vite, then try this:
-
-1. Build a Sunspitter without blocking the route through the Arrival Gate.
-2. Move Singularity to a reachable cell in the second room.
-3. Start Raid 1, switch between normal and double speed, and pause once.
-4. Select the tower and try its upgrade or sell action.
+Open the URL printed by Vite.
 
 Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
 
@@ -31,7 +25,7 @@ Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
 - `prel/selective-studio-workflow` has the newer wall experiment.
 - `prel/isometric-proving-ground` is the older Phaser version, kept for comparison.
 
-## First 3D milestone
+### First 3D milestone
 
 The default level, **Cinder Threshold · 3D Trial**, contains two connected
 15 × 20-cell rooms: Arrival Yard and Relay Hall. They retain separate grid coordinates and
@@ -68,7 +62,7 @@ fallback room until each receives authored environment assets.
 
 PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
 
-## Play
+### Play
 
 - Select a tower in the Build Catalogue, then click clear room ground to
   deploy it. Click a deployed tower to inspect, upgrade, or sell it.
@@ -89,7 +83,7 @@ raid. Enemy hull grows by 18% per completed raid, hero auto-attack damage gains
 a small late-level acceleration, and the DOM HUD preserves the raid-result and
 failure states.
 
-## Blender and GLB exports
+### Blender and GLB exports
 
 The current source scene uses one Blender unit per navigation cell (a game cell
 is 40 simulation units). After editing the source, generate the runtime GLBs:
@@ -102,7 +96,7 @@ The exporter writes to `public/assets/models/`. Add or change runtime entries
 only through [`src/game/assets/manifest.js`](src/game/assets/manifest.js), so
 content systems use stable semantic keys rather than filenames.
 
-## Quality checks
+### Quality checks
 
 ```powershell
 npm.cmd run check
@@ -136,8 +130,3 @@ text-heavy UI. No scene or Three.js object enters save data.
 
 The broader design and the 3D migration direction are documented in
 [`docs/game-design.md`](docs/game-design.md).
-
-## Contributing
-
-If you want to help me try or improve something, see
-[`CONTRIBUTING.md`](CONTRIBUTING.md). It is intentionally short.
