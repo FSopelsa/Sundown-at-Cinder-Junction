@@ -11,6 +11,8 @@ import {
   SCRAP_EXCHANGE_AURA_RANGE_STEP,
   SCRAP_EXCHANGE_AURA_MAX_RANGE,
   SCRAP_EXCHANGE_AURA_MAX_LEVEL,
+  BUILDER_CONSTRUCTION,
+  getTowerBuildTimeMs,
 } from '../../content/towers.js';
 import { validateMazePlacement, worldToCell } from '../maze.js';
 import {
@@ -41,6 +43,44 @@ export class TowerSystem {
     this.definitions = definitions;
     this.map = map;
     this.heroSystem = heroSystem;
+    this.events = [];
+  }
+
+  usesBuilderConstruction() {
+    // The active 3D room maps are where the Marshal is spatially readable.
+    // Keep the legacy test maps instant until their presentation is retired.
+    return this.map.mode === 'rooms';
+  }
+
+  getActiveConstruction() {
+    return this.gameState.towers.find((tower) => tower.construction) ?? null;
+  }
+
+  canStartConstruction() {
+    const active = this.getActiveConstruction();
+    if (active) return { ok: false, reason: `Singularity is already working on ${active.name}.` };
+    if (!this.heroSystem?.hero?.alive) {
+      return { ok: false, reason: 'Singularity must be operational to build.' };
+    }
+    return { ok: true };
+  }
+
+  sendMarshalToConstruction(tower) {
+    // Commanding the existing hero-navigation system means a build order uses
+    // the same room doors, collision rules, and save data as a manual move.
+    this.heroSystem?.commandMove(tower.x, tower.y);
+  }
+
+  startConstruction(tower, kind, upgrade = null, cost = 0) {
+    tower.construction = {
+      kind,
+      upgrade,
+      cost,
+      durationMs: kind === 'build' ? getTowerBuildTimeMs(this.definitions[tower.type]) : BUILDER_CONSTRUCTION.upgradeMs,
+      remainingMs: kind === 'build' ? getTowerBuildTimeMs(this.definitions[tower.type]) : BUILDER_CONSTRUCTION.upgradeMs,
+    };
+    this.sendMarshalToConstruction(tower);
+    return tower.construction;
   }
 
   placeTower(towerType, x, y) {
@@ -56,6 +96,11 @@ export class TowerSystem {
 
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       return { ok: false, reason: 'Invalid tower position.' };
+    }
+
+    if (this.usesBuilderConstruction()) {
+      const construction = this.canStartConstruction();
+      if (!construction.ok) return construction;
     }
 
     let replacedWall = null;
@@ -159,19 +204,25 @@ export class TowerSystem {
     };
 
     this.gameState.towers.push(tower);
-    return { ok: true, tower, replacedWall, wallRefund };
+    // The route is issued after the new obstacle exists, so the hero chooses
+    // a reachable neighbouring tile instead of attempting to stand inside it.
+    if (this.usesBuilderConstruction()) this.startConstruction(tower, 'build');
+    return { ok: true, tower, replacedWall, wallRefund, construction: tower.construction ?? null };
   }
 
   upgradeTower(towerId, upgrade) {
     const tower = this.gameState.towers.find((candidate) => candidate.id === towerId);
     if (!tower) return { ok: false, reason: 'Select a deployed tower first.' };
     if (this.gameState.stationIntegrity <= 0) return { ok: false, reason: 'The junction has fallen.' };
+    if (tower.construction) return { ok: false, reason: `${tower.name} is still under construction.` };
+    if (this.usesBuilderConstruction()) {
+      const construction = this.canStartConstruction();
+      if (!construction.ok) return construction;
+    }
     if (upgrade === 'ladder' && tower.type === 'wall') {
       if (tower.ladder) return { ok: false, reason: 'This wall already has a ladder.' };
       if (!this.economySystem.spendScrap(12)) return { ok: false, reason: 'Not enough Scrap.' };
-      tower.investedScrap = getTowerInvestment(tower) + 12;
-      tower.ladder = true;
-      return { ok: true, tower, cost: 12 };
+      return this.beginUpgrade(tower, upgrade, 12);
     }
     if (upgrade === 'range' && tower.type === 'scrapExchange') {
       if (!tower.aura) return { ok: false, reason: 'Install the relay aura first.' };
@@ -181,38 +232,60 @@ export class TowerSystem {
       }
       const cost = getAuraRangeUpgradeCost(tower, this.definitions[tower.type]);
       if (!this.economySystem.spendScrap(cost)) return { ok: false, reason: 'Not enough Scrap.' };
-      tower.auraLevel = auraLevel + 1;
-      tower.auraRange = Math.min(
-        SCRAP_EXCHANGE_AURA_MAX_RANGE,
-        SCRAP_EXCHANGE_AURA_BASE_RANGE + (tower.auraLevel - 1) * SCRAP_EXCHANGE_AURA_RANGE_STEP,
-      );
-      tower.investedScrap = getTowerInvestment(tower, this.definitions[tower.type]) + cost;
-      (tower.upgrades ??= []).push('range');
-      return { ok: true, tower, cost };
+      return this.beginUpgrade(tower, upgrade, cost);
     }
     if (tower.damage === 0) return { ok: false, reason: 'Use this structure’s special upgrades.' };
     if (upgrade !== 'damage' && upgrade !== 'speed') return { ok: false, reason: 'Choose damage or attack speed.' };
     if (tower.level >= MAX_TOWER_LEVEL) return { ok: false, reason: 'This tower is already at maximum level.' };
     const cost = getUpgradeCost(tower, this.definitions[tower.type]);
-    const investment = getTowerInvestment(tower, this.definitions[tower.type]);
     if (!this.economySystem.spendScrap(cost)) return { ok: false, reason: 'Not enough Scrap.' };
+    return this.beginUpgrade(tower, upgrade, cost);
+  }
 
-    if (upgrade === 'damage') {
+  beginUpgrade(tower, upgrade, cost) {
+    if (this.usesBuilderConstruction()) {
+      return {
+        ok: true,
+        tower,
+        cost,
+        construction: this.startConstruction(tower, 'upgrade', upgrade, cost),
+      };
+    }
+    this.completeUpgrade(tower, upgrade, cost);
+    return { ok: true, tower, cost };
+  }
+
+  completeUpgrade(tower, upgrade, cost) {
+    const definition = this.definitions[tower.type];
+    const investment = getTowerInvestment(tower, definition);
+    if (upgrade === 'ladder') {
+      tower.ladder = true;
+    } else if (upgrade === 'range') {
+      const auraLevel = Math.max(1, Number.isInteger(tower.auraLevel) ? tower.auraLevel : 1) + 1;
+      tower.auraLevel = auraLevel;
+      tower.auraRange = Math.min(
+        SCRAP_EXCHANGE_AURA_MAX_RANGE,
+        SCRAP_EXCHANGE_AURA_BASE_RANGE + (auraLevel - 1) * SCRAP_EXCHANGE_AURA_RANGE_STEP,
+      );
+      (tower.upgrades ??= []).push('range');
+    } else if (upgrade === 'damage') {
       tower.damage *= UPGRADE_MULTIPLIER;
       if (tower.effect?.type === 'burn') tower.effect.magnitude *= UPGRADE_MULTIPLIER;
-    } else {
+      tower.level += 1;
+      (tower.upgrades ??= []).push(upgrade);
+    } else if (upgrade === 'speed') {
       tower.fireIntervalMs /= UPGRADE_MULTIPLIER;
       tower.cooldownMs /= UPGRADE_MULTIPLIER;
+      tower.level += 1;
+      (tower.upgrades ??= []).push(upgrade);
     }
-    tower.level += 1;
-    (tower.upgrades ??= []).push(upgrade);
     tower.investedScrap = investment + cost;
-    return { ok: true, tower, cost };
   }
 
   sellTower(towerId) {
     const tower = this.gameState.towers.find((candidate) => candidate.id === towerId);
     if (!tower) return { ok: false, reason: 'Select a deployed tower first.' };
+    if (tower.construction) return { ok: false, reason: 'Finish the current construction before salvaging it.' };
 
     const investment = getTowerInvestment(tower, this.definitions[tower.type]);
     const refund = getTowerSellValue(tower, this.definitions[tower.type]);
@@ -221,10 +294,40 @@ export class TowerSystem {
     return { ok: true, tower, refund, investment };
   }
 
+  updateConstruction(deltaMs) {
+    const tower = this.getActiveConstruction();
+    if (!tower) return;
+    const construction = tower.construction;
+    const hero = this.heroSystem?.hero;
+    if (!hero?.alive || distanceBetween(hero, tower) > BUILDER_CONSTRUCTION.workingRange) return;
+
+    construction.remainingMs = Math.max(0, construction.remainingMs - deltaMs);
+    if (construction.remainingMs > 0) return;
+
+    tower.construction = null;
+    if (construction.kind === 'upgrade') {
+      this.completeUpgrade(tower, construction.upgrade, construction.cost);
+    }
+    this.events.push({
+      type: 'construction-complete',
+      towerId: tower.id,
+      towerName: tower.name,
+      construction,
+    });
+  }
+
+  drainEvents() {
+    const events = this.events;
+    this.events = [];
+    return events;
+  }
+
   update(deltaMs) {
+    this.updateConstruction(deltaMs);
     for (const tower of this.gameState.towers) {
       tower.timeDilationRemainingMs = Math.max(0, (tower.timeDilationRemainingMs ?? 0) - deltaMs);
-      const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && distanceBetween(source, tower) <= (source.auraRange ?? SCRAP_EXCHANGE_AURA_BASE_RANGE)) ? 1.2 : 1;
+      if (tower.construction) continue;
+      const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && !source.construction && distanceBetween(source, tower) <= (source.auraRange ?? SCRAP_EXCHANGE_AURA_BASE_RANGE)) ? 1.2 : 1;
       const attackSpeedMultiplier = auraMultiplier * (tower.timeDilationRemainingMs > 0
         ? tower.timeDilationMultiplier ?? 1
         : 1);

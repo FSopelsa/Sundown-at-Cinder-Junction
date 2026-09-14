@@ -6,6 +6,7 @@ export const ACTIONS = Object.freeze({
   sellTower: 'sell-tower',
   moveHero: 'move-hero',
   castHeroSkill: 'cast-hero-skill',
+  upgradeHeroSkill: 'upgrade-hero-skill',
   togglePause: 'toggle-pause',
   setSpeed: 'set-speed',
 });

@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { MAZE_MAP, THRESHOLD_MAP } from '../../src/game/content/map.js';
+import { getHeroStats, createHeroSkillSlots } from '../../src/game/content/heroes.js';
+import { ACTIONS } from '../../src/game/input/actions.js';
+import { TOWER_DEFINITIONS } from '../../src/game/content/towers.js';
+import { createSimulation } from '../../src/game/simulation/createSimulation.js';
+import { buildDistanceField, cellCenter, cellKey, isWormholeTransition } from '../../src/game/simulation/maze.js';
+import { roomCellCenter } from '../../src/game/simulation/roomNavigation.js';
+
+function unlockWormTunnel(simulation) {
+  const hero = simulation.state.hero;
+  hero.level = 5;
+  Object.assign(hero, getHeroStats(5));
+  hero.skillSlots = createHeroSkillSlots(5, hero.skillSlots);
+}
+
+function finishConstruction(simulation) {
+  for (let frame = 0; frame < 1200 && simulation.state.towers.some((tower) => tower.construction); frame += 1) {
+    simulation.update(1000 / 60);
+  }
+  assert.equal(simulation.state.towers.some((tower) => tower.construction), false);
+}
+
+test('Worm Tunnel is directional, expires, and can be upgraded for a longer active window', () => {
+  const simulation = createSimulation({ levelId: MAZE_MAP.id, scrap: 10000 });
+  unlockWormTunnel(simulation);
+  const entry = cellCenter(MAZE_MAP, { col: 3, row: 4 });
+  const exit = cellCenter(MAZE_MAP, { col: 20, row: 4 });
+
+  const upgrade = simulation.dispatch(ACTIONS.upgradeHeroSkill, { skillId: 'worm-tunnel' });
+  assert.equal(upgrade.ok, true);
+  assert.equal(upgrade.durationMs, 7500);
+  assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...entry }).pending, true);
+  const linked = simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...exit });
+  assert.equal(linked.durationMs, 7500);
+  assert.equal(isWormholeTransition({ col: 3, row: 4 }, { col: 20, row: 4 }, simulation.state.wormholes), true);
+  assert.equal(isWormholeTransition({ col: 20, row: 4 }, { col: 3, row: 4 }, simulation.state.wormholes), false);
+  assert.ok(buildDistanceField(MAZE_MAP, [], null, simulation.state.wormholes).get(cellKey(MAZE_MAP.entrance)) < 23);
+
+  simulation.systems.heroSystem.update(7499);
+  assert.equal(simulation.state.wormholes.length, 2);
+  simulation.systems.heroSystem.update(2);
+  assert.equal(simulation.state.wormholes.length, 0);
+});
+
+test('the Marshal walks to 3D construction, then activates build and upgrade effects', () => {
+  const simulation = createSimulation({ levelId: THRESHOLD_MAP.id, scrap: 2000 });
+  const target = roomCellCenter(THRESHOLD_MAP, { roomId: 'arrival-yard', col: 5, row: 5 });
+  const placed = simulation.dispatch(ACTIONS.placeTower, { towerType: 'peacemaker', ...target });
+  assert.equal(placed.ok, true);
+  assert.equal(placed.tower.construction.kind, 'build');
+  assert.ok(simulation.state.hero.destination);
+  assert.equal(simulation.dispatch(ACTIONS.upgradeTower, { towerId: placed.tower.id, upgrade: 'damage' }).ok, false);
+
+  finishConstruction(simulation);
+  const baseDamage = placed.tower.damage;
+  const upgrade = simulation.dispatch(ACTIONS.upgradeTower, { towerId: placed.tower.id, upgrade: 'damage' });
+  assert.equal(upgrade.ok, true);
+  assert.equal(placed.tower.damage, baseDamage);
+  assert.equal(placed.tower.construction.kind, 'upgrade');
+  finishConstruction(simulation);
+  assert.equal(placed.tower.damage, TOWER_DEFINITIONS.peacemaker.damage * 1.5);
+  assert.equal(placed.tower.level, 2);
+});

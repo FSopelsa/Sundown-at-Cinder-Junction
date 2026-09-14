@@ -294,6 +294,11 @@ button:disabled {
   gap: 0.28rem;
 }
 
+.hero-skill-wrap {
+  display: grid;
+  gap: 0.18rem;
+}
+
 .hero-skill {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -310,6 +315,14 @@ button:disabled {
   color: #cdb5f3;
   font-family: monospace;
   font-size: 0.62rem;
+}
+
+.hero-skill__upgrade {
+  padding: 0.2rem 0.32rem;
+  border-color: rgb(208 165 102 / 55%);
+  color: #e9c77c;
+  font-family: monospace;
+  font-size: 0.58rem;
 }
 
 .hero-panel__meter-row {

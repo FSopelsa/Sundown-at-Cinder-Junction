@@ -7,8 +7,15 @@ import { EffectsLayer } from './EffectsLayer.js';
 import { EntityPresenter } from './EntityPresenter.js';
 import { ModelLibrary } from './loaders/ModelLibrary.js';
 import { RoomScene } from './RoomScene.js';
+import { RouteOverlay } from './RouteOverlay.js';
 import { worldToSimulation } from './coordinates.js';
-import { getRoomAtWorldPosition, isRoomMap } from '../game/simulation/roomNavigation.js';
+import { cellCenter, worldToCell } from '../game/simulation/maze.js';
+import {
+  getRoomAtWorldPosition,
+  isRoomMap,
+  roomCellCenter,
+  worldToRoomCell,
+} from '../game/simulation/roomNavigation.js';
 
 function distanceBetween(first, second) {
   return Math.hypot(first.x - second.x, first.y - second.y);
@@ -54,6 +61,8 @@ export class BattlefieldRenderer {
     this.roomScene = new RoomScene(this.scene, this.modelLibrary);
     this.doorRevision = this.getDoorRevision();
     this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
+    this.routeOverlay = new RouteOverlay(this.scene);
+    this.routeOverlay.update(this.simulation.map, this.simulation.state, 0);
     this.entities = new EntityPresenter(this.scene, this.modelLibrary);
     this.effects = new EffectsLayer(this.scene);
     this.audio = new AudioManager(this.simulation.state.settings);
@@ -120,12 +129,23 @@ export class BattlefieldRenderer {
 
   createBuildPreview() {
     const preview = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.40, 0.40, 0.07, 32),
-      new THREE.MeshBasicMaterial({ color: 0x86d6af, transparent: true, opacity: 0.42 }),
+      new THREE.PlaneGeometry(0.88, 0.88),
+      new THREE.MeshBasicMaterial({ color: 0x86d6af, transparent: true, opacity: 0.38, side: THREE.DoubleSide }),
     );
+    preview.rotation.x = -Math.PI / 2;
     preview.visible = false;
-    preview.position.y = 0.07;
+    preview.position.y = 0.045;
     return preview;
+  }
+
+  snapPreviewPoint(point) {
+    const map = this.simulation.map;
+    if (map.mode === 'rooms') {
+      const cell = worldToRoomCell(map, point.x, point.y);
+      return cell ? roomCellCenter(map, cell) : point;
+    }
+    if (map.mode === 'maze') return cellCenter(map, worldToCell(map, point.x, point.y));
+    return point;
   }
 
   installEvents() {
@@ -190,8 +210,8 @@ export class BattlefieldRenderer {
     const point = this.raycast(event);
     this.preview.visible = Boolean(point && this.hud?.isBuilding() && !this.hud?.selectedTowerId);
     if (!point || !this.preview.visible) return;
-    const world = this.entities ? this.simulationToWorld(point) : null;
-    if (world) this.preview.position.set(world.x, 0.08, world.z);
+    const world = this.entities ? this.simulationToWorld(this.snapPreviewPoint(point)) : null;
+    if (world) this.preview.position.set(world.x, 0.045, world.z);
   }
 
   simulationToWorld(point) {
@@ -240,7 +260,9 @@ export class BattlefieldRenderer {
     });
     this.hud.showNotice(
       result.ok
-        ? result.replacedWall
+        ? result.construction
+          ? `${result.tower.name} queued. Singularity is moving into build range.`
+          : result.replacedWall
           ? `${result.tower.name} deployed, replacing a wall for ${result.wallRefund} Scrap.`
           : `${result.tower.name} deployed.`
         : result.reason,
@@ -275,6 +297,14 @@ export class BattlefieldRenderer {
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);
     this.syncRooms();
+    this.routeOverlay.update(this.simulation.map, this.simulation.state, delta);
+    for (const event of this.simulation.systems.towerSystem.drainEvents()) {
+      if (event.type !== 'construction-complete') continue;
+      const label = event.construction.kind === 'build'
+        ? `${event.towerName} is online.`
+        : `${event.towerName} upgrade complete.`;
+      this.hud?.showNotice(label, 'success');
+    }
     this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime, this.simulation.map);
     const combatEvents = this.simulation.systems.combatSystem.drainEvents();
     for (const event of combatEvents) {
@@ -319,6 +349,7 @@ export class BattlefieldRenderer {
     this.effects?.dispose();
     this.entities?.dispose();
     this.roomScene?.dispose();
+    this.routeOverlay?.dispose();
     this.modelLibrary?.dispose();
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
