@@ -1,104 +1,58 @@
 ---
 name: asset-audit
-description: Audits game assets for compliance with naming conventions, file size budgets, format standards, and pipeline requirements. Identifies orphaned assets, missing references, and standard violations.
+description: Read-only GLB admission and runtime-asset audit for Sundown at Cinder Junction.
 ---
 
-## Phase 1: Read Standards
+# Sundown asset audit
 
-Read the art bible or asset standards from the relevant design docs and the AGENTS.md naming conventions.
+Use this skill before admitting or materially changing a runtime asset. It is a
+small review aid, not an asset-production pipeline and never writes or deletes
+files.
 
----
+## Scope
 
-## Phase 2: Scan Asset Directories
+- Editable authored sources belong in `assets/blender/`.
+- Shipped 3D assets are `.glb` files in `public/assets/models/`.
+- `src/game/assets/manifest.js` is the only place that associates a runtime
+  filename with a stable semantic key.
+- `assets/archive/legacy-2d-sprites/` is historical source material, not a
+  shipped Three.js runtime path.
 
-Before the deep scan, check whether any real asset directories exist beyond
-template guidance files such as `AGENTS.md`.
+## Audit
 
-If none of `assets/art/`, `assets/audio/`, `assets/vfx/`, `assets/shaders/`, or
-`assets/data/` contain real asset files yet, stop and tell the user:
+1. Read `AGENTS.md`, `public/assets/README.md`, the applicable Blender export
+   note, and `src/game/assets/manifest.js`.
+2. Run `npm.cmd run assets:validate`; it must pass before the asset can ship.
+   Run `npm.cmd run assets:inspect` to report mesh, material, texture, and
+   file-size information without modifying anything.
+3. Check each changed GLB has one manifest entry and that the entry uses a
+   semantic key rather than leaking a filename into gameplay or presentation
+   code. Check that every manifest model path exists.
+4. Confirm the source of each model is either the matching Blender source in
+   `assets/blender/` or an explicitly documented external-source exception in
+   `docs/3d/provenance/`. An external record must state source, licence,
+   acquisition date, intended use, scale, and optimisation state. A visual
+   reference is not a shippable asset.
+5. Review reported GLB sizes rather than imposing an invented universal cap.
+   Flag unexpected growth and ask for a budget decision when an asset would
+   make the runtime meaningfully heavier.
+6. Inspect the source/export for the project coordinate contract: one Blender
+   unit per navigation cell, pivot at the cell centre, local ground at `Y=0`,
+   and logical facing along local `+X`. Reusable modules need stable semantic
+   node names.
+7. For a player-visible model change, smoke-test it in a browser raid. Verify
+   room seams, ground contact, facing, scale, and that it does not alter
+   serializable simulation or navigation data.
 
-> "No real asset directories or asset files are present yet, so there is nothing
-> meaningful to audit. Create or import assets first, then re-run `$asset-audit`.
-> If the asset pipeline is not defined yet, run `$art-bible` and `$asset-spec`
-> before auditing."
+## Report
 
-Treat `AGENTS.md` files as guidance only — they do not count as auditable assets.
+Return a compact report with:
 
-Scan the target asset directory using Glob:
+- files and manifest keys checked;
+- GLB validation result and observed sizes;
+- source/provenance status;
+- pivot, node-name, and browser-review status;
+- only concrete warnings and the next action.
 
-- `assets/art/**/*` for art assets
-- `assets/audio/**/*` for audio assets
-- `assets/vfx/**/*` for VFX assets
-- `assets/shaders/**/*` for shaders
-- `assets/data/**/*` for data files
-
----
-
-## Phase 3: Run Compliance Checks
-
-**Naming conventions:**
-- Art: `[category]_[name]_[variant]_[size].[ext]`
-- Audio: `[category]_[context]_[name]_[variant].[ext]`
-- All files must be lowercase with underscores
-
-**File standards:**
-- Textures: Power-of-two dimensions, correct format (PNG for UI, compressed for 3D), within size budget
-- Audio: Correct sample rate, format (OGG for SFX, OGG/MP3 for music), within duration limits
-- Data: Valid JSON/YAML, schema-compliant
-
-**Orphaned assets:** Search code for references to each asset file. Flag any with no references.
-
-**Missing assets:** Search code for asset references and verify the files exist.
-
----
-
-## Phase 4: Output Audit Report
-
-```markdown
-# Asset Audit Report -- [Category] -- [Date]
-
-## Summary
-- **Total assets scanned**: [N]
-- **Naming violations**: [N]
-- **Size violations**: [N]
-- **Format violations**: [N]
-- **Orphaned assets**: [N]
-- **Missing assets**: [N]
-- **Overall health**: [CLEAN / MINOR ISSUES / NEEDS ATTENTION]
-
-## Naming Violations
-| File | Expected Pattern | Issue |
-|------|-----------------|-------|
-
-## Size Violations
-| File | Budget | Actual | Overage |
-|------|--------|--------|---------|
-
-## Format Violations
-| File | Expected Format | Actual Format |
-|------|----------------|---------------|
-
-## Orphaned Assets (no code references found)
-| File | Last Modified | Size | Recommendation |
-|------|-------------|------|---------------|
-
-## Missing Assets (referenced but not found)
-| Reference Location | Expected Path |
-|-------------------|---------------|
-
-## Recommendations
-[Prioritized list of fixes]
-
-## Verdict: [COMPLIANT / WARNINGS / NON-COMPLIANT]
-```
-
-This skill is read-only — it produces a report but does not write files.
-
----
-
-## Phase 5: Next Steps
-
-- Fix naming violations using the patterns defined in AGENTS.md.
-- Delete confirmed orphaned assets after manual review.
-- Run `$content-audit` to cross-check asset counts against GDD-specified requirements.
-- If no assets were present, run `$art-bible` and `$asset-spec` first, then audit again after importing the first asset batch.
+Do not recommend renaming, optimising, or deleting an asset without evidence
+from this audit and the user's approval.

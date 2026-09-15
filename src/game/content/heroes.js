@@ -19,6 +19,12 @@ export const HERO_DEFINITION = Object.freeze({
   collisionRadius: 16,
 });
 
+// The multi-skill experiment remains serialized and tested, but is deliberately
+// not exposed to players while the tower, bounty, and room loops are developed.
+// Keeping this switch at the UI boundary makes a later return reversible without
+// invalidating saves or deleting the experimental implementation.
+export const HERO_ABILITY_PROTOTYPES_ENABLED = false;
+
 export const HERO_SKILLS = Object.freeze([
   Object.freeze({
     id: 'gravity-well',

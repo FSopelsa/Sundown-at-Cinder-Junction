@@ -28,7 +28,9 @@ If you want to help me try or improve something, see
 
 - `main` is the best place to start.
 - `prel/selective-studio-workflow` has the newer wall experiment.
-- `prel/isometric-proving-ground` is the older Phaser version, kept for comparison.
+- `prel/isometric-proving-ground` is an archived Phaser/isometric proof of
+  concept. Do not develop new work there; it is retained only as historical
+  comparison material. See [`docs/archive/isometric-proving-ground.md`](docs/archive/isometric-proving-ground.md).
 
 ### First 3D milestone
 
@@ -53,8 +55,8 @@ unapproved art-review gates before a final environment pass.
 
 ## Run locally
 
-Requirements: Node.js `^20.19.0` or `>=22.12.0`, plus Blender only when you
-want to edit or re-export models.
+Requirements: Node.js 24 LTS (the version pinned in [`.nvmrc`](.nvmrc)), plus
+Blender only when you want to edit or re-export models.
 
 ```powershell
 npm.cmd ci
@@ -109,10 +111,20 @@ npm.cmd run check
 
 This runs the simulation test suite and a production Vite build. The room
 navigation tests cover a cross-room enemy route, hero traversal/save round
-trip, and path-safe placement on both sides of the Arrival Gate.
+trip, and path-safe placement on both sides of the Arrival Gate. It also
+validates shipped GLBs and runs a Chromium check that starts a Smeltworks raid.
+
+To print GLB structure and size details without changing files:
+
+```powershell
+npm.cmd run assets:inspect
+```
 
 Pull requests run the same check automatically. For visual changes, also open
-the game and make sure the changed part actually looks right.
+the game and make sure the changed part actually looks right. The previous
+multi-skill hero experiment is intentionally dormant in the HUD while the
+tower, bounty, and room loops are refined; its implementation is retained for
+a later focused pass.
 
 ## Architecture
 

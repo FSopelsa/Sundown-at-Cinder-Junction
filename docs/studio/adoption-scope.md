@@ -19,7 +19,7 @@ operating system.
 
 - role hierarchies, agent rosters, and mandatory delegation
 - sprint planning, story registries, release operations, or Steam templates
-- broad hooks, installers, and external scaffolding
+- broad hooks, installers, external scaffolding, and generic document templates
 - Unity, Unreal, Godot, or other engine-specific guidance
 
 ## How to use it

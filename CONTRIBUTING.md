@@ -5,7 +5,7 @@ contribution process.
 
 ## Get it running
 
-You need Node.js `^20.19.0` or `>=22.12.0`.
+You need Node.js 24 LTS (the version pinned in [`.nvmrc`](.nvmrc)).
 
 ```powershell
 git clone https://github.com/FSopelsa/Sundown-at-Cinder-Junction.git
@@ -34,7 +34,8 @@ Before sharing a change, run:
 npm.cmd run check
 ```
 
-If it changes something visible, also play a raid and check it in the browser.
+This includes the GLB admission check and a Chromium raid smoke test. If it
+changes something visible, also play a raid and check it in the browser.
 
 I have not chosen a licence for the project yet, so please ask before reusing
 its code or assets somewhere else.

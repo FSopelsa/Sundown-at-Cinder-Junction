@@ -9,15 +9,20 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "check": "npm run test && npm run build"
+    "test:browser": "playwright test",
+    "assets:validate": "node scripts/check-models.mjs validate",
+    "assets:inspect": "node scripts/check-models.mjs inspect",
+    "check": "npm run test && npm run build && npm run assets:validate && npm run test:browser"
   },
   "dependencies": {
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.0",
+    "@playwright/test": "^1.63.0",
     "vite": "8.3.0"
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=24.0.0"
   }
 }

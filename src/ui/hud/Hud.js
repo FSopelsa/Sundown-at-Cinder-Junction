@@ -8,7 +8,11 @@ import {
   getAuraRangeUpgradeCost,
   SCRAP_EXCHANGE_AURA_MAX_LEVEL,
 } from '../../game/content/towers.js';
-import { getHeroSkill, HERO_DEFINITION } from '../../game/content/heroes.js';
+import {
+  getHeroSkill,
+  HERO_ABILITY_PROTOTYPES_ENABLED,
+  HERO_DEFINITION,
+} from '../../game/content/heroes.js';
 import { LEVELS } from '../../game/content/map.js';
 import { ACTIONS } from '../../game/input/actions.js';
 
@@ -207,6 +211,7 @@ export class Hud {
     });
     this.elements.commandHero.addEventListener('click', () => this.commandHero());
     this.elements.heroSkills.addEventListener('click', (event) => {
+      if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
       const upgrade = event.target.closest('[data-skill-upgrade]');
       if (upgrade) {
         const result = this.simulation.dispatch(ACTIONS.upgradeHeroSkill, { skillId: upgrade.dataset.skillUpgrade });
@@ -355,6 +360,7 @@ export class Hud {
   }
 
   activateHeroSkill(skillId) {
+    if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
     const hero = this.simulation.state.hero;
     const slot = hero.skillSlots.find((candidate) => candidate.id === skillId);
     const skill = getHeroSkill(skillId);
@@ -644,7 +650,8 @@ export class Hud {
       ? '100%'
       : `${(100 * hero.experience) / hero.experienceToNext}%`;
     const wormholeRemainingMs = activeWormholeRemainingMs;
-    this.elements.heroSkills.innerHTML = `
+    this.elements.heroSkills.hidden = !HERO_ABILITY_PROTOTYPES_ENABLED;
+    this.elements.heroSkills.innerHTML = HERO_ABILITY_PROTOTYPES_ENABLED ? `
       <span class="hero-skills__label">Abilities</span>
       <div class="hero-skills__grid">${hero.skillSlots.map((slot) => {
         const cooldown = Math.ceil((slot.cooldownRemainingMs ?? 0) / 1000);
@@ -663,7 +670,7 @@ export class Hud {
         return `<div class="hero-skill-wrap"><button type="button" class="hero-skill" data-skill-id="${slot.id}" title="${slot.description}" aria-pressed="${this.targetingSkillId === slot.id}" ${!hero.alive || !slot.unlocked || cooldown > 0 ? 'disabled' : ''}>
           <span>${slot.label}</span><small>${status}</small>
         </button>${upgradeCost === null ? '' : `<button type="button" class="hero-skill__upgrade" data-skill-upgrade="${slot.id}" ${state.scrap < upgradeCost ? 'disabled' : ''}>+${skill.durationUpgradeMs / 1000}s · ${upgradeCost} Scrap</button>`}</div>`;
-      }).join('')}</div>`;
+      }).join('')}</div>` : '';
     this.elements.commandHero.textContent = this.inputMode === 'move' ? 'Move Singularity · active' : 'Move Singularity';
     this.elements.commandHero.setAttribute('aria-pressed', String(this.inputMode === 'move'));
     this.elements.commandHero.disabled = !hero.alive;
