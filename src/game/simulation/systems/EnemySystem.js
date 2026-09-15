@@ -184,7 +184,7 @@ export class EnemySystem {
   }
 
   attackExchange(enemy) {
-    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && !tower.construction && tower.hp > 0 && distanceBetween(tower, enemy) <= tower.range)
+    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && !tower.construction && tower.hp > 0 && (tower.tauntRemainingMs ?? 0) > 0 && distanceBetween(tower, enemy) <= tower.range)
       .sort((a, b) => distanceBetween(a, enemy) - distanceBetween(b, enemy) || a.id.localeCompare(b.id))[0];
     enemy.tauntedBy = exchange?.id ?? null;
     if (!exchange) return false;

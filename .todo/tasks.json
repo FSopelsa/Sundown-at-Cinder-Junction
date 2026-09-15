@@ -304,11 +304,11 @@
   },
   {
     "id": "TASK_292",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Fix the  Taunt ",
-    "description": "- The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
-    "status": "TODO",
+    "description": "Fix the  Taunt \n- The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -326,11 +326,11 @@
   },
   {
     "id": "TASK_332",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Longer rounds (tweak enemies)",
-    "description": "- More enemies per round\n- Stronger enemies?\n- Slower?",
-    "status": "TODO",
+    "description": "Longer rounds (tweak enemies)\n- More enemies per round\n- Stronger enemies?\n- Slower?",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -348,11 +348,11 @@
   },
   {
     "id": "TASK_347",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Fix targetting for hero/builder",
-    "description": "- Player need better control over hero/builder-\t\n eg. hold ctrl to move around, or a hot key that shifts target to the hero",
-    "status": "TODO",
+    "description": "Fix targetting for hero/builder\n- Player need better control over hero/builder-\t\n eg. hold ctrl to be able to move it around, or a hot key that shifts/toggles target to the hero",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -372,7 +372,7 @@
     "id": "TASK_363",
     "priority": "LOW",
     "tags": [],
-    "title": "Brush UI",
+    "title": "Brush up UI",
     "description": "- Maybe look for insporation\n- Should be tidier, not bigger than it has to\n- Better info when overing\n- Clearer CD, cost etc.",
     "status": "TODO",
     "date": {
@@ -392,11 +392,11 @@
   },
   {
     "id": "TASK_460",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Longer buildings duration",
-    "description": "- Building (and upgrading) towers need to be a slower process.\n- Higher lvl of upgrade/tower means longer construction time.",
-    "status": "TODO",
+    "description": "Longer buildings duration\n- Building (and upgrading) towers needs to be a slower/longer process.\n- Higher lvl of upgrade/tower means longer construction time.",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -408,6 +408,28 @@
         "minute": 54,
         "second": 32,
         "nano": 38567200
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_665",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Armor/elemental resistance",
+    "description": "Armor and/or elemental resistance for mobs, - and perhaps hero etc?",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 23,
+        "minute": 56,
+        "second": 14,
+        "nano": 71064300
       }
     },
     "isImported": false

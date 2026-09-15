@@ -59,13 +59,14 @@ export class HeroSystem {
       this.gameState.towers,
       heroCellCenter(this.map, cell),
       heroCellCenter(this.map, cell),
+      this.gameState.roomState,
     );
     hero.navigationCell = route?.cells[0] ?? cell;
     hero.route ??= [];
     hero.navigationNext ??= null;
   }
 
-  commandMove(x, y) {
+  getMovePlan(x, y, towers = this.gameState.towers) {
     const hero = this.hero;
     if (!hero.alive) {
       return { ok: false, reason: 'Singularity returns with the next raid.' };
@@ -74,16 +75,35 @@ export class HeroSystem {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
 
-    this.ensureNavigationState();
+    const navigationCell = hero.navigationCell ?? worldToHeroCell(this.map, hero.x, hero.y);
     const plan = findHeroPath(
       this.map,
-      this.gameState.towers,
-      heroCellCenter(this.map, hero.navigationCell),
+      towers,
+      heroCellCenter(this.map, navigationCell),
       { x, y },
+      this.gameState.roomState,
     );
     if (!plan) {
       return { ok: false, reason: 'No open route to that position.' };
     }
+
+    return { ok: true, plan };
+  }
+
+  canCommandMove(x, y, towers = this.gameState.towers) {
+    const result = this.getMovePlan(x, y, towers);
+    return result.ok
+      ? { ok: true, destination: result.plan.destination, pathLength: result.plan.cells.length - 1 }
+      : result;
+  }
+
+  commandMove(x, y) {
+    this.ensureNavigationState();
+    const result = this.getMovePlan(x, y);
+    if (!result.ok) return result;
+
+    const hero = this.hero;
+    const { plan } = result;
 
     hero.destination = { ...plan.cells.at(-1) };
     hero.route = plan.cells.slice(1);
@@ -554,6 +574,7 @@ export class HeroSystem {
       this.gameState.towers,
       heroCellCenter(this.map, hero.navigationCell),
       heroCellCenter(this.map, hero.destination),
+      this.gameState.roomState,
     );
     if (!plan) {
       hero.route = [];

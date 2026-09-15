@@ -50,6 +50,7 @@ test('the Marshal walks to 3D construction, then activates build and upgrade eff
   const placed = simulation.dispatch(ACTIONS.placeTower, { towerType: 'peacemaker', ...target });
   assert.equal(placed.ok, true);
   assert.equal(placed.tower.construction.kind, 'build');
+  assert.ok(placed.tower.construction.durationMs >= 3000);
   assert.ok(simulation.state.hero.destination);
   assert.equal(simulation.dispatch(ACTIONS.upgradeTower, { towerId: placed.tower.id, upgrade: 'damage' }).ok, false);
 
@@ -62,4 +63,40 @@ test('the Marshal walks to 3D construction, then activates build and upgrade eff
   finishConstruction(simulation);
   assert.equal(placed.tower.damage, TOWER_DEFINITIONS.peacemaker.damage * 1.5);
   assert.equal(placed.tower.level, 2);
+  const secondUpgrade = simulation.dispatch(ACTIONS.upgradeTower, { towerId: placed.tower.id, upgrade: 'speed' });
+  assert.equal(secondUpgrade.ok, true);
+  assert.ok(secondUpgrade.construction.durationMs > upgrade.construction.durationMs);
+  finishConstruction(simulation);
+  assert.equal(placed.tower.level, 3);
+});
+
+test('unreachable construction is rejected before it changes the room state or Scrap', () => {
+  const simulation = createSimulation({ levelId: THRESHOLD_MAP.id, scrap: 2000 });
+  const heroCell = { roomId: 'arrival-yard', col: 5, row: 5 };
+  const heroPoint = roomCellCenter(THRESHOLD_MAP, heroCell);
+  Object.assign(simulation.state.hero, {
+    x: heroPoint.x,
+    y: heroPoint.y,
+    navigationCell: { ...heroCell },
+    navigationNext: null,
+    route: [],
+  });
+  simulation.state.towers = [
+    { col: 4, row: 5 }, { col: 6, row: 5 }, { col: 5, row: 4 }, { col: 5, row: 6 },
+  ].map((cell, index) => ({
+    id: `blocker-${index}`,
+    type: 'wall',
+    name: 'Defensive Wall',
+    ...roomCellCenter(THRESHOLD_MAP, { roomId: heroCell.roomId, ...cell }),
+    level: 1,
+    ladder: false,
+  }));
+  const scrapBefore = simulation.state.scrap;
+  const target = roomCellCenter(THRESHOLD_MAP, { roomId: 'arrival-yard', col: 10, row: 8 });
+  const result = simulation.dispatch(ACTIONS.placeTower, { towerType: 'peacemaker', ...target });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /cannot reach/i);
+  assert.equal(simulation.state.scrap, scrapBefore);
+  assert.equal(simulation.state.towers.length, 4);
+  assert.equal(simulation.state.towers.some((tower) => tower.construction), false);
 });

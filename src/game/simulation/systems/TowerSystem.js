@@ -13,6 +13,11 @@ import {
   SCRAP_EXCHANGE_AURA_MAX_LEVEL,
   BUILDER_CONSTRUCTION,
   getTowerBuildTimeMs,
+  getTowerUpgradeTimeMs,
+  getTauntDurationMs,
+  getTauntDurationUpgradeCost,
+  SCRAP_EXCHANGE_TAUNT_COOLDOWN_MS,
+  SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL,
 } from '../../content/towers.js';
 import { validateMazePlacement, worldToCell } from '../maze.js';
 import {
@@ -65,21 +70,31 @@ export class TowerSystem {
     return { ok: true };
   }
 
+  canReachConstruction(tower, towers = this.gameState.towers) {
+    const result = this.heroSystem?.canCommandMove(tower.x, tower.y, towers);
+    if (!result || result.ok) return { ok: true };
+    return { ok: false, reason: `Singularity cannot reach ${tower.name ?? 'that construction site'}: ${result.reason}` };
+  }
+
   sendMarshalToConstruction(tower) {
     // Commanding the existing hero-navigation system means a build order uses
     // the same room doors, collision rules, and save data as a manual move.
-    this.heroSystem?.commandMove(tower.x, tower.y);
+    return this.heroSystem?.commandMove(tower.x, tower.y) ?? { ok: true };
   }
 
   startConstruction(tower, kind, upgrade = null, cost = 0) {
+    const route = this.sendMarshalToConstruction(tower);
+    if (!route.ok) return null;
+    const durationMs = kind === 'build'
+      ? getTowerBuildTimeMs(this.definitions[tower.type])
+      : getTowerUpgradeTimeMs(tower, upgrade);
     tower.construction = {
       kind,
       upgrade,
       cost,
-      durationMs: kind === 'build' ? getTowerBuildTimeMs(this.definitions[tower.type]) : BUILDER_CONSTRUCTION.upgradeMs,
-      remainingMs: kind === 'build' ? getTowerBuildTimeMs(this.definitions[tower.type]) : BUILDER_CONSTRUCTION.upgradeMs,
+      durationMs,
+      remainingMs: durationMs,
     };
-    this.sendMarshalToConstruction(tower);
     return tower.construction;
   }
 
@@ -167,6 +182,17 @@ export class TowerSystem {
       return heroPlacement;
     }
 
+    if (this.usesBuilderConstruction()) {
+      // Validate on the prospective obstacle layout before spending Scrap or
+      // committing the tower. The Marshal routes to an open neighbouring cell.
+      const constructionSite = { type: towerType, name: definition.name, x, y };
+      const navigationTowers = this.gameState.towers
+        .filter((tower) => tower.id !== replacedWall?.id)
+        .concat(constructionSite);
+      const route = this.canReachConstruction(constructionSite, navigationTowers);
+      if (!route.ok) return route;
+    }
+
     const wallRefund = replacedWall
       ? getTowerSellValue(replacedWall, this.definitions[replacedWall.type])
       : 0;
@@ -189,7 +215,16 @@ export class TowerSystem {
       y,
       level: 1,
       ...(towerType === 'scrapExchange'
-        ? { hp: 600, maxHp: 600, aura: false, auraLevel: 0, auraRange: SCRAP_EXCHANGE_AURA_BASE_RANGE }
+        ? {
+          hp: 600,
+          maxHp: 600,
+          aura: false,
+          auraLevel: 0,
+          auraRange: SCRAP_EXCHANGE_AURA_BASE_RANGE,
+          tauntRemainingMs: 0,
+          tauntCooldownRemainingMs: 0,
+          tauntUpgradeLevel: 0,
+        }
         : {}),
       upgrades: [],
       investedScrap: definition.cost,
@@ -218,6 +253,8 @@ export class TowerSystem {
     if (this.usesBuilderConstruction()) {
       const construction = this.canStartConstruction();
       if (!construction.ok) return construction;
+      const route = this.canReachConstruction(tower);
+      if (!route.ok) return route;
     }
     if (upgrade === 'ladder' && tower.type === 'wall') {
       if (tower.ladder) return { ok: false, reason: 'This wall already has a ladder.' };
@@ -231,6 +268,15 @@ export class TowerSystem {
         return { ok: false, reason: 'Relay aura is already at maximum range.' };
       }
       const cost = getAuraRangeUpgradeCost(tower, this.definitions[tower.type]);
+      if (!this.economySystem.spendScrap(cost)) return { ok: false, reason: 'Not enough Scrap.' };
+      return this.beginUpgrade(tower, upgrade, cost);
+    }
+    if (upgrade === 'taunt' && tower.type === 'scrapExchange') {
+      const tauntLevel = Math.max(0, Number.isInteger(tower.tauntUpgradeLevel) ? tower.tauntUpgradeLevel : 0);
+      if (tauntLevel >= SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL) {
+        return { ok: false, reason: 'Taunt duration is already at maximum.' };
+      }
+      const cost = getTauntDurationUpgradeCost(tower, this.definitions[tower.type]);
       if (!this.economySystem.spendScrap(cost)) return { ok: false, reason: 'Not enough Scrap.' };
       return this.beginUpgrade(tower, upgrade, cost);
     }
@@ -268,6 +314,9 @@ export class TowerSystem {
         SCRAP_EXCHANGE_AURA_BASE_RANGE + (auraLevel - 1) * SCRAP_EXCHANGE_AURA_RANGE_STEP,
       );
       (tower.upgrades ??= []).push('range');
+    } else if (upgrade === 'taunt') {
+      tower.tauntUpgradeLevel = Math.max(0, tower.tauntUpgradeLevel ?? 0) + 1;
+      (tower.upgrades ??= []).push('taunt');
     } else if (upgrade === 'damage') {
       tower.damage *= UPGRADE_MULTIPLIER;
       if (tower.effect?.type === 'burn') tower.effect.magnitude *= UPGRADE_MULTIPLIER;
@@ -280,6 +329,23 @@ export class TowerSystem {
       (tower.upgrades ??= []).push(upgrade);
     }
     tower.investedScrap = investment + cost;
+  }
+
+  activateTowerAbility(towerId) {
+    const tower = this.gameState.towers.find((candidate) => candidate.id === towerId);
+    if (!tower || tower.type !== 'scrapExchange' || tower.hp <= 0 || tower.construction) {
+      return { ok: false, reason: 'Select an operational Scrap Exchange.' };
+    }
+    if ((tower.tauntRemainingMs ?? 0) > 0) {
+      return { ok: false, reason: 'Taunt is already active.' };
+    }
+    if ((tower.tauntCooldownRemainingMs ?? 0) > 0) {
+      return { ok: false, reason: `Taunt recharges in ${Math.ceil(tower.tauntCooldownRemainingMs / 1000)}s.` };
+    }
+    const durationMs = getTauntDurationMs(tower);
+    tower.tauntRemainingMs = durationMs;
+    tower.tauntCooldownRemainingMs = SCRAP_EXCHANGE_TAUNT_COOLDOWN_MS;
+    return { ok: true, tower, durationMs };
   }
 
   sellTower(towerId) {
@@ -326,6 +392,10 @@ export class TowerSystem {
     this.updateConstruction(deltaMs);
     for (const tower of this.gameState.towers) {
       tower.timeDilationRemainingMs = Math.max(0, (tower.timeDilationRemainingMs ?? 0) - deltaMs);
+      if (tower.type === 'scrapExchange') {
+        tower.tauntRemainingMs = Math.max(0, (tower.tauntRemainingMs ?? 0) - deltaMs);
+        tower.tauntCooldownRemainingMs = Math.max(0, (tower.tauntCooldownRemainingMs ?? 0) - deltaMs);
+      }
       if (tower.construction) continue;
       const auraMultiplier = this.gameState.towers.some(source => source.type === 'scrapExchange' && source.aura && !source.construction && distanceBetween(source, tower) <= (source.auraRange ?? SCRAP_EXCHANGE_AURA_BASE_RANGE)) ? 1.2 : 1;
       const attackSpeedMultiplier = auraMultiplier * (tower.timeDilationRemainingMs > 0

@@ -117,7 +117,7 @@ test('Quantum Blink respects tower collision and Worm Tunnel becomes a maze shor
   const field = buildDistanceField(MAZE_MAP, simulation.state.towers, null, simulation.state.wormholes);
   assert.ok(field.get(cellKey(MAZE_MAP.entrance)) < 23);
   simulation.systems.enemySystem.spawn('dustMite');
-  simulation.systems.enemySystem.update(1500);
+  simulation.systems.enemySystem.update(2000);
   const events = simulation.systems.enemySystem.drainEvents();
   assert.ok(events.some((event) => event.type === 'wormhole-travel'));
 });

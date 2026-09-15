@@ -155,7 +155,7 @@ test('maze slow effects, pause and double speed preserve movement rules', () => 
   sim.dispatch(ACTIONS.setSpeed, { speed: 2 });
   sim.systems.statusEffectSystem.apply(enemy.id, { type: 'slow', magnitude: 0.5, durationMs: 1000 });
   sim.update(100);
-  assert.ok(Math.abs(enemy.x - startX - 9.2) < 1e-6);
+  assert.ok(Math.abs(enemy.x - startX - enemy.speed * 0.5 * 0.2) < 1e-6);
 });
 
 test('maze towers prioritize the enemy closest to the exit along the open route', () => {

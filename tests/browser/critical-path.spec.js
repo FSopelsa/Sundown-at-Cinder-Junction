@@ -9,6 +9,11 @@ test('loads the four-room level and starts a raid without console errors', async
   await page.goto('/?debug');
   await expect(page.getByRole('button', { name: 'Start raid' })).toBeEnabled();
   await expect(page.locator('[data-hud="hero-skills"]')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Move Singularity · H' })).toBeEnabled();
+  await page.keyboard.press('h');
+  await expect(page.getByRole('button', { name: 'Move Singularity · active' })).toBeEnabled();
+  await page.keyboard.press('h');
+  await expect(page.getByRole('button', { name: 'Move Singularity · H' })).toBeEnabled();
 
   await page.locator('[data-hud="level"]').selectOption('cinder-smeltworks');
   await Promise.all([

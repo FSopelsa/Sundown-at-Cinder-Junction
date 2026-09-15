@@ -84,6 +84,8 @@ export function createSimulation(initialState = new GameState()) {
         return towerSystem.upgradeTower(payload.towerId, payload.upgrade);
       case ACTIONS.purchaseSupport:
         return purchaseSupport(state, economySystem, heroSystem, payload.towerId, payload.item);
+      case ACTIONS.activateTowerAbility:
+        return towerSystem.activateTowerAbility(payload.towerId);
       case ACTIONS.sellTower:
         return towerSystem.sellTower(payload.towerId);
       case ACTIONS.moveHero:

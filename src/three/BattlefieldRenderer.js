@@ -34,6 +34,7 @@ export class BattlefieldRenderer {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
     this.onResize = this.onResize.bind(this);
     this.onContextLost = this.onContextLost.bind(this);
     this.onContextRestored = this.onContextRestored.bind(this);
@@ -152,6 +153,7 @@ export class BattlefieldRenderer {
     this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
     this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('resize', this.onResize);
     this.renderer.domElement.addEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.addEventListener('webglcontextrestored', this.onContextRestored);
@@ -161,6 +163,7 @@ export class BattlefieldRenderer {
     this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
     this.renderer.domElement.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('resize', this.onResize);
     this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.onContextRestored);
@@ -273,10 +276,14 @@ export class BattlefieldRenderer {
 
   onKeyDown(event) {
     if (['SELECT', 'INPUT', 'BUTTON', 'TEXTAREA'].includes(event.target?.tagName)) return;
+    if (event.key === 'Control') {
+      this.hud?.beginTemporaryHeroCommand();
+      return;
+    }
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (key === 'h') {
       event.preventDefault();
-      this.hud?.commandHero();
+      this.hud?.toggleHeroCommand();
       return;
     }
     const binding = KEY_BINDINGS[key];
@@ -284,6 +291,10 @@ export class BattlefieldRenderer {
     event.preventDefault();
     const result = this.simulation.dispatch(binding.action, binding.payload);
     if (!result.ok) this.hud?.showNotice(result.reason, 'warning');
+  }
+
+  onKeyUp(event) {
+    if (event.key === 'Control') this.hud?.endTemporaryHeroCommand();
   }
 
   frame(now) {

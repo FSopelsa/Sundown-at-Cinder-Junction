@@ -16,7 +16,42 @@ function getRenderableRooms(map) {
 // Grid walls, floors, and trim are generated from the room palette, so a new
 // room only needs a palette name in content. Distinctive rooms opt into a GLB
 // through `environment.model`.
-function makeProceduralRoom(room, palette) {
+export function getRoomPerimeterWallSegments(map, room, roomState = null) {
+  const { grid } = room;
+  const edges = { north: [], south: [], west: [], east: [] };
+  for (const connection of map.roomConnections ?? []) {
+    if (!isDoorOpen(connection, roomState)) continue;
+    const endpoint = connection.from.roomId === room.id
+      ? connection.from
+      : connection.to.roomId === room.id ? connection.to : null;
+    if (!endpoint) continue;
+    if (endpoint.col === 0) edges.west.push([endpoint.row * grid.cellSize, (endpoint.row + 1) * grid.cellSize]);
+    else if (endpoint.col === grid.columns - 1) edges.east.push([endpoint.row * grid.cellSize, (endpoint.row + 1) * grid.cellSize]);
+    else if (endpoint.row === 0) edges.north.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
+    else if (endpoint.row === grid.rows - 1) edges.south.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
+  }
+  const splitAroundOpenings = (length, openings) => {
+    const segments = [];
+    let cursor = 0;
+    for (const [start, end] of openings
+      .map(([first, last]) => [Math.max(0, first), Math.min(length, last)])
+      .filter(([first, last]) => last > first)
+      .sort(([first], [second]) => first - second)) {
+      if (start > cursor) segments.push([cursor, start]);
+      cursor = Math.max(cursor, end);
+    }
+    if (cursor < length) segments.push([cursor, length]);
+    return segments;
+  };
+  return {
+    north: splitAroundOpenings(grid.columns * grid.cellSize, edges.north),
+    south: splitAroundOpenings(grid.columns * grid.cellSize, edges.south),
+    west: splitAroundOpenings(grid.rows * grid.cellSize, edges.west),
+    east: splitAroundOpenings(grid.rows * grid.cellSize, edges.east),
+  };
+}
+
+function makeProceduralRoom(room, palette, map, roomState) {
   const { grid } = room;
   const width = grid.columns * grid.cellSize * METERS_PER_SIMULATION_UNIT;
   const depth = grid.rows * grid.cellSize * METERS_PER_SIMULATION_UNIT;
@@ -37,22 +72,35 @@ function makeProceduralRoom(room, palette) {
     emissive: palette.trim,
     emissiveIntensity: 0.22,
   });
-  const wall = (side, spanX, spanZ, x, z) => {
+  const wall = (side, spanX, spanZ, x, z, index) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(spanX, 1.5, spanZ), wallMaterial);
-    mesh.name = `${room.id} wall ${side}`;
+    mesh.name = `${room.id} wall ${side} ${index}`;
     mesh.position.set(x, 0.75, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
     const trim = new THREE.Mesh(new THREE.BoxGeometry(spanX, 0.09, spanZ), trimMaterial);
-    trim.name = `${room.id} trim ${side}`;
+    trim.name = `${room.id} trim ${side} ${index}`;
     trim.position.set(x, 1.54, z);
     group.add(trim);
   };
-  wall('north', width, 0.18, width / 2, 0);
-  wall('south', width, 0.18, width / 2, depth);
-  wall('west', 0.18, depth, 0, depth / 2);
-  wall('east', 0.18, depth, width, depth / 2);
+  const perimeter = getRoomPerimeterWallSegments(map, room, roomState);
+  perimeter.north.forEach(([start, end], index) => {
+    wall('north', (end - start) * METERS_PER_SIMULATION_UNIT, 0.18,
+      (start + end) * METERS_PER_SIMULATION_UNIT / 2, 0, index);
+  });
+  perimeter.south.forEach(([start, end], index) => {
+    wall('south', (end - start) * METERS_PER_SIMULATION_UNIT, 0.18,
+      (start + end) * METERS_PER_SIMULATION_UNIT / 2, depth, index);
+  });
+  perimeter.west.forEach(([start, end], index) => {
+    wall('west', 0.18, (end - start) * METERS_PER_SIMULATION_UNIT,
+      0, (start + end) * METERS_PER_SIMULATION_UNIT / 2, index);
+  });
+  perimeter.east.forEach(([start, end], index) => {
+    wall('east', 0.18, (end - start) * METERS_PER_SIMULATION_UNIT,
+      width, (start + end) * METERS_PER_SIMULATION_UNIT / 2, index);
+  });
   return group;
 }
 
@@ -152,7 +200,7 @@ export class RoomScene {
       const { grid } = room;
       const position = simulationToWorld(grid.x, grid.y);
       const environment = this.modelLibrary.clone(room.environment?.model) ??
-        makeProceduralRoom(room, palette);
+        makeProceduralRoom(room, palette, map, roomState);
       environment.name = `${room.id} environment`;
       environment.position.set(position.x, 0, position.z);
       this.group.add(environment);

@@ -3,6 +3,7 @@ export const ACTIONS = Object.freeze({
   placeTower: 'place-tower',
   upgradeTower: 'upgrade-tower',
   purchaseSupport: 'purchase-support',
+  activateTowerAbility: 'activate-tower-ability',
   sellTower: 'sell-tower',
   moveHero: 'move-hero',
   castHeroSkill: 'cast-hero-skill',
