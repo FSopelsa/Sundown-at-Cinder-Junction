@@ -105,8 +105,8 @@
     "priority": "LOW",
     "tags": [],
     "title": "Make hero the builder",
-    "description": "The hero should also be the builder, meaning the Hero needs to be nearby a tower to build and upgrade it.",
-    "status": "TODO",
+    "description": "- The hero should also be the builder, meaning the Hero needs to be nearby a tower to build and upgrade it.",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -118,6 +118,19 @@
         "minute": 24,
         "second": 34,
         "nano": 114809300
+      }
+    },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 13,
+        "minute": 28,
+        "second": 24,
+        "nano": 822450300
       }
     },
     "isImported": false
@@ -171,8 +184,8 @@
     "priority": "LOW",
     "tags": [],
     "title": "Add line--shortest path ",
-    "description": "Line in the ground marking the current shortest path from enemy to their goal end. The line should dynamicaly update when new towers are built that changes the path the enemies needs t take. It would be nice if the lina is dashed (like in css) and looks like it is slowly moving towards the goal.",
-    "status": "TODO",
+    "description": "Line in the ground marking the current shortest path from enemy to their goal end. The line should dynamicaly update when new towers are built that changes the path the enemies needs to take. It would be nice if the lina is dashed (like in css) and looks like it is slowly moving towards the goal.",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -184,6 +197,19 @@
         "minute": 0,
         "second": 5,
         "nano": 550553000
+      }
+    },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 13,
+        "minute": 27,
+        "second": 38,
+        "nano": 382801800
       }
     },
     "isImported": false
@@ -281,7 +307,7 @@
     "priority": "LOW",
     "tags": [],
     "title": "Fix the  Taunt ",
-    "description": "The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
+    "description": "- The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
     "status": "TODO",
     "date": {
       "date": {
@@ -360,6 +386,28 @@
         "minute": 30,
         "second": 24,
         "nano": 388346400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_460",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Longer buildings duration",
+    "description": "- Building (and upgrading) towers need to be a slower process.\n- Higher lvl of upgrade/tower means longer construction time.",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 13,
+        "minute": 54,
+        "second": 32,
+        "nano": 38567200
       }
     },
     "isImported": false
