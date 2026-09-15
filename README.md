@@ -1,10 +1,38 @@
 # Sundown at Cinder Junction
 
-A space-western elemental tower-defense prototype. The battlefield now uses
-**Three.js + WebGL**, with Blender-authored GLB assets, while the game rules
-remain in the existing serializable JavaScript simulation.
+A hobby project where I'm building a space-western elemental tower-defense
+game. It currently uses **Three.js + WebGL**, Blender-made GLB assets, and a
+plain JavaScript simulation for the game rules.
 
-## First 3D milestone
+### Quick start
+
+Start with `main`:
+
+```powershell
+git clone https://github.com/FSopelsa/Sundown-at-Cinder-Junction.git
+Set-Location Sundown-at-Cinder-Junction
+npm.cmd ci
+npm.cmd run check
+npm.cmd run dev -- --host 127.0.0.1
+```
+Open the URL printed by Vite.
+
+Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
+
+## Contributing
+
+If you want to help me try or improve something, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md). It is intentionally short.
+
+### Branches
+
+- `main` is the best place to start.
+- `prel/selective-studio-workflow` has the newer wall experiment.
+- `prel/isometric-proving-ground` is an archived Phaser/isometric proof of
+  concept. Do not develop new work there; it is retained only as historical
+  comparison material. See [`docs/archive/isometric-proving-ground.md`](docs/archive/isometric-proving-ground.md).
+
+### First 3D milestone
 
 The default level, **Cinder Threshold · 3D Trial**, contains two connected
 15 × 20-cell rooms: Arrival Yard and Relay Hall. They retain separate grid coordinates and
@@ -27,8 +55,8 @@ unapproved art-review gates before a final environment pass.
 
 ## Run locally
 
-Requirements: Node.js `^20.19.0` or `>=22.12.0`, plus Blender only when you
-want to edit or re-export models.
+Requirements: Node.js 24 LTS (the version pinned in [`.nvmrc`](.nvmrc)), plus
+Blender only when you want to edit or re-export models.
 
 ```powershell
 npm.cmd ci
@@ -41,7 +69,7 @@ fallback room until each receives authored environment assets.
 
 PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
 
-## Play
+### Play
 
 - Select a tower in the Build Catalogue, then click clear room ground to
   deploy it. Click a deployed tower to inspect, upgrade, or sell it.
@@ -62,7 +90,7 @@ raid. Enemy hull grows by 18% per completed raid, hero auto-attack damage gains
 a small late-level acceleration, and the DOM HUD preserves the raid-result and
 failure states.
 
-## Blender and GLB exports
+### Blender and GLB exports
 
 The current source scene uses one Blender unit per navigation cell (a game cell
 is 40 simulation units). After editing the source, generate the runtime GLBs:
@@ -75,7 +103,7 @@ The exporter writes to `public/assets/models/`. Add or change runtime entries
 only through [`src/game/assets/manifest.js`](src/game/assets/manifest.js), so
 content systems use stable semantic keys rather than filenames.
 
-## Quality checks
+### Quality checks
 
 ```powershell
 npm.cmd run check
@@ -83,7 +111,20 @@ npm.cmd run check
 
 This runs the simulation test suite and a production Vite build. The room
 navigation tests cover a cross-room enemy route, hero traversal/save round
-trip, and path-safe placement on both sides of the Arrival Gate.
+trip, and path-safe placement on both sides of the Arrival Gate. It also
+validates shipped GLBs and runs a Chromium check that starts a Smeltworks raid.
+
+To print GLB structure and size details without changing files:
+
+```powershell
+npm.cmd run assets:inspect
+```
+
+Pull requests run the same check automatically. For visual changes, also open
+the game and make sure the changed part actually looks right. The previous
+multi-skill hero experiment is intentionally dormant in the HUD while the
+tower, bounty, and room loops are refined; its implementation is retained for
+a later focused pass.
 
 ## Architecture
 

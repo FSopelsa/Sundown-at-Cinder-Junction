@@ -90,6 +90,8 @@ export function createSimulation(initialState = new GameState()) {
         return heroSystem.commandMove(payload.x, payload.y);
       case ACTIONS.castHeroSkill:
         return heroSystem.castHeroSkill(payload.skillId, payload.x, payload.y);
+      case ACTIONS.upgradeHeroSkill:
+        return heroSystem.upgradeHeroSkill(payload.skillId);
       case ACTIONS.togglePause:
         state.settings.paused = !state.settings.paused;
         return { ok: true, paused: state.settings.paused };

@@ -19,6 +19,12 @@ export const HERO_DEFINITION = Object.freeze({
   collisionRadius: 16,
 });
 
+// The multi-skill experiment remains serialized and tested, but is deliberately
+// not exposed to players while the tower, bounty, and room loops are developed.
+// Keeping this switch at the UI boundary makes a later return reversible without
+// invalidating saves or deleting the experimental implementation.
+export const HERO_ABILITY_PROTOTYPES_ENABLED = false;
+
 export const HERO_SKILLS = Object.freeze([
   Object.freeze({
     id: 'gravity-well',
@@ -74,8 +80,12 @@ export const HERO_SKILLS = Object.freeze([
     unlockLevel: 5,
     target: 'ground',
     cooldownMs: 20000,
+    durationMs: 5000,
+    durationUpgradeMs: 2500,
+    maxUpgradeLevel: 2,
+    upgradeCost: 50,
     minimumDistance: 80,
-    description: 'Set two linked portals that enemies route through as a shortcut.',
+    description: 'Set a five-second one-way tunnel. The first endpoint is the entrance; upgrades extend its lifetime.',
   }),
 ]);
 
@@ -130,6 +140,10 @@ export function createHeroSkillSlots(level, savedSlots = []) {
       ...slot,
       unlocked: normalizedLevel(level) >= slot.unlockLevel,
       selection: saved?.selection ?? null,
+      upgradeLevel: Math.min(
+        slot.maxUpgradeLevel ?? 0,
+        Math.max(0, Number.isInteger(saved?.upgradeLevel) ? saved.upgradeLevel : 0),
+      ),
       cooldownRemainingMs: Math.max(
         0,
         Number.isFinite(saved?.cooldownRemainingMs) ? saved.cooldownRemainingMs : 0,

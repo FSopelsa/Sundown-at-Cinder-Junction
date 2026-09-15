@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MODEL_KEYS } from '../game/assets/manifest.js';
 import { simulationToWorld } from './coordinates.js';
+import { getWallTopology } from './wallTopology.js';
 
 const ENEMY_MODEL_NAMES = Object.freeze({
   dustMite: 'Unit_DustMite',
@@ -74,6 +75,17 @@ function makeHealthBar() {
   return { group, fill };
 }
 
+function makeConstructionFrame() {
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(0.84, 0.48, 0.84)),
+    new THREE.LineBasicMaterial({ color: 0xffc46b, transparent: true, opacity: 0.9 }),
+  );
+  frame.name = 'Construction frame';
+  frame.position.y = 0.24;
+  frame.visible = false;
+  return frame;
+}
+
 export class EntityPresenter {
   constructor(scene, modelLibrary) {
     this.scene = scene;
@@ -120,8 +132,47 @@ export class EntityPresenter {
     const root = setShadowFlags(
       this.modelLibrary.cloneNamed(MODEL_KEYS.units, TOWER_MODEL_NAMES[tower.type]) ?? fallbackModel(color, 0.42, 0.65),
     );
+    const wallParts = tower.type === 'wall' ? {
+      core: root.getObjectByName('Tower_Wall_Core'),
+      negativeEndCap: root.getObjectByName('Tower_Wall_End_Negative'),
+      positiveEndCap: root.getObjectByName('Tower_Wall_End_Positive'),
+      junctionCore: null,
+    } : null;
+    const construction = makeConstructionFrame();
+    root.add(construction);
     this.group.add(root);
-    return { root, last: new THREE.Vector3() };
+    return { root, last: new THREE.Vector3(), wallParts, construction };
+  }
+
+  syncWallView(view, tower, towers, map) {
+    if (!view.wallParts) return;
+    const topology = getWallTopology(map, tower, towers);
+    view.root.rotation.y = topology.axis === 'z' ? Math.PI / 2 : 0;
+    if (view.wallParts.negativeEndCap) view.wallParts.negativeEndCap.visible = topology.showNegativeEndCap;
+    if (view.wallParts.positiveEndCap) view.wallParts.positiveEndCap.visible = topology.showPositiveEndCap;
+
+    if (topology.cross && view.wallParts.core) {
+      if (!view.wallParts.junctionCore) {
+        view.wallParts.junctionCore = view.wallParts.core.clone(true);
+        view.wallParts.junctionCore.name = 'Tower_Wall_Cross_Core';
+        view.wallParts.junctionCore.rotation.y = Math.PI / 2;
+        view.root.add(view.wallParts.junctionCore);
+      }
+      view.wallParts.junctionCore.visible = true;
+    } else if (view.wallParts.junctionCore) {
+      view.wallParts.junctionCore.visible = false;
+    }
+  }
+
+  placeTower(view, tower, towers, map) {
+    if (tower.type !== 'wall') {
+      this.place(view, tower, 0, false);
+      return;
+    }
+    const world = simulationToWorld(tower.x, tower.y);
+    view.root.position.set(world.x, 0.02, world.z);
+    view.last.copy(view.root.position);
+    this.syncWallView(view, tower, towers, map);
   }
 
   place(view, entity, timeMs, animate = false) {
@@ -136,9 +187,9 @@ export class EntityPresenter {
     view.last.copy(next);
   }
 
-  sync(state, selectedTowerId, camera, timeMs) {
+  sync(state, selectedTowerId, camera, timeMs, map) {
     this.syncHero(state.hero, timeMs);
-    this.syncTowers(state.towers, selectedTowerId);
+    this.syncTowers(state.towers, selectedTowerId, map, timeMs);
     this.syncEnemies(state.enemies, camera, timeMs);
   }
 
@@ -151,13 +202,14 @@ export class EntityPresenter {
     this.heroView.ring.material.color.set(0x82eaff);
   }
 
-  syncTowers(towers, selectedTowerId) {
+  syncTowers(towers, selectedTowerId, map, timeMs) {
     const active = new Set();
     for (const tower of towers) {
       active.add(tower.id);
       const view = this.towerViews.get(tower.id) ?? this.createTowerView(tower);
       this.towerViews.set(tower.id, view);
-      this.place(view, tower, 0, false);
+      this.placeTower(view, tower, towers, map);
+      this.syncConstruction(view, tower, timeMs);
       const selected = tower.id === selectedTowerId;
       if (selected) {
         this.selection.visible = true;
@@ -170,6 +222,18 @@ export class EntityPresenter {
       this.group.remove(view.root);
       this.towerViews.delete(id);
     }
+  }
+
+  syncConstruction(view, tower, timeMs) {
+    const construction = tower.construction;
+    view.construction.visible = Boolean(construction);
+    if (!construction) return;
+    const progress = Math.max(0, Math.min(1,
+      1 - construction.remainingMs / construction.durationMs,
+    ));
+    view.construction.rotation.y = timeMs * 0.002;
+    view.construction.scale.set(0.72 + progress * 0.28, 0.35 + progress * 0.65, 0.72 + progress * 0.28);
+    view.construction.material.opacity = 0.55 + (1 - progress) * 0.35;
   }
 
   syncEnemies(enemies, camera, timeMs) {

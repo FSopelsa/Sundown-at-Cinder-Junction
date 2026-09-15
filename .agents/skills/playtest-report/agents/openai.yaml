@@ -1,0 +1,6 @@
+interface:
+  display_name: "Sundown Playtest Notes"
+  short_description: "Turn player observations into small, evidence-based next actions."
+  default_prompt: "Use $playtest-report to turn supplied Sundown playtest notes into concise, actionable findings."
+policy:
+  allow_implicit_invocation: true

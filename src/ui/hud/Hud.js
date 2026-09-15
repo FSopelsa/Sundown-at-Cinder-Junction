@@ -8,7 +8,11 @@ import {
   getAuraRangeUpgradeCost,
   SCRAP_EXCHANGE_AURA_MAX_LEVEL,
 } from '../../game/content/towers.js';
-import { getHeroSkill, HERO_DEFINITION } from '../../game/content/heroes.js';
+import {
+  getHeroSkill,
+  HERO_ABILITY_PROTOTYPES_ENABLED,
+  HERO_DEFINITION,
+} from '../../game/content/heroes.js';
 import { LEVELS } from '../../game/content/map.js';
 import { ACTIONS } from '../../game/input/actions.js';
 
@@ -207,6 +211,19 @@ export class Hud {
     });
     this.elements.commandHero.addEventListener('click', () => this.commandHero());
     this.elements.heroSkills.addEventListener('click', (event) => {
+      if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
+      const upgrade = event.target.closest('[data-skill-upgrade]');
+      if (upgrade) {
+        const result = this.simulation.dispatch(ACTIONS.upgradeHeroSkill, { skillId: upgrade.dataset.skillUpgrade });
+        this.showNotice(
+          result.ok
+            ? `${result.skill.label} duration extended to ${(result.durationMs / 1000).toFixed(0)}s.`
+            : result.reason,
+          result.ok ? 'success' : 'warning',
+        );
+        this.render(true);
+        return;
+      }
       const button = event.target.closest('[data-skill-id]');
       if (button) this.activateHeroSkill(button.dataset.skillId);
     });
@@ -343,6 +360,7 @@ export class Hud {
   }
 
   activateHeroSkill(skillId) {
+    if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
     const hero = this.simulation.state.hero;
     const slot = hero.skillSlots.find((candidate) => candidate.id === skillId);
     const skill = getHeroSkill(skillId);
@@ -486,8 +504,11 @@ export class Hud {
 
   render(force = false) {
     const state = this.simulation.state;
+    const activeWormholeRemainingMs = state.wormholes.length === 2
+      ? Math.min(...state.wormholes.map((portal) => portal.remainingMs ?? 0))
+      : 0;
     const renderKey = [
-      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}`).join(),
+      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}:${t.construction?.kind}:${t.construction?.upgrade}:${Math.ceil(t.construction?.remainingMs ?? 0)}`).join(),
       state.scrap,
       state.stationIntegrity,
       state.wave.index,
@@ -513,7 +534,8 @@ export class Hud {
       state.hero.maxHp,
       state.hero.experience,
       state.hero.experienceToNext,
-      state.hero.skillSlots.map((slot) => `${slot.id}:${slot.unlocked}:${Math.ceil((slot.cooldownRemainingMs ?? 0) / 100)}`).join(','),
+      state.hero.skillSlots.map((slot) => `${slot.id}:${slot.unlocked}:${slot.upgradeLevel}:${Math.ceil((slot.cooldownRemainingMs ?? 0) / 100)}`).join(','),
+      Math.ceil(activeWormholeRemainingMs / 100),
     ].join(':');
 
     if (!force && renderKey === this.lastRenderKey) {
@@ -527,6 +549,10 @@ export class Hud {
     this.elements.towerDetails.hidden = !tower;
     if (tower) {
       const cost = getUpgradeCost(tower);
+      const construction = tower.construction;
+      const constructionPercent = construction
+        ? Math.round(100 * (1 - construction.remainingMs / construction.durationMs))
+        : 100;
       this.elements.towerName.textContent = `${tower.name} · Level ${tower.level}/${MAX_TOWER_LEVEL}`;
       const dilation = (tower.timeDilationRemainingMs ?? 0) > 0
         ? ` · Time Dilation ${(tower.timeDilationRemainingMs / 1000).toFixed(1)}s`
@@ -540,7 +566,7 @@ export class Hud {
         button.textContent = cost === null ? 'Maximum level reached' : damage
           ? `Damage +50%${tower.effect?.type === 'burn' ? ' & burn +50%' : ''} · ${cost} Scrap`
           : `Attack speed +50% · ${cost} Scrap`;
-        button.disabled = cost === null || state.scrap < cost || state.stationIntegrity <= 0;
+        button.disabled = Boolean(construction) || cost === null || state.scrap < cost || state.stationIntegrity <= 0;
       }
       const structure = tower.type === 'wall' || tower.type === 'scrapExchange';
       for (const button of this.elements.upgradeButtons) button.hidden = structure;
@@ -549,14 +575,14 @@ export class Hud {
       const auraRange = tower.auraRange ?? 180;
       const auraCost = tower.aura ? getAuraRangeUpgradeCost(tower) : null;
       const auraUpgrade = tower.type === 'scrapExchange' && tower.aura
-        ? `<button data-upgrade="range" ${auraCost === null || state.scrap < auraCost ? 'disabled' : ''}>${auraCost === null ? `Relay aura maximum · ${auraRange}` : `Expand relay aura to ${auraRange + 90} · ${auraCost} Scrap`}</button>`
+        ? `<button data-upgrade="range" ${construction || auraCost === null || state.scrap < auraCost ? 'disabled' : ''}>${auraCost === null ? `Relay aura maximum · ${auraRange}` : `Expand relay aura to ${auraRange + 90} · ${auraCost} Scrap`}</button>`
         : '';
       actions.innerHTML = tower.type === 'wall'
-        ? `<button data-ladder ${tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
+        ? `<button data-ladder ${construction || tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
         : tower.type === 'scrapExchange' ? auraUpgrade + Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
           const price = offer.cost * (id === 'buyback' ? hero.level : id === 'xp' ? 1 + (hero.trainingPurchases ?? 0) : 1);
           const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
-          return `<button data-support="${id}" ${unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
+          return `<button data-support="${id}" ${construction || unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
         }).join('') : '';
       if (structure) {
         this.elements.towerName.textContent = tower.name;
@@ -567,9 +593,18 @@ export class Hud {
           ? 'Select a combat tower, then click this wall to replace it.'
           : 'Taunted enemies bombard the Exchange until it falls. Install the aura, then expand its radius. Auras do not stack.';
       }
+      if (construction) {
+        const task = construction.kind === 'build'
+          ? 'assembly'
+          : `${construction.upgrade === 'range' ? 'relay range' : construction.upgrade} upgrade`;
+        this.elements.towerName.textContent = `${tower.name} · ${constructionPercent}%`;
+        this.elements.towerStats.textContent = `Marshal ${task} in progress · ${Math.ceil(construction.remainingMs / 1000)}s remaining`;
+        this.elements.towerHistory.textContent = 'Singularity must remain within the build radius. Construction pauses while the Marshal is away.';
+        actions.innerHTML = '';
+      }
       const sellValue = getTowerSellValue(tower);
       this.elements.sellTower.textContent = `Sell for ${sellValue} Scrap (80% return)`;
-      this.elements.sellTower.disabled = false;
+      this.elements.sellTower.disabled = Boolean(construction);
     }
     this.elements.scrap.textContent = String(state.scrap);
     this.elements.integrity.textContent = String(state.stationIntegrity);
@@ -614,19 +649,28 @@ export class Hud {
     this.elements.heroXpFill.style.width = isMaxLevel
       ? '100%'
       : `${(100 * hero.experience) / hero.experienceToNext}%`;
-    this.elements.heroSkills.innerHTML = `
+    const wormholeRemainingMs = activeWormholeRemainingMs;
+    this.elements.heroSkills.hidden = !HERO_ABILITY_PROTOTYPES_ENABLED;
+    this.elements.heroSkills.innerHTML = HERO_ABILITY_PROTOTYPES_ENABLED ? `
       <span class="hero-skills__label">Abilities</span>
       <div class="hero-skills__grid">${hero.skillSlots.map((slot) => {
         const cooldown = Math.ceil((slot.cooldownRemainingMs ?? 0) / 1000);
+        const skill = getHeroSkill(slot.id);
+        const tunnelActive = slot.id === 'worm-tunnel' && wormholeRemainingMs > 0;
         const status = !slot.unlocked
           ? `L${slot.unlockLevel}`
+          : tunnelActive
+            ? `${Math.ceil(wormholeRemainingMs / 1000)}s active`
           : cooldown > 0
             ? `${cooldown}s`
             : 'Ready';
-        return `<button type="button" class="hero-skill" data-skill-id="${slot.id}" title="${slot.description}" aria-pressed="${this.targetingSkillId === slot.id}" ${!hero.alive || !slot.unlocked || cooldown > 0 ? 'disabled' : ''}>
+        const upgradeCost = skill?.durationUpgradeMs && slot.unlocked && (slot.upgradeLevel ?? 0) < skill.maxUpgradeLevel
+          ? skill.upgradeCost * ((slot.upgradeLevel ?? 0) + 1)
+          : null;
+        return `<div class="hero-skill-wrap"><button type="button" class="hero-skill" data-skill-id="${slot.id}" title="${slot.description}" aria-pressed="${this.targetingSkillId === slot.id}" ${!hero.alive || !slot.unlocked || cooldown > 0 ? 'disabled' : ''}>
           <span>${slot.label}</span><small>${status}</small>
-        </button>`;
-      }).join('')}</div>`;
+        </button>${upgradeCost === null ? '' : `<button type="button" class="hero-skill__upgrade" data-skill-upgrade="${slot.id}" ${state.scrap < upgradeCost ? 'disabled' : ''}>+${skill.durationUpgradeMs / 1000}s · ${upgradeCost} Scrap</button>`}</div>`;
+      }).join('')}</div>` : '';
     this.elements.commandHero.textContent = this.inputMode === 'move' ? 'Move Singularity · active' : 'Move Singularity';
     this.elements.commandHero.setAttribute('aria-pressed', String(this.inputMode === 'move'));
     this.elements.commandHero.disabled = !hero.alive;
@@ -642,6 +686,7 @@ export class Hud {
       );
       button.disabled =
         state.stationIntegrity <= 0 || state.scrap < definition.cost;
+      if (state.towers.some((tower) => tower.construction)) button.disabled = true;
     }
 
     const riftLeech = state.enemies.find(
@@ -660,8 +705,10 @@ export class Hud {
         ? `${getHeroSkill(this.targetingSkillId)?.label ?? 'Hero skill'} active: choose a valid target.`
       : this.simulation.map.mode === 'maze'
         ? 'Build a maze on the grid. Keep a route open to the exit. Click a wall while building to replace it and recover 80%.'
-        : this.simulation.map.mode === 'rooms'
-          ? 'Build in either unlocked room. Keep the Arrival Gate and every room route clear.'
+      : this.simulation.map.mode === 'rooms'
+          ? state.towers.some((tower) => tower.construction)
+            ? 'Singularity is constructing. The task advances only while the Marshal is within two tiles.'
+            : 'Build in either unlocked room. Singularity walks into range to assemble or upgrade it; keep every room route clear.'
         : 'Click clear ground to deploy the selected tower. Click a deployed tower to upgrade.';
   }
 

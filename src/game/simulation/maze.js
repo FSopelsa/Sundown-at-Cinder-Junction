@@ -1,5 +1,6 @@
 // A reverse 0-1 distance field gives every open cell its shortest travel cost
-// to the exit. Normal moves cost one cell; an active Worm Tunnel costs zero.
+// to the exit. Normal moves cost one cell; an active Worm Tunnel costs zero
+// from its first endpoint (entry) to its second endpoint (exit).
 // All enemies share this field and rebuild it only when blockers or portals change.
 export function cellKey(cell) {
   return `${cell.col},${cell.row}`;
@@ -35,17 +36,22 @@ function neighbors(cell) {
 
 function normalizedWormholes(wormholes = []) {
   if (!Array.isArray(wormholes) || wormholes.length !== 2) return [];
-  const [first, second] = wormholes;
-  if (!first?.cell || !second?.cell) return [];
-  return [first, second];
+  const [entry, exit] = wormholes;
+  if (!entry?.cell || !exit?.cell || entry.remainingMs <= 0 || exit.remainingMs <= 0) return [];
+  return [entry, exit];
 }
 
 export function getWormholePeer(cell, wormholes = []) {
-  const [first, second] = normalizedWormholes(wormholes);
-  if (!first || !second) return null;
-  if (cellKey(cell) === cellKey(first.cell)) return { ...second.cell };
-  if (cellKey(cell) === cellKey(second.cell)) return { ...first.cell };
+  const [entry, exit] = normalizedWormholes(wormholes);
+  if (!entry || !exit) return null;
+  if (cellKey(cell) === cellKey(entry.cell)) return { ...exit.cell };
   return null;
+}
+
+function getWormholeEntryForExit(cell, wormholes = []) {
+  const [entry, exit] = normalizedWormholes(wormholes);
+  if (!entry || !exit || cellKey(cell) !== cellKey(exit.cell)) return null;
+  return { ...entry.cell };
 }
 
 export function isWormholeTransition(from, to, wormholes = []) {
@@ -63,10 +69,13 @@ export function buildDistanceField(map, towers, candidate = null, wormholes = []
   for (let index = 0; index < queue.length; index += 1) {
     const cell = queue[index];
     const distance = distances.get(cellKey(cell));
-    const portalPeer = getWormholePeer(cell, wormholes);
+    // The field is calculated from the exit backwards. A directed entry ->
+    // exit tunnel therefore contributes its reverse edge only while building
+    // the field; movement still only ever travels entry -> exit.
+    const portalEntry = getWormholeEntryForExit(cell, wormholes);
     const transitions = [
       ...neighbors(cell).map((next) => ({ next, cost: 1 })),
-      ...(portalPeer ? [{ next: portalPeer, cost: 0 }] : []),
+      ...(portalEntry ? [{ next: portalEntry, cost: 0 }] : []),
     ];
     for (const { next, cost } of transitions) {
       const key = cellKey(next);
@@ -84,12 +93,11 @@ export function buildDistanceField(map, towers, candidate = null, wormholes = []
 export function nextRouteCell(cell, distances, wormholes = []) {
   const distance = distances.get(cellKey(cell));
   const portalPeer = getWormholePeer(cell, wormholes);
+  if (portalPeer && distances.get(cellKey(portalPeer)) === distance) return portalPeer;
   const normalStep = neighbors(cell)
     .find((next) => distances.get(cellKey(next)) === distance - 1);
   if (normalStep) return normalStep;
-  return portalPeer && distances.get(cellKey(portalPeer)) === distance
-    ? portalPeer
-    : null;
+  return null;
 }
 
 export function routePoints(map, distances, wormholes = []) {

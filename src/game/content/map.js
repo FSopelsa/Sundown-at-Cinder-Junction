@@ -1,3 +1,11 @@
+import { MODEL_KEYS } from '../assets/manifest.js';
+import {
+  defineRoom,
+  defineRoomConnection,
+  defineRoomMap,
+  roomCell,
+} from './rooms.js';
+
 const path = [
   { x: 0, y: 118 },
   { x: 250, y: 118 },
@@ -9,32 +17,103 @@ const path = [
   { x: 1280, y: 590 },
 ].map(Object.freeze);
 
-function roomCell(roomId, col, row) {
-  return Object.freeze({ roomId, col, row });
-}
-
 const THRESHOLD_ROOMS = Object.freeze([
-  Object.freeze({
+  defineRoom({
     id: 'arrival-yard',
     name: 'Arrival Yard',
-    grid: Object.freeze({ x: 40, y: 80, columns: 15, rows: 20, cellSize: 40 }),
-    environment: Object.freeze({ palette: 'rust', hero: 'scrap-crane' }),
+    x: 40,
+    y: 80,
+    columns: 15,
+    rows: 20,
+    environment: { palette: 'rust', model: MODEL_KEYS.environment.arrivalYard, hero: 'scrap-crane' },
   }),
-  Object.freeze({
+  defineRoom({
     id: 'relay-hall',
     name: 'Relay Hall',
-    grid: Object.freeze({ x: 760, y: 80, columns: 15, rows: 20, cellSize: 40 }),
-    environment: Object.freeze({ palette: 'teal', hero: 'power-relay' }),
+    x: 760,
+    y: 80,
+    columns: 15,
+    rows: 20,
+    environment: { palette: 'teal', model: MODEL_KEYS.environment.relayHall, hero: 'power-relay' },
   }),
 ]);
 
 const THRESHOLD_CONNECTIONS = Object.freeze([
-  Object.freeze({
+  defineRoomConnection({
     id: 'arrival-gate',
     name: 'Arrival Gate',
     from: roomCell('arrival-yard', 14, 10),
     to: roomCell('relay-hall', 0, 10),
-    initiallyOpen: true,
+  }),
+]);
+
+// Four rooms in a loop. Every room carries a palette instead of bespoke
+// renderer code, and the sealed Slag Shutter is the shortcut a future
+// progression unlock can open through `roomState.openDoorIds`.
+const SMELTWORKS_ROOMS = Object.freeze([
+  defineRoom({
+    id: 'intake-bay',
+    name: 'Intake Bay',
+    x: 40,
+    y: 80,
+    columns: 14,
+    rows: 12,
+    environment: { palette: 'basalt', hero: 'ore-hopper' },
+  }),
+  defineRoom({
+    id: 'smelt-floor',
+    name: 'Smelt Floor',
+    x: 680,
+    y: 80,
+    columns: 16,
+    rows: 12,
+    environment: { palette: 'ember', hero: 'crucible' },
+  }),
+  defineRoom({
+    id: 'slag-gallery',
+    name: 'Slag Gallery',
+    x: 680,
+    y: 640,
+    columns: 16,
+    rows: 10,
+    environment: { palette: 'slag', hero: 'slag-rake' },
+  }),
+  defineRoom({
+    id: 'tapline-terrace',
+    name: 'Tapline Terrace',
+    x: 40,
+    y: 640,
+    columns: 14,
+    rows: 10,
+    environment: { palette: 'teal', hero: 'tap-valve' },
+  }),
+]);
+
+const SMELTWORKS_CONNECTIONS = Object.freeze([
+  defineRoomConnection({
+    id: 'intake-sluice',
+    name: 'Intake Sluice',
+    from: roomCell('intake-bay', 13, 6),
+    to: roomCell('smelt-floor', 0, 6),
+  }),
+  defineRoomConnection({
+    id: 'smelt-stair',
+    name: 'Smelt Stair',
+    from: roomCell('smelt-floor', 8, 11),
+    to: roomCell('slag-gallery', 8, 0),
+  }),
+  defineRoomConnection({
+    id: 'gallery-causeway',
+    name: 'Gallery Causeway',
+    from: roomCell('slag-gallery', 0, 5),
+    to: roomCell('tapline-terrace', 13, 5),
+  }),
+  defineRoomConnection({
+    id: 'slag-shutter',
+    name: 'Slag Shutter',
+    from: roomCell('intake-bay', 7, 11),
+    to: roomCell('tapline-terrace', 7, 0),
+    initiallyOpen: false,
   }),
 ]);
 
@@ -83,28 +162,37 @@ export const OVERLOOK_MAP = Object.freeze({
 // First 3D migration level. Each room retains its own grid and a stable ID;
 // connections are graph edges rather than a large flattened grid. The door is
 // intentionally open for this milestone so traversal can be tested end-to-end.
-export const THRESHOLD_MAP = Object.freeze({
+export const THRESHOLD_MAP = defineRoomMap({
   id: 'cinder-threshold',
   name: 'Cinder Threshold · 3D Trial',
-  mode: 'rooms',
-  width: 1440,
-  height: 960,
   startingScrap: 560,
   rooms: THRESHOLD_ROOMS,
-  roomConnections: THRESHOLD_CONNECTIONS,
+  connections: THRESHOLD_CONNECTIONS,
   entrance: roomCell('arrival-yard', 0, 10),
   exit: roomCell('relay-hall', 14, 10),
-  heroSpawn: Object.freeze({ x: 140, y: 520 }),
-  roomState: Object.freeze({
-    unlockedRoomIds: Object.freeze(THRESHOLD_ROOMS.map((room) => room.id)),
-    openDoorIds: Object.freeze(THRESHOLD_CONNECTIONS
-      .filter((connection) => connection.initiallyOpen)
-      .map((connection) => connection.id)),
-  }),
-  presentation: Object.freeze({ type: 'three' }),
+  heroSpawn: { x: 140, y: 520 },
 });
 
-export const LEVELS = Object.freeze([THRESHOLD_MAP, SWITCHYARD_MAP, MAZE_MAP, OVERLOOK_MAP]);
+// Second 3D level: a four-room loop that proves the room graph scales past a
+// single doorway without touching simulation or renderer code.
+export const SMELTWORKS_MAP = defineRoomMap({
+  id: 'cinder-smeltworks',
+  name: 'Cinder Smeltworks · Four Rooms',
+  startingScrap: 620,
+  rooms: SMELTWORKS_ROOMS,
+  connections: SMELTWORKS_CONNECTIONS,
+  entrance: roomCell('intake-bay', 0, 6),
+  exit: roomCell('tapline-terrace', 0, 5),
+  heroSpawn: { x: 180, y: 460 },
+});
+
+export const LEVELS = Object.freeze([
+  THRESHOLD_MAP,
+  SMELTWORKS_MAP,
+  SWITCHYARD_MAP,
+  MAZE_MAP,
+  OVERLOOK_MAP,
+]);
 
 export const DEFAULT_3D_LEVEL_ID = THRESHOLD_MAP.id;
 

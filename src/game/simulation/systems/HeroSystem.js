@@ -159,6 +159,37 @@ export class HeroSystem {
     slot.cooldownRemainingMs = skill.cooldownMs;
   }
 
+  getSkillUpgradeCost(skill, slot) {
+    if (!Number.isFinite(skill.upgradeCost)) return null;
+    return skill.upgradeCost * ((slot.upgradeLevel ?? 0) + 1);
+  }
+
+  upgradeHeroSkill(skillId) {
+    const skill = getHeroSkill(skillId);
+    const slot = this.getSkillSlot(skillId);
+    if (!skill || !slot || !slot.unlocked) {
+      return { ok: false, reason: 'Unlock that ability before upgrading it.' };
+    }
+    if (!Number.isFinite(skill.durationUpgradeMs) || !Number.isInteger(skill.maxUpgradeLevel)) {
+      return { ok: false, reason: 'That ability has no configured upgrade.' };
+    }
+    if ((slot.upgradeLevel ?? 0) >= skill.maxUpgradeLevel) {
+      return { ok: false, reason: `${skill.label} is already at maximum duration.` };
+    }
+    const cost = this.getSkillUpgradeCost(skill, slot);
+    if (!this.economySystem?.spendScrap(cost)) {
+      return { ok: false, reason: `Requires ${cost} Scrap.` };
+    }
+    slot.upgradeLevel = (slot.upgradeLevel ?? 0) + 1;
+    return {
+      ok: true,
+      skill,
+      slot,
+      cost,
+      durationMs: skill.durationMs + slot.upgradeLevel * skill.durationUpgradeMs,
+    };
+  }
+
   castGravityWell(skill, slot, x, y) {
     const target = this.getOpenGroundTarget(x, y, skill.range);
     if (!target.ok) return target;
@@ -304,9 +335,21 @@ export class HeroSystem {
     if (first && distanceBetween(first, endpoint) < skill.minimumDistance) {
       return { ok: false, reason: 'Set the second endpoint farther from the first.' };
     }
+    if (first && Number.isFinite(first.progress) && endpoint.progress <= first.progress) {
+      return { ok: false, reason: 'Set the exit farther along the rail than the entrance.' };
+    }
     this.gameState.wormholes.push(endpoint);
     const complete = this.gameState.wormholes.length === 2;
-    if (complete) this.startCooldown(slot, skill);
+    const durationMs = skill.durationMs + (slot.upgradeLevel ?? 0) * skill.durationUpgradeMs;
+    if (complete) {
+      this.gameState.wormholes = this.gameState.wormholes.map((portal, index) => ({
+        ...portal,
+        direction: index === 0 ? 'entry' : 'exit',
+        durationMs,
+        remainingMs: durationMs,
+      }));
+      this.startCooldown(slot, skill);
+    }
     this.events.push({
       type: complete ? 'wormhole-linked' : 'wormhole-placed',
       x: endpoint.x, y: endpoint.y,
@@ -314,11 +357,19 @@ export class HeroSystem {
       targetY: complete ? first.y : undefined,
       endpoint,
     });
-    return { ok: true, skill, endpoint, pending: !complete, keepTargeting: !complete };
+    return {
+      ok: true,
+      skill,
+      endpoint,
+      pending: !complete,
+      keepTargeting: !complete,
+      ...(complete ? { durationMs } : {}),
+    };
   }
 
   update(deltaMs) {
     this.updateSkillCooldowns(deltaMs);
+    this.updateWormholes(deltaMs);
     this.updateGravityWells(deltaMs);
 
     const hero = this.hero;
@@ -346,6 +397,28 @@ export class HeroSystem {
     for (const slot of this.hero.skillSlots) {
       slot.cooldownRemainingMs = Math.max(0, (slot.cooldownRemainingMs ?? 0) - deltaMs);
     }
+  }
+
+  updateWormholes(deltaMs) {
+    if (this.gameState.wormholes.length !== 2) return;
+    const [entry, exit] = this.gameState.wormholes;
+    const remainingMs = Math.max(0, Math.min(
+      Number.isFinite(entry.remainingMs) ? entry.remainingMs : 0,
+      Number.isFinite(exit.remainingMs) ? exit.remainingMs : 0,
+    ) - deltaMs);
+    if (remainingMs > 0) {
+      entry.remainingMs = remainingMs;
+      exit.remainingMs = remainingMs;
+      return;
+    }
+    this.gameState.wormholes = [];
+    this.events.push({
+      type: 'wormhole-collapse',
+      x: entry.x,
+      y: entry.y,
+      targetX: exit.x,
+      targetY: exit.y,
+    });
   }
 
   updateGravityWells(deltaMs) {

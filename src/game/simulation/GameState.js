@@ -5,6 +5,7 @@ export const SAVE_SCHEMA_VERSION = 1;
 
 function cloneTower(tower) {
   return { ...tower, level: tower.level ?? 1, upgrades: [...(tower.upgrades ?? [])],
+    construction: tower.construction ? { ...tower.construction } : null,
     effect: tower.effect ? { ...tower.effect } : null,
     chain: tower.chain ? { ...tower.chain } : null };
 }

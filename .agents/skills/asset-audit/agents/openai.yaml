@@ -1,0 +1,6 @@
+interface:
+  display_name: "Sundown Asset Audit"
+  short_description: "Review Blender, GLB, manifest, provenance, and runtime fit."
+  default_prompt: "Use $asset-audit to review a Sundown runtime asset before it is admitted or changed."
+policy:
+  allow_implicit_invocation: true

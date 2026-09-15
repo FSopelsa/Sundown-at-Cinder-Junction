@@ -2,9 +2,29 @@ node_modules/
 dist/
 coverage/
 artifacts/playtest/
+playwright-report/
+test-results/
+blob-report/
 .vite/
 .idea/
 *.iml
+
+# Ignore local image assets until they are hosted elsewhere.
+*.png
+*.png.*
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.avif
+*.bmp
+*.ico
+*.svg
+*.tif
+*.tiff
+*.jfif
+*.heic
+*.heif
 
 .env
 .env.*
@@ -15,3 +35,4 @@ Thumbs.db
 *.blend1
 
 .npm-cache/
+debug.log
