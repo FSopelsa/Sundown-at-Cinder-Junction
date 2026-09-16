@@ -1,7 +1,12 @@
 # Sundown at Cinder Junction — Game Design
 
 This document preserves the original concept and first-playable plan for the
-project.
+project. The current campaign direction is recorded in
+[`campaign-vision.md`](campaign-vision.md), based on the owner's map sketch and
+16 September 2026 explanation. That note supersedes the fixed-path map,
+standalone-level progression, fixed run schedule, and next-milestone assumptions
+below. Other original ideas remain context, not a claim that every feature is
+implemented or still settled.
 
 A browser-native 3D tower-defense game about defending a battered jump-rail station on the edge of settled space.
 
@@ -253,7 +258,10 @@ The first 3D milestone now includes:
 - Tests for room traversal, save round-trips, door-safe placement, and existing
   simulation behavior
 
-The next implementation milestone is vertical-slice polish: approve a visual
-brief, replace the functional blockouts with authored environment art, establish
-real model animation clips, and then stream render rooms only if profiling shows
-the growing campaign needs it.
+The next implementation milestone is progressive campaign opening: start with
+one visible room, clear its waves, reveal a second room, and extend enemy travel
+through the existing maze to the original portal. Then prove the central
+mandatory waypoint and the first branch choice. See
+[`campaign-vision.md`](campaign-vision.md) for the verified gaps, proposed
+milestones, and unresolved design questions. Final environment art follows
+those room functions; render-room streaming remains a profiling-led decision.
