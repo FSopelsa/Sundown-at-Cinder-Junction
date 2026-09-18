@@ -6,13 +6,18 @@ import { ACTIONS } from '../../src/game/input/actions.js';
 import { TOWER_DEFINITIONS } from '../../src/game/content/towers.js';
 import { createSimulation } from '../../src/game/simulation/createSimulation.js';
 import { buildDistanceField, cellCenter, cellKey, isWormholeTransition } from '../../src/game/simulation/maze.js';
-import { roomCellCenter } from '../../src/game/simulation/roomNavigation.js';
+import { isHeroCellBlocked, worldToHeroCell } from '../../src/game/simulation/navigation.js';
+import {
+  buildRoomDistanceField,
+  roomCellCenter,
+  roomCellKey,
+} from '../../src/game/simulation/roomNavigation.js';
 
 function unlockWormTunnel(simulation) {
   const hero = simulation.state.hero;
-  hero.level = 5;
-  Object.assign(hero, getHeroStats(5));
-  hero.skillSlots = createHeroSkillSlots(5, hero.skillSlots);
+  hero.level = 6;
+  Object.assign(hero, getHeroStats(6));
+  hero.skillSlots = createHeroSkillSlots(6, hero.skillSlots);
 }
 
 function finishConstruction(simulation) {
@@ -34,6 +39,7 @@ test('Worm Tunnel is directional, expires, and can be upgraded for a longer acti
   assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...entry }).pending, true);
   const linked = simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...exit });
   assert.equal(linked.durationMs, 7500);
+  assert.equal(linked.cost, 75);
   assert.equal(isWormholeTransition({ col: 3, row: 4 }, { col: 20, row: 4 }, simulation.state.wormholes), true);
   assert.equal(isWormholeTransition({ col: 20, row: 4 }, { col: 3, row: 4 }, simulation.state.wormholes), false);
   assert.ok(buildDistanceField(MAZE_MAP, [], null, simulation.state.wormholes).get(cellKey(MAZE_MAP.entrance)) < 23);
@@ -42,6 +48,46 @@ test('Worm Tunnel is directional, expires, and can be upgraded for a longer acti
   assert.equal(simulation.state.wormholes.length, 2);
   simulation.systems.heroSystem.update(2);
   assert.equal(simulation.state.wormholes.length, 0);
+});
+
+test('Ctrl-style placement queues reserved towers and builds them in placement order', () => {
+  const simulation = createSimulation({ levelId: THRESHOLD_MAP.id, scrap: 4000 });
+  const firstPoint = roomCellCenter(THRESHOLD_MAP, { roomId: 'arrival-yard', col: 5, row: 5 });
+  const secondPoint = roomCellCenter(THRESHOLD_MAP, { roomId: 'arrival-yard', col: 9, row: 7 });
+  const first = simulation.dispatch(ACTIONS.placeTower, { towerType: 'peacemaker', ...firstPoint });
+  const rejected = simulation.dispatch(ACTIONS.placeTower, { towerType: 'sunspitter', ...secondPoint });
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.reason, /hold ctrl/i);
+
+  const second = simulation.dispatch(ACTIONS.placeTower, {
+    towerType: 'sunspitter', ...secondPoint, queue: true,
+  });
+  assert.equal(second.ok, true);
+  assert.equal(first.tower.construction.status, 'active');
+  assert.equal(second.tower.construction.status, 'queued');
+  assert.ok(second.tower.construction.queueIndex > first.tower.construction.queueIndex);
+  const reservedCell = worldToHeroCell(THRESHOLD_MAP, secondPoint.x, secondPoint.y);
+  assert.equal(isHeroCellBlocked(THRESHOLD_MAP, simulation.state.towers, reservedCell), true);
+  const enemyDistances = buildRoomDistanceField(
+    THRESHOLD_MAP,
+    simulation.state.towers,
+    null,
+    simulation.state.wormholes,
+    simulation.state.roomState,
+  );
+  assert.equal(enemyDistances.has(roomCellKey(reservedCell)), false);
+
+  const duplicate = simulation.dispatch(ACTIONS.placeTower, {
+    towerType: 'wall', ...secondPoint, queue: true,
+  });
+  assert.equal(duplicate.ok, false);
+
+  for (let frame = 0; frame < 1200 && first.tower.construction; frame += 1) {
+    simulation.update(1000 / 60);
+  }
+  assert.equal(first.tower.construction, null);
+  assert.equal(second.tower.construction.status, 'active');
+  finishConstruction(simulation);
 });
 
 test('the Marshal walks to 3D construction, then activates build and upgrade effects', () => {

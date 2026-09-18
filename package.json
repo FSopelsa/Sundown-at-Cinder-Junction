@@ -12,6 +12,8 @@
     "test:browser": "playwright test",
     "assets:validate": "node scripts/check-models.mjs validate",
     "assets:inspect": "node scripts/check-models.mjs inspect",
+    "assets:prepare": "node scripts/prepare-asset-collection.mjs",
+    "assets:prepare:zip-bag": "node scripts/prepare-zip-bag.mjs",
     "check": "npm run test && npm run build && npm run assets:validate && npm run test:browser"
   },
   "dependencies": {

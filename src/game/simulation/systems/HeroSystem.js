@@ -358,6 +358,14 @@ export class HeroSystem {
     if (first && Number.isFinite(first.progress) && endpoint.progress <= first.progress) {
       return { ok: false, reason: 'Set the exit farther along the rail than the entrance.' };
     }
+    const castCost = first && Number.isFinite(skill.scrapCost) ? skill.scrapCost : 0;
+    if (castCost > 0 && (this.gameState.scrap ?? 0) < castCost) {
+      return { ok: false, reason: `Worm Tunnel requires ${castCost} Scrap.` };
+    }
+    if (castCost > 0 && !this.economySystem?.spendScrap(castCost)) {
+      return { ok: false, reason: `Worm Tunnel requires ${castCost} Scrap.` };
+    }
+    endpoint.direction = first ? 'exit' : 'entry';
     this.gameState.wormholes.push(endpoint);
     const complete = this.gameState.wormholes.length === 2;
     const durationMs = skill.durationMs + (slot.upgradeLevel ?? 0) * skill.durationUpgradeMs;
@@ -383,6 +391,7 @@ export class HeroSystem {
       endpoint,
       pending: !complete,
       keepTargeting: !complete,
+      cost: castCost,
       ...(complete ? { durationMs } : {}),
     };
   }
@@ -394,10 +403,13 @@ export class HeroSystem {
 
     const hero = this.hero;
     hero.aegisRemainingMs = Math.max(0, (hero.aegisRemainingMs ?? 0) - deltaMs);
+    hero.speedBoostRemainingMs = Math.max(0, (hero.speedBoostRemainingMs ?? 0) - deltaMs);
+    if (hero.speedBoostRemainingMs === 0) hero.speedBoostMultiplier = 1;
     if (!hero.alive) return;
 
     this.updateMovement(deltaMs);
     this.collectNearbyScrap();
+    this.collectNearbyPickups();
     hero.attackCooldownMs = Math.max(0, hero.attackCooldownMs - deltaMs);
     if (hero.attackCooldownMs > 0) return;
 
@@ -522,6 +534,32 @@ export class HeroSystem {
     }
   }
 
+  collectNearbyPickups() {
+    const hero = this.hero;
+    const collected = [];
+    for (const pickup of this.gameState.pickups ?? []) {
+      if (distanceBetween(hero, pickup) > (pickup.collectRadius ?? 30)) continue;
+      if (pickup.type === 'speed-boost') {
+        hero.speedBoostRemainingMs = Math.max(
+          hero.speedBoostRemainingMs ?? 0,
+          pickup.durationMs ?? 0,
+        );
+        hero.speedBoostMultiplier = Math.max(1, pickup.speedMultiplier ?? 1);
+      }
+      collected.push(pickup.id);
+      this.events.push({
+        type: 'pickup-collected',
+        x: pickup.x,
+        y: pickup.y,
+        pickup,
+      });
+    }
+    if (collected.length > 0) {
+      this.gameState.pickups = this.gameState.pickups
+        .filter((pickup) => !collected.includes(pickup.id));
+    }
+  }
+
   updateMovement(deltaMs) {
     const hero = this.hero;
     const revision = getTowerNavigationRevision(this.gameState.towers);
@@ -530,7 +568,10 @@ export class HeroSystem {
       hero.reroutePending = true;
     }
 
-    let remainingDistance = hero.moveSpeed * (deltaMs / 1000);
+    const speedMultiplier = (hero.speedBoostRemainingMs ?? 0) > 0
+      ? Math.max(1, hero.speedBoostMultiplier ?? 1)
+      : 1;
+    let remainingDistance = hero.moveSpeed * speedMultiplier * (deltaMs / 1000);
     while (remainingDistance > 0) {
       if (!hero.navigationNext) {
         if (hero.reroutePending) this.rebuildRoute();

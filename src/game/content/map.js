@@ -171,6 +171,12 @@ export const THRESHOLD_MAP = defineRoomMap({
   entrance: roomCell('arrival-yard', 0, 10),
   exit: roomCell('relay-hall', 14, 10),
   heroSpawn: { x: 140, y: 520 },
+  pickupSpawns: [{
+    id: 'threshold-slipstream-bag',
+    type: 'speed-boost',
+    x: 220,
+    y: 620,
+  }],
 });
 
 // Second 3D level: a four-room loop that proves the room graph scales past a

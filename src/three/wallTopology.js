@@ -34,6 +34,19 @@ function neighbours(map, cell) {
   };
 }
 
+function ownedDiagonalNeighbours(map, cell) {
+  if (isRoomMap(map)) {
+    return {
+      northEast: { roomId: cell.roomId, col: cell.col + 1, row: cell.row - 1 },
+      southEast: { roomId: cell.roomId, col: cell.col + 1, row: cell.row + 1 },
+    };
+  }
+  return {
+    northEast: { col: cell.col + 1, row: cell.row - 1 },
+    southEast: { col: cell.col + 1, row: cell.row + 1 },
+  };
+}
+
 /**
  * Returns the presentational join state for a simulation-owned wall. The
  * simulation remains responsible for the cell occupancy and path validation;
@@ -65,6 +78,15 @@ export function getWallTopology(map, tower, towers = []) {
       wallCells.has(cellIdentity(map, candidate)),
     ]),
   );
+  const diagonalBridges = Object.entries(ownedDiagonalNeighbours(map, cell))
+    .filter(([, candidate]) => wallCells.has(cellIdentity(map, candidate)))
+    .map(([direction]) => ({
+      direction,
+      offsetX: 0.5,
+      offsetZ: direction === 'northEast' ? -0.5 : 0.5,
+      rotationY: direction === 'northEast' ? Math.PI / 4 : -Math.PI / 4,
+      scaleX: Math.SQRT2,
+    }));
 
   // If a layout contains both axes, the presenter renders the primary core and
   // a perpendicular duplicate. Horizontal is primary only to keep this result
@@ -81,6 +103,7 @@ export function getWallTopology(map, tower, towers = []) {
     cross: hasHorizontal && hasVertical,
     showNegativeEndCap: caps.negative,
     showPositiveEndCap: caps.positive,
+    ...(diagonalBridges.length > 0 ? { diagonalBridges } : {}),
   };
 }
 

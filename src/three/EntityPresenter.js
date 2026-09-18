@@ -2,6 +2,14 @@ import * as THREE from 'three';
 import { MODEL_KEYS } from '../game/assets/manifest.js';
 import { simulationToWorld } from './coordinates.js';
 import { getWallTopology } from './wallTopology.js';
+import { animateAsset, collectMotionParts, headingFromTravel } from './assetMotion.js';
+import {
+  disposeWallFadeMaterials,
+  makeWallFadeable,
+  updateWallOcclusion,
+} from './wallOcclusion.js';
+
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
 const ENEMY_MODEL_NAMES = Object.freeze({
   dustMite: 'Unit_DustMite',
@@ -75,6 +83,15 @@ function makeHealthBar() {
   return { group, fill };
 }
 
+function prepareWallClone(root) {
+  root.traverse((node) => {
+    if (!node.isMesh) return;
+    delete node.userData.wallFadeMaterials;
+    makeWallFadeable(node);
+  });
+  return root;
+}
+
 function makeConstructionFrame() {
   const frame = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxGeometry(0.84, 0.48, 0.84)),
@@ -86,6 +103,40 @@ function makeConstructionFrame() {
   return frame;
 }
 
+function makeWormholeView(direction) {
+  const entry = direction === 'entry';
+  const color = entry ? 0x52e7df : 0xff9d4d;
+  const group = new THREE.Group();
+  group.name = entry ? 'Worm Tunnel Entry' : 'Worm Tunnel Exit';
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.36, 0.055, 10, 36),
+    new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 2.4,
+      metalness: 0.3,
+      roughness: 0.28,
+    }),
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.055;
+  const field = new THREE.Mesh(
+    new THREE.CircleGeometry(0.31, 36),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: entry ? 0.28 : 0.42,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  field.rotation.x = -Math.PI / 2;
+  field.position.y = 0.035;
+  group.add(field, ring);
+  group.userData.baseScale = entry ? 1 : 0.92;
+  return group;
+}
+
 export class EntityPresenter {
   constructor(scene, modelLibrary) {
     this.scene = scene;
@@ -95,6 +146,8 @@ export class EntityPresenter {
     this.scene.add(this.group);
     this.enemyViews = new Map();
     this.towerViews = new Map();
+    this.pickupViews = new Map();
+    this.wormholeViews = new Map();
     this.heroView = null;
     this.selection = new THREE.Mesh(
       new THREE.RingGeometry(0.48, 0.54, 36),
@@ -113,7 +166,7 @@ export class EntityPresenter {
     const ring = makeStatusRing();
     root.add(ring);
     this.group.add(root);
-    return { root, ring, last: new THREE.Vector3() };
+    return { root, ring, motion: collectMotionParts(root), last: null };
   }
 
   createEnemyView(enemy) {
@@ -122,9 +175,11 @@ export class EntityPresenter {
     );
     const ring = makeStatusRing();
     const health = makeHealthBar();
+    const height = new THREE.Box3().setFromObject(root).max.y;
+    health.group.position.y = Math.max(0, height - 1.05);
     root.add(ring, health.group);
     this.group.add(root);
-    return { root, ring, health, last: new THREE.Vector3() };
+    return { root, ring, health, motion: collectMotionParts(root), last: null };
   }
 
   createTowerView(tower) {
@@ -137,11 +192,17 @@ export class EntityPresenter {
       negativeEndCap: root.getObjectByName('Tower_Wall_End_Negative'),
       positiveEndCap: root.getObjectByName('Tower_Wall_End_Positive'),
       junctionCore: null,
+      diagonalBridges: new Map(),
     } : null;
+    if (tower.type === 'wall') {
+      root.traverse((node) => {
+        if (node.isMesh) makeWallFadeable(node);
+      });
+    }
     const construction = makeConstructionFrame();
     root.add(construction);
     this.group.add(root);
-    return { root, last: new THREE.Vector3(), wallParts, construction };
+    return { root, last: null, wallParts, construction, motion: collectMotionParts(root) };
   }
 
   syncWallView(view, tower, towers, map) {
@@ -154,6 +215,7 @@ export class EntityPresenter {
     if (topology.cross && view.wallParts.core) {
       if (!view.wallParts.junctionCore) {
         view.wallParts.junctionCore = view.wallParts.core.clone(true);
+        prepareWallClone(view.wallParts.junctionCore);
         view.wallParts.junctionCore.name = 'Tower_Wall_Cross_Core';
         view.wallParts.junctionCore.rotation.y = Math.PI / 2;
         view.root.add(view.wallParts.junctionCore);
@@ -161,6 +223,31 @@ export class EntityPresenter {
       view.wallParts.junctionCore.visible = true;
     } else if (view.wallParts.junctionCore) {
       view.wallParts.junctionCore.visible = false;
+    }
+
+    const activeDiagonals = new Set();
+    for (const diagonal of topology.diagonalBridges ?? []) {
+      activeDiagonals.add(diagonal.direction);
+      let bridge = view.wallParts.diagonalBridges.get(diagonal.direction);
+      if (!bridge && view.wallParts.core) {
+        bridge = view.wallParts.core.clone(true);
+        prepareWallClone(bridge);
+        bridge.name = `Tower_Wall_Diagonal_${diagonal.direction}`;
+        view.wallParts.diagonalBridges.set(diagonal.direction, bridge);
+        view.root.add(bridge);
+      }
+      if (!bridge) continue;
+      const offset = new THREE.Vector3(diagonal.offsetX, 0, diagonal.offsetZ)
+        .applyAxisAngle(Y_AXIS, -view.root.rotation.y);
+      bridge.position.copy(view.wallParts.core.position).add(offset);
+      bridge.rotation.copy(view.wallParts.core.rotation);
+      bridge.rotation.y += diagonal.rotationY - view.root.rotation.y;
+      bridge.scale.copy(view.wallParts.core.scale);
+      bridge.scale.x *= diagonal.scaleX;
+      bridge.visible = true;
+    }
+    for (const [direction, bridge] of view.wallParts.diagonalBridges) {
+      if (!activeDiagonals.has(direction)) bridge.visible = false;
     }
   }
 
@@ -171,26 +258,31 @@ export class EntityPresenter {
     }
     const world = simulationToWorld(tower.x, tower.y);
     view.root.position.set(world.x, 0.02, world.z);
-    view.last.copy(view.root.position);
+    view.last = view.root.position.clone();
     this.syncWallView(view, tower, towers, map);
   }
 
   place(view, entity, timeMs, animate = false) {
     const world = simulationToWorld(entity.x, entity.y);
     const next = new THREE.Vector3(world.x, animate ? 0.04 + Math.sin(timeMs * 0.006 + entity.id.length) * 0.025 : 0.02, world.z);
-    if (view.last.distanceToSquared(next) > 0.0001) {
+    let moving = false;
+    if (view.last) {
       const dx = next.x - view.last.x;
       const dz = next.z - view.last.z;
-      if (dx * dx + dz * dz > 0.0001) view.root.rotation.y = Math.atan2(dx, dz);
+      moving = dx * dx + dz * dz > 0.000001;
+      if (moving) view.root.rotation.y = headingFromTravel(dx, dz);
     }
     view.root.position.copy(next);
-    view.last.copy(next);
+    view.last = next;
+    if (view.motion) animateAsset(view.motion, timeMs, moving);
   }
 
   sync(state, selectedTowerId, camera, timeMs, map) {
     this.syncHero(state.hero, timeMs);
     this.syncTowers(state.towers, selectedTowerId, map, timeMs);
     this.syncEnemies(state.enemies, camera, timeMs);
+    this.syncPickups(state.pickups ?? [], timeMs);
+    this.syncWormholes(state.wormholes ?? [], timeMs);
   }
 
   syncHero(hero, timeMs) {
@@ -209,6 +301,7 @@ export class EntityPresenter {
       const view = this.towerViews.get(tower.id) ?? this.createTowerView(tower);
       this.towerViews.set(tower.id, view);
       this.placeTower(view, tower, towers, map);
+      animateAsset(view.motion, timeMs);
       this.syncConstruction(view, tower, timeMs);
       const selected = tower.id === selectedTowerId;
       if (selected) {
@@ -219,6 +312,7 @@ export class EntityPresenter {
     if (!towers.some((tower) => tower.id === selectedTowerId)) this.selection.visible = false;
     for (const [id, view] of this.towerViews) {
       if (active.has(id)) continue;
+      if (view.wallParts) view.root.traverse((node) => disposeWallFadeMaterials(node));
       this.group.remove(view.root);
       this.towerViews.delete(id);
     }
@@ -228,12 +322,97 @@ export class EntityPresenter {
     const construction = tower.construction;
     view.construction.visible = Boolean(construction);
     if (!construction) return;
+    const queued = construction.status === 'queued';
     const progress = Math.max(0, Math.min(1,
       1 - construction.remainingMs / construction.durationMs,
     ));
-    view.construction.rotation.y = timeMs * 0.002;
-    view.construction.scale.set(0.72 + progress * 0.28, 0.35 + progress * 0.65, 0.72 + progress * 0.28);
-    view.construction.material.opacity = 0.55 + (1 - progress) * 0.35;
+    view.construction.rotation.y = queued ? 0 : timeMs * 0.002;
+    view.construction.scale.set(
+      queued ? 0.76 : 0.72 + progress * 0.28,
+      queued ? 0.4 : 0.35 + progress * 0.65,
+      queued ? 0.76 : 0.72 + progress * 0.28,
+    );
+    view.construction.material.color.set(queued ? 0x5dd8e6 : 0xffc46b);
+    view.construction.material.opacity = queued ? 0.68 : 0.55 + (1 - progress) * 0.35;
+  }
+
+  syncPickups(pickups, timeMs) {
+    const active = new Set();
+    for (const pickup of pickups) {
+      active.add(pickup.id);
+      let view = this.pickupViews.get(pickup.id);
+      if (!view) {
+        const root = setShadowFlags(
+          this.modelLibrary.cloneNamed(MODEL_KEYS.zipBag, 'Prop_ZipBag') ?? fallbackModel(0x5de4c8, 0.24, 0.3),
+        );
+        root.name = `Pickup_${pickup.id}`;
+        root.scale.setScalar(0.52);
+        const ring = makeStatusRing(0x5de4c8);
+        ring.visible = true;
+        ring.scale.setScalar(0.7);
+        root.add(ring);
+        this.group.add(root);
+        view = { root };
+        this.pickupViews.set(pickup.id, view);
+      }
+      const point = simulationToWorld(pickup.x, pickup.y);
+      view.root.position.set(point.x, 0.1 + Math.sin(timeMs * 0.003) * 0.035, point.z);
+      view.root.rotation.y = timeMs * 0.0008;
+    }
+    for (const [id, view] of this.pickupViews) {
+      if (active.has(id)) continue;
+      this.group.remove(view.root);
+      this.pickupViews.delete(id);
+    }
+  }
+
+  syncWormholes(wormholes, timeMs) {
+    const active = new Set();
+    for (const portal of wormholes) {
+      active.add(portal.id);
+      let view = this.wormholeViews.get(portal.id);
+      if (!view || view.userData.direction !== portal.direction) {
+        if (view) this.group.remove(view);
+        view = makeWormholeView(portal.direction);
+        view.userData.direction = portal.direction;
+        this.group.add(view);
+        this.wormholeViews.set(portal.id, view);
+      }
+      const point = simulationToWorld(portal.x, portal.y);
+      view.position.set(point.x, 0.025, point.z);
+      const pulse = view.userData.baseScale * (1 + Math.sin(timeMs * 0.006) * 0.08);
+      view.scale.setScalar(pulse);
+      view.rotation.y = timeMs * (portal.direction === 'entry' ? 0.0012 : -0.0012);
+    }
+    for (const [id, view] of this.wormholeViews) {
+      if (active.has(id)) continue;
+      this.group.remove(view);
+      this.wormholeViews.delete(id);
+    }
+  }
+
+  updateWallOcclusion(camera, target) {
+    this.group.updateMatrixWorld(true);
+    const walls = [];
+    for (const view of this.towerViews.values()) {
+      if (!view.wallParts) continue;
+      view.root.traverse((node) => {
+        if (node.isMesh && node.userData.wallFadeMaterials) walls.push(node);
+      });
+    }
+    return updateWallOcclusion(camera, target, walls, 0.28);
+  }
+
+  consumeCombat(events) {
+    for (const event of events) {
+      if (event.type !== 'tower-fire') continue;
+      const view = this.towerViews.get(event.towerId);
+      if (!view) continue;
+      const heading = headingFromTravel(event.targetX - event.x, event.targetY - event.y);
+      const turret = view.motion.find(part => part.role === 'Motion_Turret');
+      if (turret) turret.node.rotation.y = heading;
+      else if (event.towerType === 'sunspitter') view.root.rotation.y = heading;
+    }
   }
 
   syncEnemies(enemies, camera, timeMs) {
@@ -267,9 +446,14 @@ export class EntityPresenter {
   }
 
   dispose() {
+    for (const view of this.towerViews.values()) {
+      if (view.wallParts) view.root.traverse((node) => disposeWallFadeMaterials(node));
+    }
     this.scene.remove(this.group);
     this.enemyViews.clear();
     this.towerViews.clear();
+    this.pickupViews.clear();
+    this.wormholeViews.clear();
     this.heroView = null;
   }
 }

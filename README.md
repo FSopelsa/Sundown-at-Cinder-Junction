@@ -17,7 +17,10 @@ npm.cmd run dev -- --host 127.0.0.1
 ```
 Open the URL printed by Vite.
 
-Expect rough 3D blockouts and unfinished UI. There is no hosted build yet.
+Expect a playable prototype with unfinished environments and UI. There is no
+hosted build yet. The **Asset library** link opens 29 reference-led 3D models,
+including the active hero/towers/enemies and reserve props for later use. See
+[the asset collection](docs/3d/asset-collection/README.md) for source and rebuild notes.
 
 ## Contributing
 
@@ -48,7 +51,8 @@ are joined by the open Arrival Gate. This proves the intended expansion model:
   idle/movement motion, hit/death effects, and elemental combat beams;
 - the DOM HUD and HTML-audio system remain independent of the renderer.
 
-The GLBs are deliberately **functional blockouts**, not final environment art.
+The room GLBs are deliberately **functional blockouts**, not final environment art.
+Units and flooring now use the reference-led collection, still subject to art review.
 Their Blender source is at [`assets/blender/`](assets/blender/), and the room
 package at [`docs/3d/cinder-threshold/`](docs/3d/cinder-threshold/) records the
 unapproved art-review gates before a final environment pass.

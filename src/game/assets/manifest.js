@@ -28,7 +28,11 @@ export const MODEL_KEYS = Object.freeze({
     arrivalYard: 'environment-arrival-yard',
     relayHall: 'environment-relay-hall',
   }),
-  units: 'prototype-units',
+  units: 'authored-units',
+  prototypeUnits: 'prototype-units',
+  industrialKit: 'industrial-kit',
+  productionReserve: 'production-reserve',
+  zipBag: 'prop-zip-bag',
 });
 
 export const AUDIO_KEYS = Object.freeze({
@@ -59,6 +63,12 @@ export const AUDIO_KEYS = Object.freeze({
 export const ASSET_MANIFEST = Object.freeze({
   models: Object.freeze([
     Object.freeze({
+      key: MODEL_KEYS.zipBag,
+      path: '/assets/models/cinder-zip-bag.glb',
+      kind: 'interactive-prop',
+      preload: true,
+    }),
+    Object.freeze({
       key: MODEL_KEYS.environment.arrivalYard,
       path: '/assets/models/cinder-arrival-yard.glb',
       kind: 'environment',
@@ -69,9 +79,26 @@ export const ASSET_MANIFEST = Object.freeze({
       kind: 'environment',
     }),
     Object.freeze({
-      key: MODEL_KEYS.units,
+      key: MODEL_KEYS.prototypeUnits,
       path: '/assets/models/cinder-prototype-units.glb',
       kind: 'unit-kit',
+      preload: false,
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.units,
+      path: '/assets/models/cinder-authored-units.glb',
+      kind: 'unit-kit',
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.industrialKit,
+      path: '/assets/models/cinder-industrial-kit.glb',
+      kind: 'modular-kit',
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.productionReserve,
+      path: '/assets/models/cinder-production-reserve.glb',
+      kind: 'production-reserve',
+      preload: false,
     }),
   ]),
   audio: Object.freeze([

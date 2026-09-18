@@ -93,7 +93,7 @@ test('Time Dilation speeds tower cooldowns and Void Rend carries the hero as its
 
 test('Quantum Blink respects tower collision and Worm Tunnel becomes a maze shortcut', () => {
   const simulation = mazeSimulation();
-  const hero = unlock(simulation, 5);
+  const hero = unlock(simulation, 6);
   const blinkTarget = cellCenter(MAZE_MAP, { col: 5, row: 7 });
   const blink = simulation.dispatch(ACTIONS.castHeroSkill, {
     skillId: 'quantum-blink', x: blinkTarget.x, y: blinkTarget.y,
@@ -112,6 +112,7 @@ test('Quantum Blink respects tower collision and Worm Tunnel becomes a maze shor
     skillId: 'worm-tunnel', x: second.x, y: second.y,
   });
   assert.equal(secondPortal.ok, true);
+  assert.equal(secondPortal.cost, 75);
   assert.equal(simulation.state.wormholes.length, 2);
 
   const field = buildDistanceField(MAZE_MAP, simulation.state.towers, null, simulation.state.wormholes);
@@ -124,7 +125,7 @@ test('Quantum Blink respects tower collision and Worm Tunnel becomes a maze shor
 
 test('Worm Tunnel also advances enemies along the fixed Switchyard rail route', () => {
   const simulation = createSimulation({ scrap: 10000 });
-  unlock(simulation, 5);
+  unlock(simulation, 6);
   assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, {
     skillId: 'worm-tunnel', x: 100, y: 118,
   }).pending, true);
@@ -136,4 +137,21 @@ test('Worm Tunnel also advances enemies along the fixed Switchyard rail route', 
   simulation.systems.enemySystem.update(1400);
   assert.ok(enemy.progress > 0.4);
   assert.ok(simulation.systems.enemySystem.drainEvents().some((event) => event.type === 'wormhole-travel'));
+});
+
+test('Worm Tunnel keeps its first endpoint pending until its Scrap cost can be paid', () => {
+  const simulation = createSimulation({ levelId: MAZE_MAP.id, scrap: 74 });
+  unlock(simulation, 6);
+  const first = cellCenter(MAZE_MAP, { col: 3, row: 4 });
+  const second = cellCenter(MAZE_MAP, { col: 20, row: 4 });
+  assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, {
+    skillId: 'worm-tunnel', ...first,
+  }).pending, true);
+  const rejected = simulation.dispatch(ACTIONS.castHeroSkill, {
+    skillId: 'worm-tunnel', ...second,
+  });
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.reason, /75 Scrap/);
+  assert.equal(simulation.state.wormholes.length, 1);
+  assert.equal(simulation.state.scrap, 74);
 });

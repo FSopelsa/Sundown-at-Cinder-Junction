@@ -91,6 +91,25 @@ button:disabled {
 .tower-details__heading { justify-content: space-between; }
 .tower-details__heading strong { font-size: 0.9rem; }
 [data-hud="tower-stats"] { color: var(--teal); font-size: 0.85rem; }
+.tower-targeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.tower-targeting > div { display: flex; min-width: 0; }
+.tower-targeting button {
+  min-width: 0;
+  border-radius: 0;
+  padding: 0.35rem 0.48rem;
+  font-size: 0.68rem;
+}
+.tower-targeting button:first-child { border-radius: 4px 0 0 4px; }
+.tower-targeting button:last-child { border-radius: 0 4px 4px 0; }
+.tower-targeting button + button { margin-left: -1px; }
 .upgrade-options { margin-top: 0.75rem; align-items: stretch; }
 .upgrade-options button { flex: 1; font-size: 0.8rem; }
 .tower-details__sell {

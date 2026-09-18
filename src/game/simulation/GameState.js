@@ -1,10 +1,14 @@
 import { getMap } from '../content/map.js';
 import { createHeroState } from '../content/heroes.js';
+import { createPickupState } from '../content/pickups.js';
 
 export const SAVE_SCHEMA_VERSION = 1;
 
 function cloneTower(tower) {
-  return { ...tower, level: tower.level ?? 1, upgrades: [...(tower.upgrades ?? [])],
+  const targeting = ['first', 'toughest', 'last'].includes(tower.targeting)
+    ? tower.targeting
+    : 'first';
+  return { ...tower, level: tower.level ?? 1, targeting, upgrades: [...(tower.upgrades ?? [])],
     construction: tower.construction ? { ...tower.construction } : null,
     effect: tower.effect ? { ...tower.effect } : null,
     chain: tower.chain ? { ...tower.chain } : null };
@@ -112,6 +116,9 @@ export class GameState {
     this.wormholes = Array.isArray(snapshot.wormholes)
       ? snapshot.wormholes.slice(0, 2).map(cloneFieldObject)
       : [];
+    this.pickups = Array.isArray(snapshot.pickups)
+      ? snapshot.pickups.map(cloneFieldObject)
+      : (map.pickupSpawns ?? []).map(createPickupState).filter(Boolean);
     this.roomState = createRoomState(map, snapshot.roomState);
     this.wave = createWaveState(snapshot.wave);
     this.stationIntegrity = Number.isFinite(snapshot.stationIntegrity)
@@ -148,6 +155,7 @@ export class GameState {
       gravityWells: this.gravityWells.map(cloneFieldObject),
       scrapPiles: this.scrapPiles.map(cloneFieldObject),
       wormholes: this.wormholes.map(cloneFieldObject),
+      pickups: this.pickups.map(cloneFieldObject),
       roomState: {
         unlockedRoomIds: [...this.roomState.unlockedRoomIds],
         openDoorIds: [...this.roomState.openDoorIds],

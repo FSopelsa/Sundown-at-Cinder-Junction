@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ACTIONS } from '../game/input/actions.js';
 import { KEY_BINDINGS } from '../game/input/bindings.js';
 import { AudioManager } from './audio/AudioManager.js';
@@ -53,6 +54,13 @@ export class BattlefieldRenderer {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const studio = new RoomEnvironment();
+    this.materialEnvironment = pmrem.fromScene(studio, 0.04);
+    this.scene.environment = this.materialEnvironment.texture;
+    this.scene.environmentIntensity = 0.35;
+    studio.dispose();
+    pmrem.dispose();
     this.renderer.domElement.setAttribute('aria-label', '3D Cinder Junction battlefield');
     this.parent.replaceChildren(this.renderer.domElement);
     this.addLights();
@@ -259,12 +267,15 @@ export class BattlefieldRenderer {
     }
     const result = this.simulation.dispatch(ACTIONS.placeTower, {
       towerType: this.hud?.getSelectedTowerType() ?? 'peacemaker',
+      queue: event.ctrlKey || this.hud?.isBuildQueueActive(),
       ...point,
     });
     this.hud.showNotice(
       result.ok
         ? result.construction
-          ? `${result.tower.name} queued. Singularity is moving into build range.`
+          ? result.queued
+            ? `${result.tower.name} reserved as the next build order.`
+            : `${result.tower.name} queued. Singularity is moving into build range.`
           : result.replacedWall
           ? `${result.tower.name} deployed, replacing a wall for ${result.wallRefund} Scrap.`
           : `${result.tower.name} deployed.`
@@ -276,8 +287,12 @@ export class BattlefieldRenderer {
 
   onKeyDown(event) {
     if (['SELECT', 'INPUT', 'BUTTON', 'TEXTAREA'].includes(event.target?.tagName)) return;
-    if (event.key === 'Control') {
+    if (event.key === 'Shift') {
       this.hud?.beginTemporaryHeroCommand();
+      return;
+    }
+    if (event.key === 'Control') {
+      this.hud?.beginBuildQueue();
       return;
     }
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
@@ -294,7 +309,8 @@ export class BattlefieldRenderer {
   }
 
   onKeyUp(event) {
-    if (event.key === 'Control') this.hud?.endTemporaryHeroCommand();
+    if (event.key === 'Shift') this.hud?.endTemporaryHeroCommand();
+    if (event.key === 'Control') this.hud?.endBuildQueue();
   }
 
   frame(now) {
@@ -310,19 +326,40 @@ export class BattlefieldRenderer {
     this.syncRooms();
     this.routeOverlay.update(this.simulation.map, this.simulation.state, delta);
     for (const event of this.simulation.systems.towerSystem.drainEvents()) {
-      if (event.type !== 'construction-complete') continue;
-      const label = event.construction.kind === 'build'
-        ? `${event.towerName} is online.`
-        : `${event.towerName} upgrade complete.`;
-      this.hud?.showNotice(label, 'success');
+      if (event.type === 'construction-blocked') {
+        this.hud?.showNotice(`${event.towerName} is still queued: ${event.reason}`, 'warning');
+      } else if (event.type === 'construction-started') {
+        this.hud?.showNotice(`Singularity is moving to the next order: ${event.towerName}.`, 'neutral');
+      } else if (event.type === 'construction-complete') {
+        const label = event.construction.kind === 'build'
+          ? `${event.towerName} is online.`
+          : `${event.towerName} upgrade complete.`;
+        this.hud?.showNotice(label, 'success');
+      }
     }
     this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime, this.simulation.map);
+    if (state.hero.alive) {
+      const focus = this.simulationToWorld(state.hero);
+      const target = new THREE.Vector3(focus.x, 0.45, focus.z);
+      this.roomScene.updateOcclusion(this.camera, target);
+      this.entities.updateWallOcclusion(this.camera, target);
+    }
     const combatEvents = this.simulation.systems.combatSystem.drainEvents();
+    this.entities.consumeCombat(combatEvents);
     for (const event of combatEvents) {
       if (event.type === 'tower-fire') this.audio.playTowerAttack(event.towerType);
     }
     this.effects.consumeCombat(combatEvents);
-    this.effects.consumeHero(this.simulation.systems.heroSystem.drainEvents());
+    const heroEvents = this.simulation.systems.heroSystem.drainEvents();
+    for (const event of heroEvents) {
+      if (event.type === 'pickup-collected') {
+        this.hud?.showNotice(
+          `${event.pickup.name}: movement speed boosted for ${Math.ceil(event.pickup.durationMs / 1000)}s.`,
+          'success',
+        );
+      }
+    }
+    this.effects.consumeHero(heroEvents);
     this.effects.update(delta);
     this.announceStateChanges();
     this.renderer.render(this.scene, this.camera);
@@ -362,6 +399,7 @@ export class BattlefieldRenderer {
     this.roomScene?.dispose();
     this.routeOverlay?.dispose();
     this.modelLibrary?.dispose();
+    this.materialEnvironment?.dispose();
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
   }

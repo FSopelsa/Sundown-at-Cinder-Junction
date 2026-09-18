@@ -1,6 +1,7 @@
 export const ACTIONS = Object.freeze({
   startWave: 'start-wave',
   placeTower: 'place-tower',
+  setTowerTargeting: 'set-tower-targeting',
   upgradeTower: 'upgrade-tower',
   purchaseSupport: 'purchase-support',
   activateTowerAbility: 'activate-tower-ability',

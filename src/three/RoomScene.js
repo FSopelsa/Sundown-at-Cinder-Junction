@@ -2,6 +2,12 @@ import * as THREE from 'three';
 import { getRoomPalette } from '../game/content/rooms.js';
 import { roomCellCenter } from '../game/simulation/roomNavigation.js';
 import { METERS_PER_SIMULATION_UNIT, simulationToWorld } from './coordinates.js';
+import { createFloorKit } from './floorKit.js';
+import {
+  disposeWallFadeMaterials,
+  makeWallFadeable,
+  updateWallOcclusion,
+} from './wallOcclusion.js';
 
 function getRenderableRooms(map) {
   if (map.mode === 'rooms') return map.rooms;
@@ -190,6 +196,7 @@ export class RoomScene {
     this.group.name = 'Cinder rooms';
     this.scene.add(this.group);
     this.floorSurfaces = [];
+    this.wallOccluders = [];
   }
 
   build(map, roomState = map.roomState ?? null) {
@@ -201,8 +208,20 @@ export class RoomScene {
       const position = simulationToWorld(grid.x, grid.y);
       const environment = this.modelLibrary.clone(room.environment?.model) ??
         makeProceduralRoom(room, palette, map, roomState);
+      const floorKit = createFloorKit(room, this.modelLibrary);
+      if (floorKit) {
+        environment.traverse((node) => {
+          if (/^Floor[ _](slab|plate)/.test(node.name) || node.name === `${room.id} floor`) node.visible = false;
+        });
+        environment.add(floorKit);
+      }
       environment.name = `${room.id} environment`;
       environment.position.set(position.x, 0, position.z);
+      environment.traverse((node) => {
+        if (!node.isMesh || !/wall/i.test(`${node.name} ${node.parent?.name ?? ''}`)) return;
+        makeWallFadeable(node);
+        this.wallOccluders.push(node);
+      });
       this.group.add(environment);
       const gridLines = makeBuildGrid(room, palette);
       gridLines.position.set(position.x, 0, position.z);
@@ -257,8 +276,19 @@ export class RoomScene {
     this.group.add(light);
   }
 
+  updateOcclusion(camera, target) {
+    this.group.updateMatrixWorld(true);
+    return updateWallOcclusion(camera, target, this.wallOccluders);
+  }
+
   clear() {
+    for (const wall of this.wallOccluders) disposeWallFadeMaterials(wall);
+    this.group.traverse((node) => {
+      // Instance buffers are room-owned; their shared geometry/materials belong to ModelLibrary.
+      if (node.isInstancedMesh) node.dispose();
+    });
     this.floorSurfaces = [];
+    this.wallOccluders = [];
     this.group.clear();
   }
 

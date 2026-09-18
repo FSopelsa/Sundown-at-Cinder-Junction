@@ -79,7 +79,10 @@ export function createSimulation(initialState = new GameState()) {
           payload.towerType ?? 'peacemaker',
           payload.x,
           payload.y,
+          { queue: Boolean(payload.queue) },
         );
+      case ACTIONS.setTowerTargeting:
+        return towerSystem.setTowerTargeting(payload.towerId, payload.targeting);
       case ACTIONS.upgradeTower:
         return towerSystem.upgradeTower(payload.towerId, payload.upgrade);
       case ACTIONS.purchaseSupport:

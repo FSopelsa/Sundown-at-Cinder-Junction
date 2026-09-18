@@ -8,8 +8,17 @@ test('loads the four-room level and starts a raid without console errors', async
 
   await page.goto('/?debug');
   await expect(page.getByRole('button', { name: 'Start raid' })).toBeEnabled();
-  await expect(page.locator('[data-hud="hero-skills"]')).toBeHidden();
+  await expect(page.locator('[data-hud="hero-skills"]')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Worm Tunnel/ })).toBeDisabled();
+  await expect(page.locator('[data-hud="hero-skills"]')).toContainText('L6');
   await expect(page.getByRole('button', { name: 'Move Singularity · H' })).toBeEnabled();
+  await page.keyboard.down('Shift');
+  await expect(page.getByRole('button', { name: 'Move Singularity · active' })).toBeEnabled();
+  await page.keyboard.up('Shift');
+  await expect(page.getByRole('button', { name: 'Move Singularity · H' })).toBeEnabled();
+  await page.keyboard.down('Control');
+  await expect(page.locator('[data-hud="notice"]')).toContainText('Build queue active');
+  await page.keyboard.up('Control');
   await page.keyboard.press('h');
   await expect(page.getByRole('button', { name: 'Move Singularity · active' })).toBeEnabled();
   await page.keyboard.press('h');
