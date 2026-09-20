@@ -1,3 +1,4 @@
+import { CampaignScene } from './CampaignScene.js';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ACTIONS } from '../game/input/actions.js';
@@ -66,7 +67,7 @@ export class BattlefieldRenderer {
     this.addLights();
     this.resize();
 
-    this.modelLibrary = await ModelLibrary.load();
+    this.modelLibrary = await ModelLibrary.load(undefined, { includeReserve: Boolean(this.simulation.map.campaign) });
     this.roomScene = new RoomScene(this.scene, this.modelLibrary);
     this.doorRevision = this.getDoorRevision();
     this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
@@ -76,6 +77,19 @@ export class BattlefieldRenderer {
     this.effects = new EffectsLayer(this.scene);
     this.audio = new AudioManager(this.simulation.state.settings);
     this.cameraControls = new TacticalCamera(this.camera, this.renderer.domElement, this.simulation.map, this.hud.root);
+    if (this.simulation.map.campaign) {
+      this.cameraControls.azimuth = -0.12;
+      this.cameraControls.setMap(this.visibleMap());
+      this.campaignScene = new CampaignScene(this.scene, this.modelLibrary, this.simulation.map);
+      this.hud.campaignHud.focusRoom = id => {
+        const room = this.simulation.map.rooms.find(r => r.id === id && this.simulation.state.roomState.unlockedRoomIds.includes(id));
+        if (room) {
+          this.cameraControls.setMap({ ...this.simulation.map, rooms: [room] }, true);
+          this.cameraControls.map = this.visibleMap();
+        }
+      };
+      this.hud.showNotice(this.simulation.state.campaign.lastMessage, 'neutral');
+    }
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     // Room blockouts currently have flat navigable terrain. Pick against a
@@ -98,8 +112,14 @@ export class BattlefieldRenderer {
     return this;
   }
 
+  visibleMap() {
+    const map = this.simulation.map;
+    return map.campaign ? { ...map, rooms: map.rooms.filter(r => this.simulation.state.roomState.unlockedRoomIds.includes(r.id)) } : map;
+  }
+
   describeMap() {
     const map = this.simulation.map;
+    if (map.campaign) return this.simulation.state.campaign.lastMessage;
     if (!isRoomMap(map)) return `${map.name} ready.`;
     const doors = map.roomConnections ?? [];
     const open = doors.filter((connection) =>
@@ -110,7 +130,7 @@ export class BattlefieldRenderer {
   }
 
   getDoorRevision() {
-    return this.simulation.state.roomState?.openDoorIds?.join('|') ?? '';
+    return JSON.stringify(this.simulation.state.roomState ?? {});
   }
 
   // Doors live in simulation state, so an unlock only has to change
@@ -120,6 +140,11 @@ export class BattlefieldRenderer {
     if (revision === this.doorRevision) return;
     this.doorRevision = revision;
     this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
+    if (this.simulation.map.campaign) {
+      this.cameraControls.setMap(this.visibleMap(), true);
+      this.hud.hideOutcome();
+      this.hud.showNotice(this.simulation.state.campaign.lastMessage, 'success');
+    }
   }
 
   addLights() {
@@ -134,6 +159,8 @@ export class BattlefieldRenderer {
     sun.shadow.camera.top = 22;
     sun.shadow.camera.bottom = -22;
     this.scene.add(sun);
+    this.sunLight = sun;
+    this.scene.add(sun.target);
   }
 
   createBuildPreview() {
@@ -211,6 +238,10 @@ export class BattlefieldRenderer {
     const hit = this.raycaster.ray.intersectPlane(this.pickPlane, this.pickPoint);
     if (!hit) return null;
     const point = worldToSimulation(hit);
+    if (this.simulation.map.campaign) {
+      const cell = worldToRoomCell(this.simulation.map, point.x, point.y);
+      if (!this.simulation.state.roomState.unlockedRoomIds.includes(cell?.roomId)) return null;
+    }
     if (isRoomMap(this.simulation.map) && !getRoomAtWorldPosition(this.simulation.map, point.x, point.y)) {
       return null;
     }
@@ -239,6 +270,20 @@ export class BattlefieldRenderer {
       return;
     }
     this.audio.unlock();
+    if (this.simulation.map.campaign && !this.hud?.getTargetingSkill()) {
+      const room = getRoomAtWorldPosition(this.simulation.map, point.x, point.y);
+      const machine = roomCellCenter(this.simulation.map, room.terminal);
+      if (distanceBetween(point, machine) < 28 || distanceBetween(point, { x: machine.x, y: machine.y - 40 }) < 24) {
+        const result = this.simulation.dispatch('campaign-interact', { targetId: `save:${room.id}` });
+        this.hud.showNotice(result.ok ? result.message : result.reason, result.ok ? 'neutral' : 'warning');
+        return;
+      }
+      const trialDoor = this.simulation.map.roomConnections.find(d => d.from.roomId === room.id && room.id === 'workshop' && distanceBetween(point, roomCellCenter(this.simulation.map, d.from)) < 30 && ['solar-door','cryo-door','arc-door','grav-door'].includes(d.id));
+      if (trialDoor) {
+        const result = this.simulation.dispatch('campaign-interact', { targetId: `trial:${trialDoor.id.replace('-door', '')}` });
+        this.hud.showNotice(result.ok ? result.message : result.reason, result.ok ? 'neutral' : 'warning'); return;
+      }
+    }
     const targetingSkill = this.hud?.getTargetingSkill();
     if (targetingSkill) {
       this.hud.resolveSkillTarget(this.simulation.dispatch(ACTIONS.castHeroSkill, { skillId: targetingSkill, ...point }));
@@ -318,12 +363,18 @@ export class BattlefieldRenderer {
     const delta = Math.min(250, Math.max(0, now - this.lastFrameAt));
     this.lastFrameAt = now;
     this.cameraControls.update(delta);
+    if (this.simulation.map.campaign) {
+      const x = Math.round(this.cameraControls.target.x), z = Math.round(this.cameraControls.target.z);
+      this.sunLight.position.set(x - 12, 28, z - 8); this.sunLight.target.position.set(x, 0, z);
+    }
     const state = this.simulation.state;
     this.audio.syncSettings(state.settings);
     const visualSpeed = state.settings.paused || state.stationIntegrity <= 0 ? 0 : state.settings.speed;
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);
     this.syncRooms();
+    this.campaignScene?.update(state, this.presentationTime);
+    this.hud.campaignHud?.update();
     this.routeOverlay.update(this.simulation.map, this.simulation.state, delta);
     for (const event of this.simulation.systems.towerSystem.drainEvents()) {
       if (event.type === 'construction-blocked') {
@@ -370,7 +421,7 @@ export class BattlefieldRenderer {
     const state = this.simulation.state;
     if (!this.wasWaveInProgress && state.wave.inProgress) this.audio.playWaveStart();
     if (this.wasWaveInProgress && !state.wave.inProgress && state.wave.completed) {
-      const campaignComplete = this.simulation.systems.waveSystem.hasCompletedCampaign();
+      const campaignComplete = !state.campaign && this.simulation.systems.waveSystem.hasCompletedCampaign();
       this.hud?.showNotice(campaignComplete ? 'The Black Comet is down. Cinder Junction holds.' : `${state.wave.label} cleared.`, 'success');
       this.hud?.showWaveResult({
         label: state.wave.label,
@@ -396,6 +447,7 @@ export class BattlefieldRenderer {
     this.audio?.dispose();
     this.effects?.dispose();
     this.entities?.dispose();
+    this.campaignScene?.dispose();
     this.roomScene?.dispose();
     this.routeOverlay?.dispose();
     this.modelLibrary?.dispose();

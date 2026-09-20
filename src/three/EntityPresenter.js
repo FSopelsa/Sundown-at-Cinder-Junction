@@ -423,8 +423,9 @@ export class EntityPresenter {
       this.enemyViews.set(enemy.id, view);
       this.place(view, enemy, timeMs, true);
       const effect = enemy.effects.find((candidate) => STATUS_COLORS[candidate.type]);
-      view.ring.visible = Boolean(effect);
+      view.ring.visible = Boolean(effect) || enemy.sunRegenRemainingMs > 0 || enemy.sunDoorPermission;
       if (effect) view.ring.material.color.set(STATUS_COLORS[effect.type]);
+      else view.ring.material.color.set(enemy.sunRegenRemainingMs > 0 ? 0xffdc64 : 0xff9a42);
       view.health.group.quaternion.copy(camera.quaternion);
       const healthRatio = Math.max(0, Math.min(1, enemy.hp / enemy.maxHp));
       view.health.fill.scale.x = healthRatio;

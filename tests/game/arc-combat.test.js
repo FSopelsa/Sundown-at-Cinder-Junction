@@ -8,7 +8,7 @@ function setup() {
   const sim = createSimulation({ scrap: 2000 });
   const placed = sim.dispatch(ACTIONS.placeTower, { towerType: 'teslaCoil', x: 100, y: 350 });
   assert.equal(placed.ok, true);
-  const enemies = [150, 240, 330, 420, 510].map((x, i) => {
+  const enemies = [150, 240, 330, 420, 510, 600, 690].map((x, i) => {
     const enemy = sim.systems.enemySystem.spawn('sparkWagon');
     Object.assign(enemy, { x, y: 350, progress: 1 - i * .1 });
     return enemy;
@@ -31,16 +31,16 @@ test('Arc consumes shields at 2x and only unspent hit damage reaches hull', () =
   assert.equal(enemy.hp, hp - 15);
 });
 
-test('Tesla chains to four distinct nearest targets with falloff, including beyond initial range', () => {
+test('Tesla chains to six distinct nearest targets with falloff, including beyond initial range', () => {
   const { sim, enemies } = setup();
   sim.systems.towerSystem.update(0);
-  for (let i = 0; i < 4; i++) {
-    assert.ok(Math.abs(enemies[i].shield - (48 - 36 * .72 ** i)) < 1e-8);
+  for (let i = 0; i < 6; i++) {
+    assert.ok(Math.abs(enemies[i].shield - (48 - 36 * .80 ** i)) < 1e-8);
   }
-  assert.equal(enemies[4].shield, 48);
+  assert.equal(enemies[6].shield, 48);
   const chain = sim.systems.combatSystem.drainEvents().find(e => e.type === 'arc-chain');
-  assert.deepEqual(chain.links.map(link => link.targetId), enemies.slice(0, 4).map(e => e.id));
-  assert.equal(new Set(chain.links.map(link => link.targetId)).size, 4);
+  assert.deepEqual(chain.links.map(link => link.targetId), enemies.slice(0, 6).map(e => e.id));
+  assert.equal(new Set(chain.links.map(link => link.targetId)).size, 6);
 });
 
 test('a chain stops at gaps and continues from the last position after lethal hits', () => {
@@ -69,7 +69,7 @@ test('Tesla upgrades affect chained combat and nested chain/shield data round-tr
   assert.deepEqual(restored.toJSON(), sim.state.toJSON());
   restored.towers[0].chain.maxTargets = 99;
   restored.enemies[0].shield = 99;
-  assert.equal(tower.chain.maxTargets, 4);
+  assert.equal(tower.chain.maxTargets, 6);
   assert.equal(enemies[0].shield, 0);
 });
 

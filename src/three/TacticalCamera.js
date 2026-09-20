@@ -54,12 +54,18 @@ export class TacticalCamera {
     hudRoot.append(this.toolbar);
   }
 
-  setMap(map) {
+  setMap(map, animate = false) {
+    const from = { target: this.target.clone(), distance: this.distance };
     this.map = map;
     this.overview(map);
+    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.transition = { from, to: { target: this.target.clone(), distance: this.distance }, elapsed: 0 };
+      this.target.copy(from.target); this.distance = from.distance; this.updateCamera();
+    }
   }
 
   overview(map = this.map) {
+    this.transition = null;
     const bounds = getMapWorldBounds(map);
     const spanX = bounds.maxX - bounds.minX;
     const spanZ = bounds.maxZ - bounds.minZ;
@@ -74,11 +80,13 @@ export class TacticalCamera {
   }
 
   zoom(factor) {
+    this.transition = null;
     this.distance = THREE.MathUtils.clamp(this.distance * factor, MIN_DISTANCE, MAX_DISTANCE);
     this.updateCamera();
   }
 
   pan(horizontal, vertical) {
+    this.transition = null;
     const forward = new THREE.Vector3();
     this.camera.getWorldDirection(forward);
     forward.y = 0;
@@ -126,6 +134,16 @@ export class TacticalCamera {
   }
 
   update(deltaMs) {
+    if (this.transition) {
+      const t = this.transition;
+      t.elapsed += Math.min(deltaMs, 100);
+      const progress = Math.min(1, t.elapsed / 3200);
+      const eased = progress * progress * (3 - 2 * progress);
+      this.target.lerpVectors(t.from.target, t.to.target, eased);
+      this.distance = THREE.MathUtils.lerp(t.from.distance, t.to.distance, eased) + Math.sin(progress * Math.PI) * 3;
+      this.updateCamera();
+      if (progress === 1) this.transition = null;
+    }
     const step = Math.min(deltaMs, 50) * this.distance * 0.00085;
     if (this.keys.has('ArrowLeft')) this.pan(-step, 0);
     if (this.keys.has('ArrowRight')) this.pan(step, 0);

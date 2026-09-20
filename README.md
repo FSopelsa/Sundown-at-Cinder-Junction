@@ -18,7 +18,7 @@ npm.cmd run dev -- --host 127.0.0.1
 Open the URL printed by Vite.
 
 Expect a playable prototype with unfinished environments and UI. There is no
-hosted build yet. The **Asset library** link opens 29 reference-led 3D models,
+hosted build yet. The **Asset library** link opens the reference-led 3D model collection,
 including the active hero/towers/enemies and reserve props for later use. See
 [the asset collection](docs/3d/asset-collection/README.md) for source and rebuild notes.
 
@@ -35,27 +35,31 @@ If you want to help me try or improve something, see
   concept. Do not develop new work there; it is retained only as historical
   comparison material. See [`docs/archive/isometric-proving-ground.md`](docs/archive/isometric-proving-ground.md).
 
-### First 3D milestone
+### Expanding campaign
 
-The default level, **Cinder Threshold · 3D Trial**, contains two connected
-15 × 20-cell rooms: Arrival Yard and Relay Hall. They retain separate grid coordinates and
-are joined by the open Arrival Gate. This proves the intended expansion model:
+The default now starts in **Room 1**. Clear its two waves to reveal **Room 2**,
+then clear that room to open the **sun junction**. Enemies retain the original
+portal goal and cross your earlier defenses. The sun grants its required
+door seal and seven seconds of regeneration.
 
-- enemy routing crosses the room-aware graph from the first room to the final
-  exit;
-- Singularity can route through the same door connection;
-- tower placement preserves one global route and keeps doors clear;
-- `GameState` persists room IDs, open doors, hero routes, and the existing
-  wave/economy/progression state;
-- Three.js presents GLB rooms, units, shadows, camera controls, procedural
-  idle/movement motion, hit/death effects, and elemental combat beams;
-- the DOM HUD and HTML-audio system remain independent of the renderer.
+Clear the junction to explore the **dormant boss chamber** and **elemental
+workshop**. Choose one of four local TD trials at a time, earning elemental
+upgrades and four keys for the future final boss. The boss fight itself is
+intentionally deferred.
 
-The room GLBs are deliberately **functional blockouts**, not final environment art.
-Units and flooring now use the reference-led collection, still subject to art review.
-Their Blender source is at [`assets/blender/`](assets/blender/), and the room
-package at [`docs/3d/cinder-threshold/`](docs/3d/cinder-threshold/) records the
-unapproved art-review gates before a final environment pass.
+Each completed combat room autosaves. Otherwise, click its computer or **Go
+to save machine**: Singularity must reach it before saving. Reload resumes
+the newest checkpoint; the campaign panel can load either save slot. Saves
+are local to this browser and server address, including its port.
+
+Want to inspect the landmarks immediately? On the development server, open
+`/?review=junction`. This review sandbox uses separate saves. The normal
+campaign remains available at `/`. See [the campaign vision](docs/campaign-vision.md)
+for confirmed rules, tuning assumptions and deferred ideas.
+
+Rooms remain functional blockouts. The industrial floors, gates, consoles,
+reactors, pylons, dormant sentinel and active units reuse the Blender/GLB
+collection. Threshold, Smeltworks and the older maps remain selectable.
 
 ## Run locally
 
@@ -67,7 +71,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the displayed local Vite URL. The default route opens the 3D trial. The
+Open the displayed local Vite URL. The default route opens or resumes the expanding campaign. The
 level selector still exposes the older simulation maps; they use a simple 3D
 fallback room until each receives authored environment assets.
 
@@ -81,18 +85,17 @@ PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
   route to the final exit.
 - **Move Singularity** (or `H`) arms hero movement. Click any reachable room
   cell and the hero will cross open doors as needed.
-- **Start raid** (or `Space`) begins the next raid. `P`, `1`, and `2` control
+- **Start wave** (or `Space`) begins the next raid. `P`, `1`, and `2` control
   pause and simulation speed.
 - The top-right audio control mutes/unmutes HTML audio and sets the master
   volume. Select a Scrap Exchange to buy its relay aura, then expand the aura
   twice; the final 360-unit radius reaches roughly a quarter of the threshold.
 - Use the mouse wheel, camera buttons, arrow keys, or right/middle drag to pan
-  and zoom. **Overview** recenters both rooms.
+  and zoom. **Overview** frames discovered rooms. Use the campaign panel to focus a room.
 
-Escaped enemies still reduce station integrity, then return first in the next
-raid. Enemy hull grows by 18% per completed raid, hero auto-attack damage gains
-a small late-level acceleration, and the DOM HUD preserves the raid-result and
-failure states.
+Campaign leaks reduce shared integrity and do not return in later waves.
+Legacy scenarios retain their returning-enemy rules. Campaign waves scale by
+encounter tier and enemy type; towers and the hero persist as rooms open.
 
 ### Blender and GLB exports
 

@@ -1,3 +1,4 @@
+import { CAMPAIGN_MAP } from './campaign.js';
 import { MODEL_KEYS } from '../assets/manifest.js';
 import {
   defineRoom,
@@ -193,6 +194,7 @@ export const SMELTWORKS_MAP = defineRoomMap({
 });
 
 export const LEVELS = Object.freeze([
+  CAMPAIGN_MAP,
   THRESHOLD_MAP,
   SMELTWORKS_MAP,
   SWITCHYARD_MAP,
@@ -200,7 +202,7 @@ export const LEVELS = Object.freeze([
   OVERLOOK_MAP,
 ]);
 
-export const DEFAULT_3D_LEVEL_ID = THRESHOLD_MAP.id;
+export const DEFAULT_3D_LEVEL_ID = CAMPAIGN_MAP.id;
 
 export function getMap(levelId) {
   return LEVELS.find((map) => map.id === levelId) ?? SWITCHYARD_MAP;

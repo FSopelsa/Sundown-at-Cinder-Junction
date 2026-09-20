@@ -6,7 +6,7 @@ test('loads the four-room level and starts a raid without console errors', async
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
 
-  await page.goto('/?debug');
+  await page.goto('/?level=cinder-threshold&debug');
   await expect(page.getByRole('button', { name: 'Start raid' })).toBeEnabled();
   await expect(page.locator('[data-hud="hero-skills"]')).toBeVisible();
   await expect(page.getByRole('button', { name: /Worm Tunnel/ })).toBeDisabled();

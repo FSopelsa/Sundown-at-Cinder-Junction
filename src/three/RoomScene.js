@@ -36,6 +36,14 @@ export function getRoomPerimeterWallSegments(map, room, roomState = null) {
     else if (endpoint.row === 0) edges.north.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
     else if (endpoint.row === grid.rows - 1) edges.south.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
   }
+  if (map.campaign) {
+    const entries = [map.exit, ...map.campaign.encounters.flatMap(e => [e.spawn, e.goal].filter(Boolean))];
+    for (const cell of entries.filter(c => c.roomId === room.id)) {
+      if (cell.col === 0) edges.west.push([cell.row * grid.cellSize, (cell.row + 1) * grid.cellSize]);
+      else if (cell.col === grid.columns - 1) edges.east.push([cell.row * grid.cellSize, (cell.row + 1) * grid.cellSize]);
+      else if (cell.row === 0) edges.north.push([cell.col * grid.cellSize, (cell.col + 1) * grid.cellSize]);
+    }
+  }
   const splitAroundOpenings = (length, openings) => {
     const segments = [];
     let cursor = 0;
@@ -197,22 +205,32 @@ export class RoomScene {
     this.scene.add(this.group);
     this.floorSurfaces = [];
     this.wallOccluders = [];
+    this.owned ??= new Set();
   }
 
   build(map, roomState = map.roomState ?? null) {
     this.clear();
     this.group.name = `${map.name} rooms`;
-    for (const room of getRenderableRooms(map)) {
+    for (const room of getRenderableRooms(map).filter(room => !map.campaign || roomState.unlockedRoomIds.includes(room.id))) {
       const palette = getRoomPalette(room.environment?.palette);
       const { grid } = room;
       const position = simulationToWorld(grid.x, grid.y);
       const environment = this.modelLibrary.clone(room.environment?.model) ??
         makeProceduralRoom(room, palette, map, roomState);
+      if (!room.environment?.model) this.collectOwned(environment);
       const floorKit = createFloorKit(room, this.modelLibrary);
       if (floorKit) {
         environment.traverse((node) => {
           if (/^Floor[ _](slab|plate)/.test(node.name) || node.name === `${room.id} floor`) node.visible = false;
         });
+        if (map.campaign) {
+          const tint = new THREE.Color({ rust: 0xbfa58e, teal: 0x86b6b7, ember: 0xc5a482, slag: 0xa3b39c, basalt: 0x94a7bb }[room.environment.palette] ?? 0xffffff);
+          floorKit.traverse(node => {
+            if (!node.isMesh) return;
+            const tintMaterial = original => { const material = original.clone(); material.color.multiply(tint); this.owned.add(material); return material; };
+            node.material = Array.isArray(node.material) ? node.material.map(tintMaterial) : tintMaterial(node.material);
+          });
+        }
         environment.add(floorKit);
       }
       environment.name = `${room.id} environment`;
@@ -225,12 +243,15 @@ export class RoomScene {
       this.group.add(environment);
       const gridLines = makeBuildGrid(room, palette);
       gridLines.position.set(position.x, 0, position.z);
+      this.collectOwned(gridLines);
       this.group.add(gridLines);
       this.addFloorSurface(room);
       this.addRoomLight(room, palette);
     }
     for (const connection of map.roomConnections ?? []) {
+      if (map.campaign && ![connection.from.roomId, connection.to.roomId].every(id => roomState.unlockedRoomIds.includes(id))) continue;
       const bridge = connectionBridge(map, connection, isDoorOpen(connection, roomState));
+      if (bridge) this.collectOwned(bridge);
       if (bridge) this.group.add(bridge);
     }
   }
@@ -258,6 +279,7 @@ export class RoomScene {
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(point.x, 0.03, point.z);
     floor.userData.roomId = room.id;
+    this.collectOwned(floor);
     this.floorSurfaces.push(floor);
     this.group.add(floor);
   }
@@ -271,7 +293,7 @@ export class RoomScene {
     const light = new THREE.PointLight(palette.light, palette.lightIntensity, 15, 2);
     light.name = `${room.id} light`;
     light.position.set(point.x, 3.8, point.z);
-    light.castShadow = true;
+    light.castShadow = false;
     light.shadow.mapSize.set(512, 512);
     this.group.add(light);
   }
@@ -279,6 +301,13 @@ export class RoomScene {
   updateOcclusion(camera, target) {
     this.group.updateMatrixWorld(true);
     return updateWallOcclusion(camera, target, this.wallOccluders);
+  }
+
+  collectOwned(root) {
+    root.traverse(node => {
+      if (node.geometry) this.owned.add(node.geometry);
+      for (const material of (Array.isArray(node.material) ? node.material : [node.material])) if (material) this.owned.add(material);
+    });
   }
 
   clear() {
@@ -289,7 +318,10 @@ export class RoomScene {
     });
     this.floorSurfaces = [];
     this.wallOccluders = [];
+    this.owned ??= new Set();
     this.group.clear();
+    for (const resource of this.owned) resource.dispose();
+    this.owned.clear();
   }
 
   dispose() {

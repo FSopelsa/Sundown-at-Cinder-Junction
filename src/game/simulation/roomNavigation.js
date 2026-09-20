@@ -1,3 +1,4 @@
+import { validateCampaignPlacement } from './campaignRouting.js';
 // Room maps retain a local grid per room. A cell's room ID is part of every
 // navigation key, so adjoining rooms can grow independently without turning
 // the campaign into one enormous, fragile flattened grid.
@@ -43,6 +44,13 @@ export function worldToRoomCell(map, x, y) {
   };
 }
 
+export function shareCombatRoom(map, first, second) {
+  if (!map.campaign) return true;
+  const roomId = entity => worldToRoomCell(map, entity.x, entity.y)?.roomId ??
+    entity.roomCell?.roomId ?? entity.navigationCell?.roomId;
+  return Boolean(roomId(first) && roomId(first) === roomId(second));
+}
+
 export function roomCellCenter(map, cell) {
   const room = getRoom(map, cell?.roomId);
   if (!room) return null;
@@ -80,13 +88,13 @@ function connectionIsOpen(connection, roomState = null) {
 
 export function isDoorCell(map, cell, roomState = null) {
   return Boolean(map.roomConnections?.some((connection) =>
-    connectionIsOpen(connection, roomState) &&
+    (map.campaign || connectionIsOpen(connection, roomState)) &&
       (roomCellsMatch(connection.from, cell) || roomCellsMatch(connection.to, cell)),
   ));
 }
 
 export function getRoomNeighbors(map, cell, roomState = null) {
-  if (!isInsideRoomGrid(map, cell)) return [];
+  if (!isInsideRoomGrid(map, cell) || (roomState?.unlockedRoomIds && !roomState.unlockedRoomIds.includes(cell.roomId))) return [];
   const connected = map.roomConnections
     ?.filter((connection) => connectionIsOpen(connection, roomState))
     .flatMap((connection) => {
@@ -94,7 +102,7 @@ export function getRoomNeighbors(map, cell, roomState = null) {
       if (roomCellsMatch(connection.to, cell)) return [{ ...connection.from }];
       return [];
     }) ?? [];
-  return [...gridNeighbors(cell), ...connected].filter((next) => isInsideRoomGrid(map, next));
+  return [...gridNeighbors(cell), ...connected].filter((next) => isInsideRoomGrid(map, next) && (!roomState?.unlockedRoomIds || roomState.unlockedRoomIds.includes(next.roomId)));
 }
 
 export function towerRoomCell(map, tower) {
@@ -102,14 +110,14 @@ export function towerRoomCell(map, tower) {
 }
 
 export function isRoomCellBlocked(map, towers, cell) {
-  if (!isInsideRoomGrid(map, cell)) return true;
+  if (!isInsideRoomGrid(map, cell) || getRoom(map, cell.roomId).obstacles?.some(c => roomCellsMatch(c, cell))) return true;
   return towers
     .filter((tower) => !(tower.type === 'wall' && tower.ladder))
     .some((tower) => roomCellsMatch(towerRoomCell(map, tower), cell));
 }
 
 export function findNearestOpenRoomCell(map, towers, cell, roomState = null) {
-  if (!isInsideRoomGrid(map, cell)) return null;
+  if (!isInsideRoomGrid(map, cell) || (roomState?.unlockedRoomIds && !roomState.unlockedRoomIds.includes(cell.roomId))) return null;
   const queue = [{ ...cell }];
   const seen = new Set([roomCellKey(cell)]);
 
@@ -213,6 +221,7 @@ export function buildRoomDistanceField(
       .filter(Boolean)
       .map(roomCellKey),
   );
+  for (const room of map.rooms ?? []) for (const obstacle of room.obstacles ?? []) blocked.add(roomCellKey(obstacle));
   if (candidate) blocked.add(roomCellKey(candidate));
   const distances = new Map();
   if (blocked.has(roomCellKey(map.exit))) return distances;
@@ -358,6 +367,7 @@ export function validateRoomPlacement(map, state, x, y, options = {}) {
   const { ignoreTowerId = null, roomState = state.roomState } = options;
   const cell = worldToRoomCell(map, x, y);
   if (!cell) return { ok: false, reason: 'Build inside an unlocked room.' };
+  if (getRoom(map, cell.roomId).obstacles?.some(c => roomCellsMatch(c, cell))) return { ok: false, reason: 'This cell contains room equipment.' };
   if (roomCellsMatch(cell, map.entrance) || roomCellsMatch(cell, map.exit) || isDoorCell(map, cell, roomState)) {
     return { ok: false, reason: 'Keep room entrances, exits, and doors clear.' };
   }
@@ -372,6 +382,10 @@ export function validateRoomPlacement(map, state, x, y, options = {}) {
     return { ok: false, reason: 'An enemy is crossing this cell.' };
   }
 
+  if (map.campaign) {
+    const result = validateCampaignPlacement(map, state, cell, activeTowers);
+    return result.ok ? { ok: true, cell, ...roomCellCenter(map, cell) } : result;
+  }
   const distances = buildRoomDistanceField(map, activeTowers, cell, state.wormholes, roomState);
   const currentCells = state.enemies
     .map((enemy) => enemy.roomNext ?? enemy.roomCell ?? worldToRoomCell(map, enemy.x, enemy.y));

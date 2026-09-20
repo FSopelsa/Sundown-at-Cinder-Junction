@@ -1,3 +1,4 @@
+import { shareCombatRoom } from '../roomNavigation.js';
 import {
   createHeroSkillSlots,
   getExperienceToNextHeroLevel,
@@ -140,7 +141,7 @@ export class HeroSystem {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
     const cell = worldToHeroCell(this.map, x, y);
-    if (!isInsideHeroGrid(this.map, cell)) {
+    if (!isInsideHeroGrid(this.map, cell) || (this.map.campaign && !this.gameState.roomState.unlockedRoomIds.includes(cell?.roomId))) {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
     const point = heroCellCenter(this.map, cell);
@@ -414,7 +415,7 @@ export class HeroSystem {
     if (hero.attackCooldownMs > 0) return;
 
     const target = this.gameState.enemies
-      .filter((enemy) => distanceBetween(hero, enemy) <= hero.attackRange)
+      .filter((enemy) => shareCombatRoom(this.map, hero, enemy) && distanceBetween(hero, enemy) <= hero.attackRange)
       .sort((first, second) => distanceBetween(hero, first) - distanceBetween(hero, second))[0];
     if (!target) return;
 
@@ -627,6 +628,8 @@ export class HeroSystem {
   }
 
   takeDamage(amount, source = null) {
+    const keys = this.gameState.campaign?.keys ?? [];
+    amount *= (keys.includes('cryo') ? 0.9 : 1) * (keys.includes('grav') ? 0.9 : 1);
     const hero = this.hero;
     if (!hero.alive || !Number.isFinite(amount) || amount <= 0) {
       return { applied: 0, killed: false };

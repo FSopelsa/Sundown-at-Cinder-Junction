@@ -1,3 +1,4 @@
+import { getEncounter } from '../../game/content/campaign.js';
 import { SUPPORT_ITEMS } from '../../game/simulation/systems/SupportShop.js';
 import { FINAL_WAVE_INDEX, getRaidScaling } from '../../game/content/waves.js';
 import {
@@ -206,6 +207,8 @@ export class Hud {
     this.root.querySelector('[data-action="change-level"]').addEventListener('click', () => {
       const url = new URL(window.location.href);
       url.searchParams.set('level', this.root.querySelector('[data-hud="level"]').value);
+      url.searchParams.set('checkpoint', 'new');
+      url.searchParams.delete('review');
       window.location.assign(url.href);
     });
     this.root.querySelector('[data-action="back-build"]').addEventListener('click', () => {
@@ -512,7 +515,7 @@ export class Hud {
   startWave() {
     const result = this.simulation.dispatch(ACTIONS.startWave);
     const healthIncrease = result.ok
-      ? Math.round((getRaidScaling(result.wave.index).healthMultiplier - 1) * 100)
+      ? Math.round((getRaidScaling(result.wave.index + (getEncounter(this.simulation.map, this.simulation.state)?.tier ?? 0) * 3).healthMultiplier - 1) * 100)
       : 0;
     const carryoverText = result.ok && result.wave.carryoverCount > 0
       ? ` ${result.wave.carryoverCount} ${result.wave.carryoverCount === 1 ? 'returning enemy' : 'returning enemies'} arrive first.`
@@ -535,6 +538,7 @@ export class Hud {
   }
 
   showWaveResult({ label, campaignComplete = false, carryoverCount = 0 }) {
+    if (this.simulation.state.campaign) { this.showNotice(`${label} cleared.`, 'success'); return; }
     this.outcome = campaignComplete
       ? {
           tone: 'success',
@@ -562,9 +566,9 @@ export class Hud {
       tone: 'danger',
       eyebrow: 'Station lost',
       title: 'The junction has fallen.',
-      copy: 'The rail is overrun. Restart the run and try a different build.',
+      copy: this.simulation.state.campaign ? 'Load a room checkpoint or machine save from the campaign panel. Earlier saves remain available.' : 'The rail is overrun. Restart the run and try a different build.',
       action: 'restart',
-      buttonLabel: 'Restart run',
+      buttonLabel: this.simulation.state.campaign && this.campaignHud?.saves.latest() ? 'Resume last save' : 'Restart run',
     };
     this.renderOutcome();
   }
@@ -599,6 +603,7 @@ export class Hud {
       ? Math.min(...state.wormholes.map((portal) => portal.remainingMs ?? 0))
       : 0;
     const renderKey = [
+      state.campaign?.activeEncounterId, Math.ceil((state.campaign?.revealRemainingMs ?? 0) / 1000),
       state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}:${Math.ceil(t.tauntRemainingMs ?? 0)}:${Math.ceil(t.tauntCooldownRemainingMs ?? 0)}:${t.tauntUpgradeLevel}:${t.targeting}:${t.construction?.status}:${t.construction?.kind}:${t.construction?.upgrade}:${Math.ceil(t.construction?.remainingMs ?? 0)}`).join(),
       state.scrap,
       state.stationIntegrity,
@@ -727,8 +732,9 @@ export class Hud {
     const carryoverSuffix = state.wave.carryoverCount > 0
       ? ` +${state.wave.carryoverCount}`
       : '';
-    this.elements.wave.textContent =
-      state.wave.index === 0
+    this.elements.wave.textContent = state.campaign
+      ? state.campaign.activeEncounterId ? `${state.wave.index}/${getEncounter(this.simulation.map, state).waves}` : 'Explore'
+      : state.wave.index === 0
         ? 'Standby'
         : `${state.wave.index}/${FINAL_WAVE_INDEX} ${state.wave.label}${carryoverSuffix}`;
     this.elements.enemies.textContent = String(state.enemies.length);
@@ -751,6 +757,10 @@ export class Hud {
       state.stationIntegrity <= 0 ||
       (state.wave.index >= FINAL_WAVE_INDEX && state.wave.completed);
 
+    if (state.campaign) {
+      this.elements.startWave.disabled ||= !state.campaign.activeEncounterId || state.campaign.revealRemainingMs > 0;
+      this.elements.startWave.textContent = state.campaign.revealRemainingMs > 0 ? 'Revealing room…' : state.campaign.activeEncounterId ? 'Start wave' : 'Choose a trial';
+    }
     this.elements.heroName.textContent = hero.name;
     this.elements.heroLevel.textContent = `Level ${hero.level}`;
     this.elements.heroState.textContent = hero.alive
@@ -827,7 +837,7 @@ export class Hud {
             ? this.queueModifierActive
               ? 'Build queue active. Each placed tower reserves its tile and is assembled in order.'
               : 'Singularity is constructing. Hold Ctrl to reserve more towers in sequence.'
-            : 'Build in either unlocked room. Singularity walks into range to assemble or upgrade it; keep every room route clear.'
+            : 'Build in an unlocked combat room. Singularity walks into range to assemble or upgrade it; keep every room route clear.'
         : 'Click clear ground to deploy the selected tower. Click a deployed tower to upgrade.';
   }
 
@@ -837,6 +847,7 @@ export class Hud {
   }
 
   dispose() {
+    this.campaignHud?.dispose();
     if (this.animationFrame !== null) {
       window.cancelAnimationFrame(this.animationFrame);
     }

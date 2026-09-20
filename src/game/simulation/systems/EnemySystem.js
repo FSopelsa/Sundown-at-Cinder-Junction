@@ -1,3 +1,6 @@
+import { shareCombatRoom } from '../roomNavigation.js';
+import { getEncounter } from '../../content/campaign.js';
+import { refreshCampaignRoutes, moveCampaignEnemy } from '../campaignEnemies.js';
 import { ENEMY_DEFINITIONS } from '../../content/enemies.js';
 import { FINAL_WAVE_INDEX, getRaidScaling } from '../../content/waves.js';
 import {
@@ -56,17 +59,20 @@ export class EnemySystem {
       throw new Error(`Unknown enemy type: ${enemyType}`);
     }
 
+    const encounter = getEncounter(this.map, this.gameState);
+    const entrance = encounter?.spawn ?? this.map.entrance;
     const start = this.map.mode === 'maze'
       ? cellCenter(this.map, this.map.entrance)
       : this.map.mode === 'rooms'
-        ? roomCellCenter(this.map, this.map.entrance)
+        ? roomCellCenter(this.map, entrance)
         : pointAlongPath(0, this.map.path);
-    const raidIndex = Math.max(1, this.gameState.wave.index);
+    const raidIndex = Math.max(1, this.gameState.wave.index + (encounter ? encounter.tier * 3 : 0));
     const scaling = getRaidScaling(raidIndex);
     const maxHp = Math.round(definition.maxHp * scaling.healthMultiplier);
     const maxShield = Math.round((definition.maxShield ?? 0) * scaling.healthMultiplier);
     const enemy = {
       id: this.gameState.allocateId('enemy'),
+      ...(encounter ? { encounterId: encounter.id, sunVisited: false, sunDoorPermission: false, sunRegenRemainingMs: 0 } : {}),
       type: definition.id,
       name: definition.name,
       hp: maxHp,
@@ -99,7 +105,7 @@ export class EnemySystem {
       this.refreshMazeRoutes();
       enemy.remainingDistance = this.mazeDistances.get(cellKey(enemy.mazeCell)) * this.map.grid.cellSize;
     } else if (this.map.mode === 'rooms') {
-      enemy.roomCell = { ...this.map.entrance };
+      enemy.roomCell = { ...entrance };
       enemy.roomNext = null;
       this.refreshRoomRoutes();
       enemy.remainingDistance = this.roomDistances.get(roomCellKey(enemy.roomCell)) *
@@ -123,6 +129,11 @@ export class EnemySystem {
     const escapedEnemyIds = new Set();
 
     for (const enemy of this.gameState.enemies) {
+      if (enemy.sunRegenRemainingMs > 0) {
+        const activeMs = Math.min(deltaMs, enemy.sunRegenRemainingMs);
+        enemy.hp = Math.min(enemy.maxHp, enemy.hp + enemy.maxHp * 0.04 * activeMs / 1000);
+        enemy.sunRegenRemainingMs = Math.max(0, enemy.sunRegenRemainingMs - deltaMs);
+      }
       const regenerationIsSuppressed =
         enemy.regenSuppressedBy !== null &&
         enemy.effects.some(
@@ -167,7 +178,7 @@ export class EnemySystem {
           this.gameState.stationIntegrity - enemy.stationDamage,
         );
 
-        if (this.gameState.wave.index < FINAL_WAVE_INDEX) {
+        if (!this.gameState.campaign && this.gameState.wave.index < FINAL_WAVE_INDEX) {
           this.gameState.carryoverEnemies.push({
             enemyType: enemy.type,
             sourceWaveIndex: this.gameState.wave.index,
@@ -184,7 +195,7 @@ export class EnemySystem {
   }
 
   attackExchange(enemy) {
-    const exchange = this.gameState.towers.filter(tower => tower.type === 'scrapExchange' && !tower.construction && tower.hp > 0 && (tower.tauntRemainingMs ?? 0) > 0 && distanceBetween(tower, enemy) <= tower.range)
+    const exchange = this.gameState.towers.filter(tower => shareCombatRoom(this.map, enemy, tower) && tower.type === 'scrapExchange' && !tower.construction && tower.hp > 0 && (tower.tauntRemainingMs ?? 0) > 0 && distanceBetween(tower, enemy) <= tower.range)
       .sort((a, b) => distanceBetween(a, enemy) - distanceBetween(b, enemy) || a.id.localeCompare(b.id))[0];
     enemy.tauntedBy = exchange?.id ?? null;
     if (!exchange) return false;
@@ -199,7 +210,7 @@ export class EnemySystem {
 
   attackHero(enemy) {
     const hero = this.heroSystem?.hero;
-    if (!hero?.alive || distanceBetween(enemy, hero) > enemy.attackRange) {
+    if (!hero?.alive || !shareCombatRoom(this.map, enemy, hero) || distanceBetween(enemy, hero) > enemy.attackRange) {
       return false;
     }
 
@@ -315,6 +326,7 @@ export class EnemySystem {
   }
 
   refreshRoomRoutes() {
+    if (this.map.campaign) return refreshCampaignRoutes(this);
     const portalRevision = (this.gameState.wormholes ?? [])
       .map((portal) => portal.cell ? roomCellKey(portal.cell) : '')
       .join('|');
@@ -332,6 +344,7 @@ export class EnemySystem {
   }
 
   moveThroughRooms(enemy, distance) {
+    if (this.map.campaign) return moveCampaignEnemy(this, enemy, distance);
     if (enemy.roomNext && !getRoomNeighbors(this.map, enemy.roomCell, this.gameState.roomState)
       .some((cell) => roomCellsMatch(cell, enemy.roomNext))) {
       enemy.roomNext = null;

@@ -1,3 +1,4 @@
+import { shareCombatRoom } from '../roomNavigation.js';
 import { SWITCHYARD_MAP, distanceToPath } from '../../content/map.js';
 import {
   TOWER_DEFINITIONS,
@@ -507,7 +508,7 @@ export class TowerSystem {
       }
 
       const target = this.gameState.enemies
-        .filter((enemy) => distanceBetween(tower, enemy) <= tower.range)
+        .filter((enemy) => shareCombatRoom(this.map, tower, enemy) && distanceBetween(tower, enemy) <= tower.range)
         .sort((first, second) => compareTowerTargets(tower, this.map, first, second))[0];
 
       if (!target) {
@@ -564,7 +565,7 @@ export class TowerSystem {
       previous = endpoint;
       damage *= tower.chain.damageMultiplier;
       target = this.gameState.enemies
-        .filter((enemy) => enemy.hp > 0 && !hitIds.has(enemy.id) &&
+        .filter((enemy) => shareCombatRoom(this.map, firstTarget, enemy) && enemy.hp > 0 && !hitIds.has(enemy.id) &&
           distanceBetween(previous, enemy) <= tower.chain.jumpRange)
         .sort((a, b) => distanceBetween(previous, a) - distanceBetween(previous, b) || a.id.localeCompare(b.id))[0];
     }

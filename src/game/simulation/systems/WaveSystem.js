@@ -108,6 +108,7 @@ export class WaveSystem {
   }
 
   hasCompletedCampaign() {
+    if (this.gameState.campaign) return this.gameState.campaign.keys.length === 4;
     return (
       this.gameState.wave.index >= FINAL_WAVE_INDEX &&
       this.gameState.wave.completed

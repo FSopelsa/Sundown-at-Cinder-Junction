@@ -19,7 +19,7 @@ import { getRoomPerimeterWallSegments } from '../../src/three/RoomScene.js';
 const ROOM_MAPS = LEVELS.filter(isRoomMap);
 
 test('every room level validates and names a known palette per room', () => {
-  assert.deepEqual(ROOM_MAPS.map((map) => map.id), ['cinder-threshold', 'cinder-smeltworks']);
+  assert.deepEqual(ROOM_MAPS.map((map) => map.id), ['cinder-campaign', 'cinder-threshold', 'cinder-smeltworks']);
 
   for (const map of ROOM_MAPS) {
     assert.deepEqual(validateRoomMap(map), { ok: true, problems: [] });

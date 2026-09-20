@@ -1,3 +1,5 @@
+import { CampaignSystem } from './systems/CampaignSystem.js';
+import { getCampaignWave } from '../content/campaign.js';
 import { purchaseSupport } from './systems/SupportShop.js';
 import { ACTIONS } from '../input/actions.js';
 import { getMap } from '../content/map.js';
@@ -41,9 +43,9 @@ export function createSimulation(initialState = new GameState()) {
     heroSystem,
   );
   const waveSystem = new WaveSystem(state, enemySystem,
-    map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
+    map.campaign ? index => getCampaignWave(map, state, index) : map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
   const elementRecipeSystem = new ElementRecipeSystem();
-  let accumulatorMs = 0;
+  const campaignSystem = map.campaign ? new CampaignSystem(state, map, heroSystem) : null;
 
   function tick(deltaMs) {
     waveSystem.update(deltaMs);
@@ -54,6 +56,7 @@ export function createSimulation(initialState = new GameState()) {
     towerSystem.update(deltaMs);
     enemySystem.update(deltaMs);
     waveSystem.completeIfFinished();
+    campaignSystem?.update(deltaMs);
   }
 
   function update(deltaMs) {
@@ -62,16 +65,18 @@ export function createSimulation(initialState = new GameState()) {
     }
 
     const frameMs = Math.min(MAX_FRAME_MS, Math.max(0, deltaMs));
-    accumulatorMs += frameMs * state.settings.speed;
+    state.accumulatorMs += frameMs * state.settings.speed;
 
-    while (accumulatorMs >= FIXED_STEP_MS) {
+    while (state.accumulatorMs >= FIXED_STEP_MS) {
       tick(FIXED_STEP_MS);
-      accumulatorMs -= FIXED_STEP_MS;
+      state.accumulatorMs -= FIXED_STEP_MS;
     }
   }
 
   function dispatch(action, payload = {}) {
     switch (action) {
+      case 'campaign-interact':
+        return campaignSystem?.interact(payload.targetId) ?? { ok: false, reason: 'No campaign here.' };
       case ACTIONS.startWave:
         return waveSystem.startNextWave();
       case ACTIONS.placeTower:
@@ -92,6 +97,7 @@ export function createSimulation(initialState = new GameState()) {
       case ACTIONS.sellTower:
         return towerSystem.sellTower(payload.towerId);
       case ACTIONS.moveHero:
+        if (state.campaign) state.campaign.pendingInteraction = null;
         return heroSystem.commandMove(payload.x, payload.y);
       case ACTIONS.castHeroSkill:
         return heroSystem.castHeroSkill(payload.skillId, payload.x, payload.y);
@@ -116,6 +122,7 @@ export function createSimulation(initialState = new GameState()) {
     map,
     state,
     systems: {
+      campaignSystem,
       combatSystem,
       economySystem,
       elementRecipeSystem,
