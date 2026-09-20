@@ -522,7 +522,7 @@ export class Hud {
       : '';
     this.showNotice(
       result.ok
-        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}`
+        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}${result.earlyStartBonus ? ` +${result.earlyStartBonus} early-launch Scrap.` : ''}`
         : result.reason,
       result.ok ? 'success' : 'warning',
     );
@@ -754,7 +754,7 @@ export class Hud {
     this.elements.heroName.textContent = hero.name;
     this.elements.heroLevel.textContent = `Level ${hero.level}`;
     this.elements.heroState.textContent = hero.alive
-      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}${hero.speedBoostRemainingMs > 0 ? ` · Slipstream ${Math.ceil(hero.speedBoostRemainingMs / 1000)}s` : ''}`
+      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}${hero.speedBoostRemainingMs > 0 ? ` · Snabba skor ${Math.ceil(hero.speedBoostRemainingMs / 1000)}s` : ''}`
       : 'DOWN — returns at the next raid';
     this.elements.heroHp.textContent = `${Math.ceil(hero.hp)} / ${hero.maxHp}`;
     this.elements.heroHpFill.style.width = `${(100 * hero.hp) / hero.maxHp}%`;

@@ -1,5 +1,7 @@
 import {
+  EARLY_START_BONUS_WINDOW_MS,
   FINAL_WAVE_INDEX,
+  getEarlyStartBonus,
   getWaveDefinition,
 } from '../../content/waves.js';
 
@@ -30,11 +32,12 @@ function createSpawnQueue(groups, carryoverEnemies = []) {
 }
 
 export class WaveSystem {
-  constructor(gameState, enemySystem, waveProvider = getWaveDefinition, heroSystem = null) {
+  constructor(gameState, enemySystem, waveProvider = getWaveDefinition, heroSystem = null, economySystem = null) {
     this.gameState = gameState;
     this.enemySystem = enemySystem;
     this.waveProvider = waveProvider;
     this.heroSystem = heroSystem;
+    this.economySystem = economySystem;
   }
 
   startNextWave() {
@@ -54,6 +57,10 @@ export class WaveSystem {
     }
 
     const heroRevived = this.heroSystem?.reviveForNextWave() ?? false;
+    const earlyStartBonus = this.gameState.wave.planningRemainingMs > 0
+      ? getEarlyStartBonus(nextWaveIndex)
+      : 0;
+    if (earlyStartBonus > 0) this.economySystem?.awardScrap(earlyStartBonus);
     const carryoverEnemies = this.gameState.carryoverEnemies.map((enemy) => ({
       ...enemy,
     }));
@@ -66,17 +73,19 @@ export class WaveSystem {
       isBounty: definition.isBounty,
       label: definition.label,
       elapsedMs: 0,
+      planningRemainingMs: 0,
       carryoverCount: carryoverEnemies.length,
       spawnQueue: createSpawnQueue(definition.groups, carryoverEnemies),
     };
 
-    return { ok: true, wave: this.gameState.wave, heroRevived };
+    return { ok: true, wave: this.gameState.wave, heroRevived, earlyStartBonus };
   }
 
   update(deltaMs) {
     const wave = this.gameState.wave;
 
     if (!wave.inProgress) {
+      wave.planningRemainingMs = Math.max(0, (wave.planningRemainingMs ?? 0) - deltaMs);
       return;
     }
 
@@ -101,6 +110,7 @@ export class WaveSystem {
     ) {
       wave.inProgress = false;
       wave.completed = true;
+      wave.planningRemainingMs = EARLY_START_BONUS_WINDOW_MS;
       return true;
     }
 

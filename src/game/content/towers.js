@@ -138,8 +138,8 @@ export const TOWER_DEFINITIONS = Object.freeze({
     shotsPerSecond: 0.9,
     damageType: 'arc',
     assetKey: ASSET_KEYS.towers.teslaCoil,
-    chain: Object.freeze({ maxTargets: 6, jumpRange: 110, damageMultiplier: 0.80}),
-    description: 'Arc lightning chains to 6 enemies, losing 20% damage per jump. Deals double damage to shields.',
+    chain: Object.freeze({ maxTargets: 4, jumpRange: 110, damageMultiplier: 0.72}),
+    description: 'Arc lightning chains to 4 enemies, losing 28% damage per jump. Deals double damage to shields.',
   }),
   scrapExchange: Object.freeze({
     id: 'scrapExchange', name: 'Scrap Exchange', cost: 100, range: 100,

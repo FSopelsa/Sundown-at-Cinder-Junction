@@ -42,7 +42,7 @@ export function createSimulation(initialState = new GameState()) {
     heroSystem,
   );
   const waveSystem = new WaveSystem(state, enemySystem,
-    map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
+    map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem, economySystem);
   const pickupSystem = new PickupSystem(state, map);
   const elementRecipeSystem = new ElementRecipeSystem();
   let accumulatorMs = 0;

@@ -62,6 +62,9 @@ function createWaveState(wave = {}) {
     isBounty: Boolean(wave.isBounty),
     label: typeof wave.label === 'string' ? wave.label : '',
     elapsedMs: Number.isFinite(wave.elapsedMs) ? wave.elapsedMs : 0,
+    planningRemainingMs: Number.isFinite(wave.planningRemainingMs)
+      ? Math.max(0, wave.planningRemainingMs)
+      : 0,
     carryoverCount:
       Number.isInteger(wave.carryoverCount) && wave.carryoverCount >= 0
         ? wave.carryoverCount
