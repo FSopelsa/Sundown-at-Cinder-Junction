@@ -41,5 +41,5 @@ export const ASSET_CATALOGUE = Object.freeze([
   ...active.map(([node, title, category]) => ({ node, title, category, stage: 'In game', model: MODEL_KEYS.units })),
   ...reserve.map(([node, title, category]) => ({ node, title, category, stage: 'Production reserve', model: MODEL_KEYS.productionReserve })),
   ...kit.map(([node, title, category]) => ({ node, title, category, stage: 'In game', model: MODEL_KEYS.industrialKit })),
-  { node: 'Prop_ZipBag', title: 'Clear zip bag', category: 'pickup', stage: 'In game', model: MODEL_KEYS.zipBag },
+  { node: 'Prop_SnabbaSkor', title: 'Snabba skor', category: 'pickup', stage: 'In game', model: MODEL_KEYS.snabbaSkor },
 ].map(Object.freeze));

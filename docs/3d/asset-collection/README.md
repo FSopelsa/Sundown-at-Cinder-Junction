@@ -1,7 +1,7 @@
 # Sundown reference-led asset collection
 
 The original 29-model collection below is joined in the library by the
-separately built [clear zip bag](../zip-bag/README.md), for 30 models total.
+separately built [Snabba skor](../snabba-skor/README.md), for 30 models total.
 
 29 editable, original 3D models built from the visual ideas in the local asset
 folders. Open `/?assets` in the running game to inspect each model, switch views,

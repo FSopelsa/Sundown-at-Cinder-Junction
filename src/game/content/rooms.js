@@ -123,6 +123,7 @@ export function defineRoomMap({
   unlockedRoomIds = null,
   openDoorIds = null,
   pickupSpawns = [],
+  pickupSpawnPoint = null,
 }) {
   const frozenRooms = Object.freeze(rooms.map((room) => Object.freeze(room)));
   const frozenConnections = Object.freeze(connections.map((connection) => Object.freeze(connection)));
@@ -142,6 +143,7 @@ export function defineRoomMap({
     heroSpawn: Object.freeze({ ...heroSpawn }),
     waveSet,
     pickupSpawns: Object.freeze(pickupSpawns.map((pickup) => Object.freeze({ ...pickup }))),
+    pickupSpawnPoint: pickupSpawnPoint ? Object.freeze({ ...pickupSpawnPoint }) : null,
     roomState: Object.freeze({
       unlockedRoomIds: Object.freeze(unlockedRoomIds ?? frozenRooms.map((room) => room.id)),
       openDoorIds: Object.freeze(openDoorIds ?? defaultOpenDoorIds(frozenConnections)),

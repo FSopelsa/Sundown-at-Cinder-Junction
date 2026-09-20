@@ -1,6 +1,9 @@
 import { getMap } from '../content/map.js';
 import { createHeroState } from '../content/heroes.js';
-import { createPickupState } from '../content/pickups.js';
+import {
+  createPickupState,
+  getRandomSnabbaSkorSpawnDelay,
+} from '../content/pickups.js';
 
 export const SAVE_SCHEMA_VERSION = 1;
 
@@ -119,6 +122,15 @@ export class GameState {
     this.pickups = Array.isArray(snapshot.pickups)
       ? snapshot.pickups.map(cloneFieldObject)
       : (map.pickupSpawns ?? []).map(createPickupState).filter(Boolean);
+    const hasPickupSchedule = Object.prototype.hasOwnProperty.call(
+      snapshot,
+      'snabbaSkorSpawnRemainingMs',
+    );
+    this.snabbaSkorSpawnRemainingMs = hasPickupSchedule
+      ? (Number.isFinite(snapshot.snabbaSkorSpawnRemainingMs)
+        ? Math.max(0, snapshot.snabbaSkorSpawnRemainingMs)
+        : null)
+      : getRandomSnabbaSkorSpawnDelay();
     this.roomState = createRoomState(map, snapshot.roomState);
     this.wave = createWaveState(snapshot.wave);
     this.stationIntegrity = Number.isFinite(snapshot.stationIntegrity)
@@ -156,6 +168,7 @@ export class GameState {
       scrapPiles: this.scrapPiles.map(cloneFieldObject),
       wormholes: this.wormholes.map(cloneFieldObject),
       pickups: this.pickups.map(cloneFieldObject),
+      snabbaSkorSpawnRemainingMs: this.snabbaSkorSpawnRemainingMs,
       roomState: {
         unlockedRoomIds: [...this.roomState.unlockedRoomIds],
         openDoorIds: [...this.roomState.openDoorIds],

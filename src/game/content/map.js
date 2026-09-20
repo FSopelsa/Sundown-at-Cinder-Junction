@@ -128,6 +128,7 @@ export const SWITCHYARD_MAP = Object.freeze({
   pathClearance: 55,
   towerSpacing: 38,
   heroSpawn: Object.freeze({ x: 84, y: 228 }),
+  pickupSpawnPoint: Object.freeze({ x: 420, y: 348 }),
   heroGrid: Object.freeze({ x: 0, y: 0, columns: 53, rows: 30, cellSize: 24 }),
   heroTowerClearance: 30,
 });
@@ -143,6 +144,7 @@ export const MAZE_MAP = Object.freeze({
   entrance: Object.freeze({ col: 0, row: 4 }),
   exit: Object.freeze({ col: 23, row: 4 }),
   heroSpawn: Object.freeze({ x: 260, y: 420 }),
+  pickupSpawnPoint: Object.freeze({ x: 420, y: 300 }),
 });
 
 export const OVERLOOK_MAP = Object.freeze({
@@ -156,6 +158,7 @@ export const OVERLOOK_MAP = Object.freeze({
   entrance: Object.freeze({ col: 0, row: 5 }),
   exit: Object.freeze({ col: 17, row: 5 }),
   heroSpawn: Object.freeze({ x: 380, y: 440 }),
+  pickupSpawnPoint: Object.freeze({ x: 500, y: 360 }),
   waveSet: 'elemental-trial',
 });
 
@@ -171,12 +174,7 @@ export const THRESHOLD_MAP = defineRoomMap({
   entrance: roomCell('arrival-yard', 0, 10),
   exit: roomCell('relay-hall', 14, 10),
   heroSpawn: { x: 140, y: 520 },
-  pickupSpawns: [{
-    id: 'threshold-slipstream-bag',
-    type: 'speed-boost',
-    x: 220,
-    y: 620,
-  }],
+  pickupSpawnPoint: { x: 220, y: 620 },
 });
 
 // Second 3D level: a four-room loop that proves the room graph scales past a
@@ -190,6 +188,7 @@ export const SMELTWORKS_MAP = defineRoomMap({
   entrance: roomCell('intake-bay', 0, 6),
   exit: roomCell('tapline-terrace', 0, 5),
   heroSpawn: { x: 180, y: 460 },
+  pickupSpawnPoint: { x: 300, y: 420 },
 });
 
 export const LEVELS = Object.freeze([

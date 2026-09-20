@@ -1,4 +1,4 @@
-"""Original zip bag: +X front, Y up, Z width; photo pixels never shipped."""
+"""Original Snabba skor: +X front, Y up, Z width; photo pixels never shipped."""
 import hashlib
 import json
 import math
@@ -8,10 +8,10 @@ import numpy as np
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'assets/blender/cinder-zip-bag.blend'
-OUTPUT = ROOT / 'public/assets/models/cinder-zip-bag.glb'
-REPORT = ROOT / 'docs/3d/zip-bag/build-report.json'
-REFERENCE = ROOT / 'assets/references/zip_bag/IMG_0548.jpeg'
+SOURCE = ROOT / 'assets/blender/cinder-snabba-skor.blend'
+OUTPUT = ROOT / 'public/assets/models/cinder-snabba-skor.glb'
+REPORT = ROOT / 'docs/3d/snabba-skor/build-report.json'
+REFERENCE = ROOT / 'assets/references/snabba_skor/IMG_0548.jpeg'
 WIDTH, HOLE_Y, HOLE_RADIUS = 0.62, 0.915, 0.022
 
 
@@ -38,13 +38,13 @@ def plastic_maps():
     normal /= np.linalg.norm(normal, axis=-1, keepdims=True)
     rgba = np.ones((size, size, 4), dtype=np.float32)
     rgba[:, :, :3] = normal*0.5+0.5
-    image = bpy.data.images.new('ZipBag_Original_Crease_Normal', width=size, height=size)
+    image = bpy.data.images.new('SnabbaSkor_Original_Crease_Normal', width=size, height=size)
     image.colorspace_settings.name = 'Non-Color'
     image.pixels.foreach_set(rgba.ravel())
     image.pack()
     rough = np.clip(0.24+np.abs(height)*0.32+rng.random(u.shape)*0.035, 0.2, 0.58)
     rgba[:, :, :3] = rough[:, :, None]
-    roughness = bpy.data.images.new('ZipBag_Original_Roughness', width=size, height=size)
+    roughness = bpy.data.images.new('SnabbaSkor_Original_Roughness', width=size, height=size)
     roughness.colorspace_settings.name = 'Non-Color'
     roughness.pixels.foreach_set(rgba.ravel())
     roughness.pack()
@@ -151,34 +151,34 @@ class Mesh:
         self.parent.users_collection[0].objects.link(obj)
         obj.parent = self.parent
         obj['cast_shadow'] = False
-        obj['interaction'] = 'zip-bag-opening'
+        obj['interaction'] = 'snabba-skor-opening'
         obj.shape_key_add(name='Basis')
-        key = obj.shape_key_add(name='Zip_Open')
+        key = obj.shape_key_add(name='SnabbaSkor_Open')
         for i, point in enumerate(self.vertices): key.data[i].co = xyz(opened(point, 1 if point[0] > 0 else -1))
         key.value = 0
         return obj
 
 
 def main():
-    scene = bpy.data.scenes.new('Sundown Zip Bag')
+    scene = bpy.data.scenes.new('Sundown Snabba skor')
     bpy.context.window.scene = scene
-    collection = bpy.data.collections.new('Sundown_ZipBag_Source')
+    collection = bpy.data.collections.new('Sundown_SnabbaSkor_Source')
     scene.collection.children.link(collection)
-    root = bpy.data.objects.new('Prop_ZipBag', None)
+    root = bpy.data.objects.new('Prop_SnabbaSkor', None)
     collection.objects.link(root)
     for key, value in {'forward_axis': '+X', 'cell_scale_meters': 1,
                        'asset_role': 'reusable-prop', 'source_kind': 'original-reference-led',
-                       'interaction': 'zip-bag-opening', 'opening_morph': 'Zip_Open',
+                       'interaction': 'snabba-skor-opening', 'opening_morph': 'SnabbaSkor_Open',
                        'default_state': 'closed-empty'}.items(): root[key] = value
-    film = material('ZipBag_ClearPolyethylene', (0.83, 0.87, 0.86), 0.25, 0.3, plastic_maps())
-    seal = material('ZipBag_WeldedSeams', (0.83, 0.86, 0.81), 0.62, 0.34)
-    green = material('ZipBag_GreenClosure', (0.005, 0.36, 0.20), 1, 0.32)
+    film = material('SnabbaSkor_ClearPolyethylene', (0.83, 0.87, 0.86), 0.25, 0.3, plastic_maps())
+    seal = material('SnabbaSkor_WeldedSeams', (0.83, 0.86, 0.81), 0.62, 0.34)
+    green = material('SnabbaSkor_GreenClosure', (0.005, 0.36, 0.20), 1, 0.32)
     for sign, suffix in [(1, 'Front'), (-1, 'Back')]:
-        body = Mesh('ZipBag_Film'+suffix, root, film, sign)
+        body = Mesh('SnabbaSkor_Film'+suffix, root, film, sign)
         body.grid(-WIDTH/2, WIDTH/2, 0, 0.86, 36, 48)
         body.header()
         body.finish()
-        seams = Mesh('ZipBag_Seams'+suffix, root, seal, sign)
+        seams = Mesh('SnabbaSkor_Seams'+suffix, root, seal, sign)
         seams.grid(-WIDTH/2, -WIDTH/2+0.007, 0, 0.862, 1, 48, 0.0005)
         seams.grid(WIDTH/2-0.007, WIDTH/2, 0, 0.862, 1, 48, 0.0005)
         seams.grid(-WIDTH/2, WIDTH/2, 0, 0.009, 36, 1, 0.0005)
@@ -192,10 +192,10 @@ def main():
         for y, thickness in [(0.853, 0.003), (0.861, 0.004), (0.879, 0.0015)]:
             seams.grid(-WIDTH/2, WIDTH/2, y, y+thickness, 48, 1, 0.0012)
         seams.finish()
-        strip = Mesh('ZipBag_GreenSeal'+suffix, root, green, sign)
+        strip = Mesh('SnabbaSkor_GreenSeal'+suffix, root, green, sign)
         strip.grid(-WIDTH/2, WIDTH/2, 0.959, 0.973, 48, 2, 0.001)
         strip.finish()
-    for name, location in [('ZipBag_ContentAnchor', (0, 0.4, 0)), ('ZipBag_HangingAnchor', (0, HOLE_Y, 0))]:
+    for name, location in [('SnabbaSkor_ContentAnchor', (0, 0.4, 0)), ('SnabbaSkor_HangingAnchor', (0, HOLE_Y, 0))]:
         anchor = bpy.data.objects.new(name, None)
         collection.objects.link(anchor)
         anchor.parent = root
@@ -222,11 +222,11 @@ def main():
                'source': str(SOURCE.relative_to(ROOT)).replace(chr(92), '/'),
                'reference': str(REFERENCE.relative_to(ROOT)).replace(chr(92), '/'),
                'referenceSha256': hashlib.sha256(REFERENCE.read_bytes()).hexdigest(),
-               'assets': [{'name': 'Prop_ZipBag', 'triangles': triangles, 'parts': 6,
+               'assets': [{'name': 'Prop_SnabbaSkor', 'triangles': triangles, 'parts': 6,
                            'forwardAxis': '+X', 'heightCells': 1, 'widthCells': WIDTH,
-                           'morphTarget': 'Zip_Open', 'use': 'reserve'}]}
+                           'morphTarget': 'SnabbaSkor_Open', 'use': 'reserve'}]}
     REPORT.write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
-    print('ZIP_BAG_COMPLETE', triangles, 'triangles')
+    print('SNABBA_SKOR_COMPLETE', triangles, 'triangles')
 
 
 if __name__ == '__main__':

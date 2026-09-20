@@ -32,7 +32,7 @@ export const MODEL_KEYS = Object.freeze({
   prototypeUnits: 'prototype-units',
   industrialKit: 'industrial-kit',
   productionReserve: 'production-reserve',
-  zipBag: 'prop-zip-bag',
+  snabbaSkor: 'prop-snabba-skor',
 });
 
 export const AUDIO_KEYS = Object.freeze({
@@ -63,8 +63,8 @@ export const AUDIO_KEYS = Object.freeze({
 export const ASSET_MANIFEST = Object.freeze({
   models: Object.freeze([
     Object.freeze({
-      key: MODEL_KEYS.zipBag,
-      path: '/assets/models/cinder-zip-bag.glb',
+      key: MODEL_KEYS.snabbaSkor,
+      path: '/assets/models/cinder-snabba-skor.glb',
       kind: 'interactive-prop',
       preload: true,
     }),

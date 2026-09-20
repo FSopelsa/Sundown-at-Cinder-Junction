@@ -1,4 +1,4 @@
-# Zip Bag Verification
+# Snabba skor Verification
 
 Verified 2026-09-18 using Blender 5.2.1 LTS and Chromium WebGL.
 
@@ -15,7 +15,7 @@ Verified 2026-09-18 using Blender 5.2.1 LTS and Chromium WebGL.
   a front view and an open mobile view. The opening slider changes the rendered
   mesh, hides for other models and does not overlap the mobile statistics.
 
-`node scripts/review-zip-bag.mjs http://127.0.0.1:5174` passed a temporary
+`node scripts/review-snabba-skor.mjs http://127.0.0.1:5174` passed a temporary
 in-game placement test with closed and open instances. Both sat 0.004 units
 above the floor, their opening values were independent, and all bag meshes
 respected the no-opaque-shadow flag. Adding the presentation objects did not
@@ -26,7 +26,7 @@ Blender MCP imported and displayed both final states in a separate review scene:
 two bag roots, 18 objects total. Existing scenes were preserved, safe mode stayed
 enabled, and the editable source remains in the separate saved `.blend` file.
 
-Evidence is under `artifacts/playtest/zip-bag/` (ignored generated outputs),
+Evidence is under `artifacts/playtest/snabba-skor/` (ignored generated outputs),
 including the check log, browser review receipt and desktop/mobile/battlefield
 captures. The final GLB size and SHA-256 are in `build-report.json`.
 

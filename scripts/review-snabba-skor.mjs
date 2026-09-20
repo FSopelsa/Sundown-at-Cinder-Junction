@@ -3,11 +3,11 @@ import { mkdir, readdir, copyFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 
-const output = resolve('artifacts/playtest/zip-bag');
+const output = resolve('artifacts/playtest/snabba-skor');
 await mkdir(output, { recursive: true });
 const results = await readdir('test-results', { withFileTypes: true });
-const suite = results.find(entry => entry.isDirectory() && entry.name.startsWith('zip-bag-'));
-assert.ok(suite, 'Run the zip-bag browser test before this review.');
+const suite = results.find(entry => entry.isDirectory() && entry.name.startsWith('snabba-skor-'));
+assert.ok(suite, 'Run the snabba-skor browser test before this review.');
 for (const file of await readdir(resolve('test-results', suite.name))) {
   if (file.endsWith('.png')) await copyFile(resolve('test-results', suite.name, file), resolve(output, file));
 }
@@ -26,17 +26,17 @@ try {
     const { game, simulation } = window.__cinder;
     const { ModelLibrary } = await import('/src/three/loaders/ModelLibrary.js');
     const { MODEL_KEYS, getModelAsset } = await import('/src/game/assets/manifest.js');
-    const { setZipBagOpening } = await import('/src/three/zipBag.js');
+    const { setSnabbaSkorOpening } = await import('/src/three/snabbaSkor.js');
     const { Box3 } = await import('/node_modules/three/build/three.module.js');
-    const library = await ModelLibrary.load({ models: [getModelAsset(MODEL_KEYS.zipBag)] }, { includeReserve: true });
+    const library = await ModelLibrary.load({ models: [getModelAsset(MODEL_KEYS.snabbaSkor)] }, { includeReserve: true });
     if (library.failures.length) throw new Error('Bag failed to load in the battlefield.');
-    const closed = library.cloneNamed(MODEL_KEYS.zipBag, 'Prop_ZipBag');
-    const open = library.cloneNamed(MODEL_KEYS.zipBag, 'Prop_ZipBag');
+    const closed = library.cloneNamed(MODEL_KEYS.snabbaSkor, 'Prop_SnabbaSkor');
+    const open = library.cloneNamed(MODEL_KEYS.snabbaSkor, 'Prop_SnabbaSkor');
     closed.position.set(6.0, 0.004, 9.6);
     open.position.set(7.0, 0.004, 9.6);
     closed.scale.setScalar(0.7);
     open.scale.setScalar(0.7);
-    setZipBagOpening(open, 1);
+    setSnabbaSkorOpening(open, 1);
     const before = JSON.stringify(simulation.state);
     game.scene.add(closed, open);
     game.cameraControls.target.set(6.5, 0, 9.5);
@@ -58,8 +58,8 @@ try {
   assert.ok(placement.groundY.every(y => Math.abs(y - 0.004) < 0.001));
   await page.getByRole('button', { name: 'Start raid', exact: true }).click();
   await page.waitForFunction(() => window.__cinder.simulation.state.enemies.length > 0);
-  await page.screenshot({ path: resolve(output, 'zip-bag-battlefield.png') });
-  await page.screenshot({ path: resolve(output, 'zip-bag-battlefield.jpg'), type: 'jpeg', quality: 80 });
+  await page.screenshot({ path: resolve(output, 'snabba-skor-battlefield.png') });
+  await page.screenshot({ path: resolve(output, 'snabba-skor-battlefield.jpg'), type: 'jpeg', quality: 80 });
   assert.deepEqual(errors, []);
   await writeFile(resolve(output, 'browser-review.json'), `${JSON.stringify({ ...placement, errors }, null, 2)}\n`);
   console.log(JSON.stringify(placement, null, 2));

@@ -352,7 +352,7 @@ export class BattlefieldRenderer {
     this.effects.consumeCombat(combatEvents);
     const heroEvents = this.simulation.systems.heroSystem.drainEvents();
     for (const event of heroEvents) {
-      if (event.type === 'pickup-collected') {
+      if (event.type === 'pickup-collected' || event.type === 'pickup-purchased') {
         this.hud?.showNotice(
           `${event.pickup.name}: movement speed boosted for ${Math.ceil(event.pickup.durationMs / 1000)}s.`,
           'success',
