@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "blenderVersion": "5.2.1 LTS",
+  "source": "assets/blender/cinder-snabba-skor.blend",
+  "reference": "assets/references/snabba_skor/IMG_0548.jpeg",
+  "referenceSha256": "35b4801363adcb2b4e9f1315fdc502d2f1a5f118de96349660e07e425a032647",
+  "assets": [
+    {
+      "name": "Prop_SnabbaSkor",
+      "triangles": 10264,
+      "parts": 6,
+      "forwardAxis": "+X",
+      "heightCells": 1,
+      "widthCells": 0.62,
+      "morphTarget": "SnabbaSkor_Open",
+      "use": "reserve"
+    }
+  ],
+  "packages": [
+    {
+      "key": "prop-snabba-skor",
+      "path": "public/assets/models/cinder-snabba-skor.glb",
+      "bytes": 1071220,
+      "sha256": "67943eb24fc64ede3c20e77fd2b288dda06e699341230c1c050e7bd204ea3558",
+      "meshes": 6,
+      "materials": 3,
+      "textures": 2,
+      "optimization": "weld, dedup, prune; semantic nodes and SnabbaSkor_Open morphs retained; no decoder required"
+    }
+  ]
+}

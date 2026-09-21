@@ -525,7 +525,7 @@ export class Hud {
       : '';
     this.showNotice(
       result.ok
-        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}`
+        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}${result.earlyStartBonus ? ` +${result.earlyStartBonus} early-launch Scrap.` : ''}`
         : result.reason,
       result.ok ? 'success' : 'warning',
     );
@@ -695,7 +695,7 @@ export class Hud {
         ? `<button data-ladder ${construction || tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
         : tower.type === 'scrapExchange' ? tauntAction + tauntUpgrade + auraUpgrade + Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
           const price = offer.cost * (id === 'buyback' ? hero.level : id === 'xp' ? 1 + (hero.trainingPurchases ?? 0) : 1);
-          const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
+          const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp','snabbaSkor'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
           return `<button data-support="${id}" ${construction || unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
         }).join('') : '';
       if (structure) {
@@ -764,7 +764,7 @@ export class Hud {
     this.elements.heroName.textContent = hero.name;
     this.elements.heroLevel.textContent = `Level ${hero.level}`;
     this.elements.heroState.textContent = hero.alive
-      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}${hero.speedBoostRemainingMs > 0 ? ` · Slipstream ${Math.ceil(hero.speedBoostRemainingMs / 1000)}s` : ''}`
+      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}${hero.speedBoostRemainingMs > 0 ? ` · Snabba skor ${Math.ceil(hero.speedBoostRemainingMs / 1000)}s` : ''}`
       : 'DOWN — returns at the next raid';
     this.elements.heroHp.textContent = `${Math.ceil(hero.hp)} / ${hero.maxHp}`;
     this.elements.heroHpFill.style.width = `${(100 * hero.hp) / hero.maxHp}%`;

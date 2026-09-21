@@ -10,6 +10,7 @@ import { EconomySystem } from './systems/EconomySystem.js';
 import { ElementRecipeSystem } from './systems/ElementRecipeSystem.js';
 import { EnemySystem } from './systems/EnemySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
+import { PickupSystem } from './systems/PickupSystem.js';
 import { StatusEffectSystem } from './systems/StatusEffectSystem.js';
 import { TowerSystem } from './systems/TowerSystem.js';
 import { WaveSystem } from './systems/WaveSystem.js';
@@ -42,13 +43,20 @@ export function createSimulation(initialState = new GameState()) {
     map,
     heroSystem,
   );
-  const waveSystem = new WaveSystem(state, enemySystem,
-    map.campaign ? index => getCampaignWave(map, state, index) : map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
+  const waveSystem = new WaveSystem(
+    state,
+    enemySystem,
+    map.campaign ? index => getCampaignWave(map, state, index) : map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined,
+    heroSystem,
+    economySystem,
+  );
+  const pickupSystem = new PickupSystem(state, map);
   const elementRecipeSystem = new ElementRecipeSystem();
   const campaignSystem = map.campaign ? new CampaignSystem(state, map, heroSystem) : null;
 
   function tick(deltaMs) {
     waveSystem.update(deltaMs);
+    pickupSystem.update(deltaMs);
     statusEffectSystem.update(deltaMs);
     if (map.mode === 'maze') enemySystem.refreshMazeRoutes();
     if (map.mode === 'rooms') enemySystem.refreshRoomRoutes();
@@ -128,6 +136,7 @@ export function createSimulation(initialState = new GameState()) {
       elementRecipeSystem,
       enemySystem,
       heroSystem,
+      pickupSystem,
       statusEffectSystem,
       towerSystem,
       waveSystem,

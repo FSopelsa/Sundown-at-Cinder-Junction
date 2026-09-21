@@ -129,6 +129,28 @@ test('starting a raid stores its queue in GameState and spawns into GameState', 
   assert.equal(simulation.state.wave.index, 1);
 });
 
+test('starting the next raid during planning awards an early-launch Scrap bonus', () => {
+  const simulation = createSimulation({ scrap: 0 });
+  simulation.state.wave = {
+    index: 1,
+    inProgress: false,
+    completed: true,
+    isBounty: false,
+    label: 'Raid 1',
+    elapsedMs: 0,
+    planningRemainingMs: 12000,
+    carryoverCount: 0,
+    spawnQueue: [],
+  };
+
+  const started = simulation.dispatch(ACTIONS.startWave);
+
+  assert.equal(started.ok, true);
+  assert.equal(started.earlyStartBonus, 6);
+  assert.equal(simulation.state.scrap, 6);
+  assert.equal(simulation.state.wave.planningRemainingMs, 0);
+});
+
 test('escaped enemies return first in the next raid', () => {
   const simulation = createSimulation();
   simulation.state.wave.index = 1;

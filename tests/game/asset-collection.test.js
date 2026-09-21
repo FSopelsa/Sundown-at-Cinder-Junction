@@ -14,11 +14,11 @@ import { createFloorKit } from '../../src/three/floorKit.js';
 
 async function readKit(key) {
   const buffer = await readFile(`public${getModelAsset(key).path}`);
-  if (key === MODEL_KEYS.industrialKit || key === MODEL_KEYS.zipBag) {
+  if (key === MODEL_KEYS.industrialKit || key === MODEL_KEYS.zipBag || key === MODEL_KEYS.snabbaSkor) {
     // Node checks geometry/hierarchy; the browser suite decodes the packed textures.
     const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
     const doc = await io.readBinary(buffer);
-    assert.equal(doc.getRoot().listTextures().length, key === MODEL_KEYS.zipBag ? 2 : 1, 'packed procedural maps');
+    assert.equal(doc.getRoot().listTextures().length, [MODEL_KEYS.zipBag, MODEL_KEYS.snabbaSkor].includes(key) ? 2 : 1, 'packed procedural maps');
     for (const texture of doc.getRoot().listTextures()) texture.dispose();
     const geometryOnly = await io.writeBinary(doc);
     return new GLTFLoader().parseAsync(geometryOnly.buffer.slice(geometryOnly.byteOffset, geometryOnly.byteOffset + geometryOnly.byteLength), '');
@@ -29,8 +29,11 @@ async function readKit(key) {
 test('all catalogue entries resolve to unique, origin-centred GLB roots with painted geometry', async () => {
   assert.equal(new Set(ASSET_CATALOGUE.map(a => a.node)).size, ASSET_CATALOGUE.length);
   const report = JSON.parse(await readFile('docs/3d/asset-collection/build-report.json', 'utf8'));
-  const bagReport = JSON.parse(await readFile('docs/3d/zip-bag/build-report.json', 'utf8'));
-  assert.equal(report.assets.length + bagReport.assets.length, ASSET_CATALOGUE.length);
+  const bagReports = [
+    JSON.parse(await readFile('docs/3d/zip-bag/build-report.json', 'utf8')),
+    JSON.parse(await readFile('docs/3d/snabba-skor/build-report.json', 'utf8')),
+  ];
+  assert.equal(report.assets.length + bagReports.reduce((sum, item) => sum + item.assets.length, 0), ASSET_CATALOGUE.length);
   for (const key of new Set(ASSET_CATALOGUE.map(a => a.model))) {
     const gltf = await readKit(key);
     const entries = ASSET_CATALOGUE.filter(a => a.model === key);
@@ -47,12 +50,12 @@ test('all catalogue entries resolve to unique, origin-centred GLB roots with pai
       root.traverse((node) => {
         if (!node.isMesh) return;
         meshes += 1;
-        assert.ok(key === MODEL_KEYS.zipBag ? node.geometry.attributes.uv : node.geometry.attributes.color, `${entry.node} material coordinates`);
+        assert.ok([MODEL_KEYS.zipBag, MODEL_KEYS.snabbaSkor].includes(key) ? node.geometry.attributes.uv : node.geometry.attributes.color, `${entry.node} material coordinates`);
       });
       assert.ok(meshes > 0, entry.node);
     }
   }
-  for (const pkg of [...report.packages, ...bagReport.packages]) {
+  for (const pkg of [report, ...bagReports].flatMap((item) => item.packages)) {
     const bytes = await readFile(pkg.path);
     assert.equal(createHash('sha256').update(bytes).digest('hex'), pkg.sha256);
   }

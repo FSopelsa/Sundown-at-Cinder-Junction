@@ -343,7 +343,7 @@ export class EntityPresenter {
       let view = this.pickupViews.get(pickup.id);
       if (!view) {
         const root = setShadowFlags(
-          this.modelLibrary.cloneNamed(MODEL_KEYS.zipBag, 'Prop_ZipBag') ?? fallbackModel(0x5de4c8, 0.24, 0.3),
+          this.modelLibrary.cloneNamed(MODEL_KEYS.snabbaSkor, 'Prop_SnabbaSkor') ?? fallbackModel(0x5de4c8, 0.24, 0.3),
         );
         root.name = `Pickup_${pickup.id}`;
         root.scale.setScalar(0.52);

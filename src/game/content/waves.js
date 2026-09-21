@@ -1,8 +1,15 @@
 export const FINAL_WAVE_INDEX = 11;
 export const HEALTH_INCREASE_PER_RAID = 0.22;
+export const EARLY_START_BONUS_WINDOW_MS = 12000;
+export const EARLY_START_BONUS_BASE_SCRAP = 6;
 // Raids gain hull, not a universal sprint. Individual enemy speeds stay legible
 // and give each chassis a distinct role throughout the campaign.
 export const SPEED_INCREASE_PER_RAID = 0.005;
+
+export function getEarlyStartBonus(waveIndex) {
+  if (!Number.isInteger(waveIndex) || waveIndex < 2) return 0;
+  return EARLY_START_BONUS_BASE_SCRAP + (waveIndex - 2) * 2;
+}
 
 const enemyUnlocks = [
   'dustMite',

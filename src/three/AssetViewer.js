@@ -6,6 +6,7 @@ import { ASSET_CATALOGUE } from '../game/assets/catalogue.js';
 import { ModelLibrary } from './loaders/ModelLibrary.js';
 import { animateAsset, collectMotionParts } from './assetMotion.js';
 import { setZipBagOpening } from './zipBag.js';
+import { setSnabbaSkorOpening } from './snabbaSkor.js';
 import './assetViewer.css';
 
 export async function createAssetViewer(parent) {
@@ -142,8 +143,13 @@ export async function createAssetViewer(parent) {
       node.material = Array.isArray(node.material) ? node.material.map(cloneMaterial) : cloneMaterial(node.material);
     });
     scene.add(model);
-    query('opening-control').hidden = model.userData.interaction !== 'zip-bag-opening';
-    if (!query('opening-control').hidden) setZipBagOpening(model, 0);
+    const openingHandler = model.userData.interaction === 'zip-bag-opening'
+      ? setZipBagOpening
+      : model.userData.interaction === 'snabba-skor-opening'
+        ? setSnabbaSkorOpening
+        : null;
+    query('opening-control').hidden = !openingHandler;
+    if (openingHandler) openingHandler(model, 0);
     query('opening').value = '0';
     query('opening-value').value = '0%';
     viewport.dataset.opening = '0';
@@ -196,7 +202,8 @@ export async function createAssetViewer(parent) {
   query('opening').addEventListener('input', () => {
     if (!model) return;
     const value = Number(query('opening').value);
-    setZipBagOpening(model, value / 100);
+    if (model.userData.interaction === 'zip-bag-opening') setZipBagOpening(model, value / 100);
+    if (model.userData.interaction === 'snabba-skor-opening') setSnabbaSkorOpening(model, value / 100);
     query('opening-value').value = `${value}%`;
     viewport.dataset.opening = String(value);
     needsRender = true;

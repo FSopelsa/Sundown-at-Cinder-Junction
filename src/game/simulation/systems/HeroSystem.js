@@ -540,13 +540,7 @@ export class HeroSystem {
     const collected = [];
     for (const pickup of this.gameState.pickups ?? []) {
       if (distanceBetween(hero, pickup) > (pickup.collectRadius ?? 30)) continue;
-      if (pickup.type === 'speed-boost') {
-        hero.speedBoostRemainingMs = Math.max(
-          hero.speedBoostRemainingMs ?? 0,
-          pickup.durationMs ?? 0,
-        );
-        hero.speedBoostMultiplier = Math.max(1, pickup.speedMultiplier ?? 1);
-      }
+      this.applyPickupEffect(pickup);
       collected.push(pickup.id);
       this.events.push({
         type: 'pickup-collected',
@@ -559,6 +553,16 @@ export class HeroSystem {
       this.gameState.pickups = this.gameState.pickups
         .filter((pickup) => !collected.includes(pickup.id));
     }
+  }
+
+  applyPickupEffect(pickup) {
+    if (pickup?.type !== 'speed-boost') return false;
+    this.hero.speedBoostRemainingMs = Math.max(
+      this.hero.speedBoostRemainingMs ?? 0,
+      pickup.durationMs ?? 0,
+    );
+    this.hero.speedBoostMultiplier = Math.max(1, pickup.speedMultiplier ?? 1);
+    return true;
   }
 
   updateMovement(deltaMs) {
