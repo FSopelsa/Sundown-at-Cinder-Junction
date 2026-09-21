@@ -70,6 +70,7 @@ function makeProceduralRoom(room, palette, map, roomState) {
   const width = grid.columns * grid.cellSize * METERS_PER_SIMULATION_UNIT;
   const depth = grid.rows * grid.cellSize * METERS_PER_SIMULATION_UNIT;
   const group = new THREE.Group();
+  group.userData.ownsResources = true;
   const floor = new THREE.Mesh(
     new THREE.BoxGeometry(width, 0.20, depth),
     new THREE.MeshStandardMaterial({ color: palette.floor, metalness: 0.55, roughness: 0.68 }),
@@ -144,6 +145,7 @@ function makeBuildGrid(room, palette) {
     }),
   );
   gridLines.name = `${room.id} build grid`;
+  gridLines.userData.ownsResources = true;
   return gridLines;
 }
 
@@ -162,6 +164,7 @@ function connectionBridge(map, connection, open) {
   const dz = toWorld.z - fromWorld.z;
   const length = Math.hypot(dx, dz);
   const bridge = new THREE.Group();
+  bridge.userData.ownsResources = true;
   bridge.name = `${connection.id} ${open ? 'bridge' : 'sealed bridge'}`;
   const deck = new THREE.Mesh(
     new THREE.BoxGeometry(length + 0.3, 0.16, 0.88),

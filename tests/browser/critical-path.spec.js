@@ -18,6 +18,8 @@ test('loads the four-room level and starts a raid without console errors', async
   await expect(page.getByRole('button', { name: 'Move Singularity · H' })).toBeEnabled();
   await page.keyboard.down('Control');
   await expect(page.locator('[data-hud="notice"]')).toContainText('Build queue active');
+  await expect(page.locator('[data-hud="notice"]')).toHaveCSS('z-index', '6');
+  await expect(page.locator('.camera-controls')).toHaveCSS('z-index', '5');
   await page.keyboard.up('Control');
   await page.keyboard.press('h');
   await expect(page.getByRole('button', { name: 'Move Singularity · active' })).toBeEnabled();

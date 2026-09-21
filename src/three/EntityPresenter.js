@@ -8,6 +8,7 @@ import {
   makeWallFadeable,
   updateWallOcclusion,
 } from './wallOcclusion.js';
+import { disposeObjectResources } from './disposeObjectResources.js';
 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
@@ -46,6 +47,7 @@ function fallbackModel(color, size = 0.45, height = 0.7) {
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   group.add(mesh);
+  group.userData.ownsResources = true;
   return group;
 }
 
@@ -134,7 +136,18 @@ function makeWormholeView(direction) {
   field.position.y = 0.035;
   group.add(field, ring);
   group.userData.baseScale = entry ? 1 : 0.92;
+  group.userData.ownsResources = true;
   return group;
+}
+
+function disposeView(view) {
+  if (!view) return;
+  if (view.wallParts) view.root.traverse((node) => disposeWallFadeMaterials(node));
+  if (view.root.userData.ownsResources) {
+    disposeObjectResources(view.root);
+    return;
+  }
+  for (const object of view.ownedObjects ?? []) disposeObjectResources(object);
 }
 
 export class EntityPresenter {
@@ -160,33 +173,36 @@ export class EntityPresenter {
   }
 
   createHeroView() {
-    const root = setShadowFlags(
-      this.modelLibrary.cloneNamed(MODEL_KEYS.units, 'Unit_Hero') ?? fallbackModel(0xc9914e, 0.38, 0.95),
-    );
+    const model = this.modelLibrary.cloneNamed(MODEL_KEYS.units, 'Unit_Hero');
+    const root = setShadowFlags(model ?? fallbackModel(0xc9914e, 0.38, 0.95));
     const ring = makeStatusRing();
     root.add(ring);
     this.group.add(root);
-    return { root, ring, motion: collectMotionParts(root), last: null };
+    return {
+      root, ring, motion: collectMotionParts(root), last: null,
+      ownedObjects: model ? [ring] : [],
+    };
   }
 
   createEnemyView(enemy) {
-    const root = setShadowFlags(
-      this.modelLibrary.cloneNamed(MODEL_KEYS.units, ENEMY_MODEL_NAMES[enemy.type]) ?? fallbackModel(0xc96e42),
-    );
+    const model = this.modelLibrary.cloneNamed(MODEL_KEYS.units, ENEMY_MODEL_NAMES[enemy.type]);
+    const root = setShadowFlags(model ?? fallbackModel(0xc96e42));
     const ring = makeStatusRing();
     const health = makeHealthBar();
     const height = new THREE.Box3().setFromObject(root).max.y;
     health.group.position.y = Math.max(0, height - 1.05);
     root.add(ring, health.group);
     this.group.add(root);
-    return { root, ring, health, motion: collectMotionParts(root), last: null };
+    return {
+      root, ring, health, motion: collectMotionParts(root), last: null,
+      ownedObjects: model ? [ring, health.group] : [],
+    };
   }
 
   createTowerView(tower) {
     const color = tower.damageType === 'solar' ? 0xdb5e32 : tower.damageType === 'cryo' ? 0x67bfd1 : tower.damageType === 'arc' ? 0x9b73de : 0xb58044;
-    const root = setShadowFlags(
-      this.modelLibrary.cloneNamed(MODEL_KEYS.units, TOWER_MODEL_NAMES[tower.type]) ?? fallbackModel(color, 0.42, 0.65),
-    );
+    const model = this.modelLibrary.cloneNamed(MODEL_KEYS.units, TOWER_MODEL_NAMES[tower.type]);
+    const root = setShadowFlags(model ?? fallbackModel(color, 0.42, 0.65));
     const wallParts = tower.type === 'wall' ? {
       core: root.getObjectByName('Tower_Wall_Core'),
       negativeEndCap: root.getObjectByName('Tower_Wall_End_Negative'),
@@ -202,7 +218,10 @@ export class EntityPresenter {
     const construction = makeConstructionFrame();
     root.add(construction);
     this.group.add(root);
-    return { root, last: null, wallParts, construction, motion: collectMotionParts(root) };
+    return {
+      root, last: null, wallParts, construction, motion: collectMotionParts(root),
+      ownedObjects: model ? [construction] : [],
+    };
   }
 
   syncWallView(view, tower, towers, map) {
@@ -312,8 +331,8 @@ export class EntityPresenter {
     if (!towers.some((tower) => tower.id === selectedTowerId)) this.selection.visible = false;
     for (const [id, view] of this.towerViews) {
       if (active.has(id)) continue;
-      if (view.wallParts) view.root.traverse((node) => disposeWallFadeMaterials(node));
       this.group.remove(view.root);
+      disposeView(view);
       this.towerViews.delete(id);
     }
   }
@@ -342,9 +361,8 @@ export class EntityPresenter {
       active.add(pickup.id);
       let view = this.pickupViews.get(pickup.id);
       if (!view) {
-        const root = setShadowFlags(
-          this.modelLibrary.cloneNamed(MODEL_KEYS.snabbaSkor, 'Prop_SnabbaSkor') ?? fallbackModel(0x5de4c8, 0.24, 0.3),
-        );
+        const model = this.modelLibrary.cloneNamed(MODEL_KEYS.snabbaSkor, 'Prop_SnabbaSkor');
+        const root = setShadowFlags(model ?? fallbackModel(0x5de4c8, 0.24, 0.3));
         root.name = `Pickup_${pickup.id}`;
         root.scale.setScalar(0.52);
         const ring = makeStatusRing(0x5de4c8);
@@ -352,7 +370,7 @@ export class EntityPresenter {
         ring.scale.setScalar(0.7);
         root.add(ring);
         this.group.add(root);
-        view = { root };
+        view = { root, ownedObjects: model ? [ring] : [] };
         this.pickupViews.set(pickup.id, view);
       }
       const point = simulationToWorld(pickup.x, pickup.y);
@@ -362,6 +380,7 @@ export class EntityPresenter {
     for (const [id, view] of this.pickupViews) {
       if (active.has(id)) continue;
       this.group.remove(view.root);
+      disposeView(view);
       this.pickupViews.delete(id);
     }
   }
@@ -372,7 +391,10 @@ export class EntityPresenter {
       active.add(portal.id);
       let view = this.wormholeViews.get(portal.id);
       if (!view || view.userData.direction !== portal.direction) {
-        if (view) this.group.remove(view);
+        if (view) {
+          this.group.remove(view);
+          disposeObjectResources(view);
+        }
         view = makeWormholeView(portal.direction);
         view.userData.direction = portal.direction;
         this.group.add(view);
@@ -387,6 +409,7 @@ export class EntityPresenter {
     for (const [id, view] of this.wormholeViews) {
       if (active.has(id)) continue;
       this.group.remove(view);
+      disposeObjectResources(view);
       this.wormholeViews.delete(id);
     }
   }
@@ -434,6 +457,7 @@ export class EntityPresenter {
     for (const [id, view] of this.enemyViews) {
       if (active.has(id)) continue;
       this.group.remove(view.root);
+      disposeView(view);
       this.enemyViews.delete(id);
     }
   }
@@ -447,9 +471,12 @@ export class EntityPresenter {
   }
 
   dispose() {
-    for (const view of this.towerViews.values()) {
-      if (view.wallParts) view.root.traverse((node) => disposeWallFadeMaterials(node));
-    }
+    disposeView(this.heroView);
+    for (const view of this.enemyViews.values()) disposeView(view);
+    for (const view of this.towerViews.values()) disposeView(view);
+    for (const view of this.pickupViews.values()) disposeView(view);
+    for (const view of this.wormholeViews.values()) disposeObjectResources(view);
+    disposeObjectResources(this.selection);
     this.scene.remove(this.group);
     this.enemyViews.clear();
     this.towerViews.clear();

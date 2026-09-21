@@ -7,6 +7,7 @@ import { AudioManager } from './audio/AudioManager.js';
 import { TacticalCamera } from './TacticalCamera.js';
 import { EffectsLayer } from './EffectsLayer.js';
 import { EntityPresenter } from './EntityPresenter.js';
+import { disposeObjectResources } from './disposeObjectResources.js';
 import { ModelLibrary } from './loaders/ModelLibrary.js';
 import { RoomScene } from './RoomScene.js';
 import { RouteOverlay } from './RouteOverlay.js';
@@ -452,6 +453,11 @@ export class BattlefieldRenderer {
     this.routeOverlay?.dispose();
     this.modelLibrary?.dispose();
     this.materialEnvironment?.dispose();
+    if (this.preview) {
+      this.scene?.remove(this.preview);
+      disposeObjectResources(this.preview);
+      this.preview = null;
+    }
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
   }

@@ -84,7 +84,8 @@ PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
 - Do not block an entrance, exit, or door; the global room graph must retain a
   route to the final exit.
 - **Move Singularity** (or `H`) arms hero movement. Click any reachable room
-  cell and the hero will cross open doors as needed.
+  cell and the hero will cross open doors as needed. Hold `Shift` while
+  building for one temporary move order, or hold `Ctrl` to queue construction.
 - **Start wave** (or `Space`) begins the next raid. `P`, `1`, and `2` control
   pause and simulation speed.
 - The top-right audio control mutes/unmutes HTML audio and sets the master
@@ -96,6 +97,9 @@ PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
 Campaign leaks reduce shared integrity and do not return in later waves.
 Legacy scenarios retain their returning-enemy rules. Campaign waves scale by
 encounter tier and enemy type; towers and the hero persist as rooms open.
+Legacy scenarios retain their returning-enemy rules. Their enemy hull grows by
+22% per completed raid, hero auto-attack damage gains a small late-level
+acceleration, and the DOM HUD preserves the raid-result and failure states.
 
 ### Blender and GLB exports
 
