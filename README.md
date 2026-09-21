@@ -95,11 +95,11 @@ PowerShell may block `npm.ps1`; `npm.cmd` avoids changing execution policy.
   and zoom. **Overview** frames discovered rooms. Use the campaign panel to focus a room.
 
 Campaign leaks reduce shared integrity and do not return in later waves.
-Legacy scenarios retain their returning-enemy rules. Campaign waves scale by
-encounter tier and enemy type; towers and the hero persist as rooms open.
-Legacy scenarios retain their returning-enemy rules. Their enemy hull grows by
-22% per completed raid, hero auto-attack damage gains a small late-level
-acceleration, and the DOM HUD preserves the raid-result and failure states.
+Campaign waves scale by encounter tier and enemy type; towers and the hero
+persist as rooms open. Legacy scenarios retain their returning-enemy rules.
+Their enemy hull grows by 22% per completed raid, hero auto-attack damage
+gains a small late-level acceleration, and the DOM HUD preserves the
+raid-result and failure states.
 
 ### Blender and GLB exports
 
