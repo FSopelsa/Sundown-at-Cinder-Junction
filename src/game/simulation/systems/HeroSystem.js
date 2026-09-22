@@ -1,3 +1,4 @@
+import { shareCombatRoom } from '../roomNavigation.js';
 import {
   createHeroSkillSlots,
   getExperienceToNextHeroLevel,
@@ -59,13 +60,14 @@ export class HeroSystem {
       this.gameState.towers,
       heroCellCenter(this.map, cell),
       heroCellCenter(this.map, cell),
+      this.gameState.roomState,
     );
     hero.navigationCell = route?.cells[0] ?? cell;
     hero.route ??= [];
     hero.navigationNext ??= null;
   }
 
-  commandMove(x, y) {
+  getMovePlan(x, y, towers = this.gameState.towers) {
     const hero = this.hero;
     if (!hero.alive) {
       return { ok: false, reason: 'Singularity returns with the next raid.' };
@@ -74,16 +76,35 @@ export class HeroSystem {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
 
-    this.ensureNavigationState();
+    const navigationCell = hero.navigationCell ?? worldToHeroCell(this.map, hero.x, hero.y);
     const plan = findHeroPath(
       this.map,
-      this.gameState.towers,
-      heroCellCenter(this.map, hero.navigationCell),
+      towers,
+      heroCellCenter(this.map, navigationCell),
       { x, y },
+      this.gameState.roomState,
     );
     if (!plan) {
       return { ok: false, reason: 'No open route to that position.' };
     }
+
+    return { ok: true, plan };
+  }
+
+  canCommandMove(x, y, towers = this.gameState.towers) {
+    const result = this.getMovePlan(x, y, towers);
+    return result.ok
+      ? { ok: true, destination: result.plan.destination, pathLength: result.plan.cells.length - 1 }
+      : result;
+  }
+
+  commandMove(x, y) {
+    this.ensureNavigationState();
+    const result = this.getMovePlan(x, y);
+    if (!result.ok) return result;
+
+    const hero = this.hero;
+    const { plan } = result;
 
     hero.destination = { ...plan.cells.at(-1) };
     hero.route = plan.cells.slice(1);
@@ -120,7 +141,7 @@ export class HeroSystem {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
     const cell = worldToHeroCell(this.map, x, y);
-    if (!isInsideHeroGrid(this.map, cell)) {
+    if (!isInsideHeroGrid(this.map, cell) || (this.map.campaign && !this.gameState.roomState.unlockedRoomIds.includes(cell?.roomId))) {
       return { ok: false, reason: 'Choose a point inside the battlefield.' };
     }
     const point = heroCellCenter(this.map, cell);
@@ -338,6 +359,14 @@ export class HeroSystem {
     if (first && Number.isFinite(first.progress) && endpoint.progress <= first.progress) {
       return { ok: false, reason: 'Set the exit farther along the rail than the entrance.' };
     }
+    const castCost = first && Number.isFinite(skill.scrapCost) ? skill.scrapCost : 0;
+    if (castCost > 0 && (this.gameState.scrap ?? 0) < castCost) {
+      return { ok: false, reason: `Worm Tunnel requires ${castCost} Scrap.` };
+    }
+    if (castCost > 0 && !this.economySystem?.spendScrap(castCost)) {
+      return { ok: false, reason: `Worm Tunnel requires ${castCost} Scrap.` };
+    }
+    endpoint.direction = first ? 'exit' : 'entry';
     this.gameState.wormholes.push(endpoint);
     const complete = this.gameState.wormholes.length === 2;
     const durationMs = skill.durationMs + (slot.upgradeLevel ?? 0) * skill.durationUpgradeMs;
@@ -363,6 +392,7 @@ export class HeroSystem {
       endpoint,
       pending: !complete,
       keepTargeting: !complete,
+      cost: castCost,
       ...(complete ? { durationMs } : {}),
     };
   }
@@ -374,15 +404,18 @@ export class HeroSystem {
 
     const hero = this.hero;
     hero.aegisRemainingMs = Math.max(0, (hero.aegisRemainingMs ?? 0) - deltaMs);
+    hero.speedBoostRemainingMs = Math.max(0, (hero.speedBoostRemainingMs ?? 0) - deltaMs);
+    if (hero.speedBoostRemainingMs === 0) hero.speedBoostMultiplier = 1;
     if (!hero.alive) return;
 
     this.updateMovement(deltaMs);
     this.collectNearbyScrap();
+    this.collectNearbyPickups();
     hero.attackCooldownMs = Math.max(0, hero.attackCooldownMs - deltaMs);
     if (hero.attackCooldownMs > 0) return;
 
     const target = this.gameState.enemies
-      .filter((enemy) => distanceBetween(hero, enemy) <= hero.attackRange)
+      .filter((enemy) => shareCombatRoom(this.map, hero, enemy) && distanceBetween(hero, enemy) <= hero.attackRange)
       .sort((first, second) => distanceBetween(hero, first) - distanceBetween(hero, second))[0];
     if (!target) return;
 
@@ -502,6 +535,36 @@ export class HeroSystem {
     }
   }
 
+  collectNearbyPickups() {
+    const hero = this.hero;
+    const collected = [];
+    for (const pickup of this.gameState.pickups ?? []) {
+      if (distanceBetween(hero, pickup) > (pickup.collectRadius ?? 30)) continue;
+      this.applyPickupEffect(pickup);
+      collected.push(pickup.id);
+      this.events.push({
+        type: 'pickup-collected',
+        x: pickup.x,
+        y: pickup.y,
+        pickup,
+      });
+    }
+    if (collected.length > 0) {
+      this.gameState.pickups = this.gameState.pickups
+        .filter((pickup) => !collected.includes(pickup.id));
+    }
+  }
+
+  applyPickupEffect(pickup) {
+    if (pickup?.type !== 'speed-boost') return false;
+    this.hero.speedBoostRemainingMs = Math.max(
+      this.hero.speedBoostRemainingMs ?? 0,
+      pickup.durationMs ?? 0,
+    );
+    this.hero.speedBoostMultiplier = Math.max(1, pickup.speedMultiplier ?? 1);
+    return true;
+  }
+
   updateMovement(deltaMs) {
     const hero = this.hero;
     const revision = getTowerNavigationRevision(this.gameState.towers);
@@ -510,7 +573,10 @@ export class HeroSystem {
       hero.reroutePending = true;
     }
 
-    let remainingDistance = hero.moveSpeed * (deltaMs / 1000);
+    const speedMultiplier = (hero.speedBoostRemainingMs ?? 0) > 0
+      ? Math.max(1, hero.speedBoostMultiplier ?? 1)
+      : 1;
+    let remainingDistance = hero.moveSpeed * speedMultiplier * (deltaMs / 1000);
     while (remainingDistance > 0) {
       if (!hero.navigationNext) {
         if (hero.reroutePending) this.rebuildRoute();
@@ -554,6 +620,7 @@ export class HeroSystem {
       this.gameState.towers,
       heroCellCenter(this.map, hero.navigationCell),
       heroCellCenter(this.map, hero.destination),
+      this.gameState.roomState,
     );
     if (!plan) {
       hero.route = [];
@@ -565,6 +632,8 @@ export class HeroSystem {
   }
 
   takeDamage(amount, source = null) {
+    const keys = this.gameState.campaign?.keys ?? [];
+    amount *= (keys.includes('cryo') ? 0.9 : 1) * (keys.includes('grav') ? 0.9 : 1);
     const hero = this.hero;
     if (!hero.alive || !Number.isFinite(amount) || amount <= 0) {
       return { applied: 0, killed: false };

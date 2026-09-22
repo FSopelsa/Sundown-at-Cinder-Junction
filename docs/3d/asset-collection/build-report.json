@@ -1,0 +1,751 @@
+{
+  "schemaVersion": 1,
+  "blenderVersion": "5.2.1 LTS",
+  "source": "assets/blender/cinder-asset-collection.blend",
+  "method": "Original procedural meshes and vertex-painted PBR materials; reference pixels excluded",
+  "assets": [
+    {
+      "node": "Unit_Hero",
+      "title": "Singularity",
+      "category": "hero",
+      "use": "active",
+      "references": [
+        "singularity_hero"
+      ],
+      "bounds": {
+        "min": [
+          -0.375,
+          0,
+          -0.4146
+        ],
+        "max": [
+          0.43497,
+          1.34,
+          0.4146
+        ]
+      },
+      "triangles": 11588,
+      "parts": 5,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_ColdIronLongshot",
+      "title": "Cold-Iron Longshot",
+      "category": "tower",
+      "use": "active",
+      "references": [
+        "cold_Iron_Longshot"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.43,
+          1.12,
+          0.43
+        ]
+      },
+      "triangles": 7112,
+      "parts": 2,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_Sunspitter",
+      "title": "Sunspitter",
+      "category": "tower",
+      "use": "active",
+      "references": [
+        "sunspitter"
+      ],
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.45,
+          1.07889,
+          0.45
+        ]
+      },
+      "triangles": 9484,
+      "parts": 3,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_TeslaCoil",
+      "title": "Tesla Coil",
+      "category": "tower",
+      "use": "active",
+      "references": [
+        "tesla_coil"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.43,
+          1.28,
+          0.43
+        ]
+      },
+      "triangles": 12296,
+      "parts": 1,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_RustRunner",
+      "title": "MechDog",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "MechDog_enemy"
+      ],
+      "bounds": {
+        "min": [
+          -0.66977,
+          0,
+          -0.3175
+        ],
+        "max": [
+          0.525,
+          0.745,
+          0.3175
+        ]
+      },
+      "triangles": 2324,
+      "parts": 5,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_TinbackHauler",
+      "title": "Tinback armored hauler",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "MechDog_enemy"
+      ],
+      "bounds": {
+        "min": [
+          -0.66977,
+          0,
+          -0.3175
+        ],
+        "max": [
+          0.525,
+          0.935,
+          0.3175
+        ]
+      },
+      "triangles": 2504,
+      "parts": 5,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_RiftLeech",
+      "title": "TechSquid / Rift Leech",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "TechSquid_enemy"
+      ],
+      "bounds": {
+        "min": [
+          -0.39,
+          0.04584,
+          -0.39
+        ],
+        "max": [
+          0.39,
+          1.03,
+          0.39
+        ]
+      },
+      "triangles": 3316,
+      "parts": 7,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_BlackComet",
+      "title": "The Black Comet",
+      "category": "boss",
+      "use": "active",
+      "references": [
+        "BlackComet_wave-boss"
+      ],
+      "bounds": {
+        "min": [
+          -0.80146,
+          0.14979,
+          -0.63588
+        ],
+        "max": [
+          0.63507,
+          1.83358,
+          0.63588
+        ]
+      },
+      "triangles": 5856,
+      "parts": 1,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_DustMite",
+      "title": "Dust Mite scavenger",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "MechDog_enemy",
+        "tesla_coil"
+      ],
+      "bounds": {
+        "min": [
+          -0.28796,
+          0.0079,
+          -0.40414
+        ],
+        "max": [
+          0.3,
+          0.545,
+          0.40414
+        ]
+      },
+      "triangles": 444,
+      "parts": 3,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_SparkWagon",
+      "title": "Spark Wagon capacitor carrier",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "MechDog_enemy",
+        "tesla_coil"
+      ],
+      "bounds": {
+        "min": [
+          -0.3278,
+          0.005,
+          -0.3115
+        ],
+        "max": [
+          0.3278,
+          0.845,
+          0.3115
+        ]
+      },
+      "triangles": 3028,
+      "parts": 3,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Unit_SiegeCrawler",
+      "title": "Siege Crawler",
+      "category": "enemy",
+      "use": "active",
+      "references": [
+        "MechDog_enemy",
+        "tesla_coil"
+      ],
+      "bounds": {
+        "min": [
+          -0.411,
+          0.005,
+          -0.3115
+        ],
+        "max": [
+          0.53,
+          0.665,
+          0.3115
+        ]
+      },
+      "triangles": 2424,
+      "parts": 3,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_Peacemaker",
+      "title": "Peacemaker",
+      "category": "tower",
+      "use": "active",
+      "references": [
+        "cold_Iron_Longshot"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.629,
+          0.785,
+          0.43
+        ]
+      },
+      "triangles": 2944,
+      "parts": 2,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_ScrapExchange",
+      "title": "Scrap Exchange",
+      "category": "tower",
+      "use": "active",
+      "references": [
+        "walls",
+        "graphicInspo"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.43,
+          1.029,
+          0.43
+        ]
+      },
+      "triangles": 2844,
+      "parts": 1,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Tower_Wall",
+      "title": "Windowed defensive wall",
+      "category": "wall",
+      "use": "active",
+      "references": [
+        "walls"
+      ],
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.18
+        ],
+        "max": [
+          0.5,
+          1.02,
+          0.18
+        ]
+      },
+      "triangles": 1048,
+      "parts": 3,
+      "file": "cinder-authored-units.glb"
+    },
+    {
+      "node": "Prop_CryogenicPlant",
+      "title": "Cryogenic cooling plant",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "cold_Iron_Longshot"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.43,
+          1.12,
+          0.43
+        ]
+      },
+      "triangles": 6896,
+      "parts": 2,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_ContainmentReactor",
+      "title": "Fusion containment reactor",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "sunspitter"
+      ],
+      "bounds": {
+        "min": [
+          -0.49,
+          0,
+          -0.49
+        ],
+        "max": [
+          0.49,
+          1.29,
+          0.49
+        ]
+      },
+      "triangles": 12248,
+      "parts": 3,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_ArcPylon",
+      "title": "Arc relay pylon",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "tesla_coil"
+      ],
+      "bounds": {
+        "min": [
+          -0.43,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.43,
+          2.05,
+          0.43
+        ]
+      },
+      "triangles": 15464,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_TechSquidSentinel",
+      "title": "TechSquid sentinel",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "TechSquid_enemy"
+      ],
+      "bounds": {
+        "min": [
+          -0.819,
+          0.09627,
+          -0.819
+        ],
+        "max": [
+          0.819,
+          2.163,
+          0.819
+        ]
+      },
+      "triangles": 3316,
+      "parts": 7,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_DeathComet",
+      "title": "Death Comet relic",
+      "category": "boss",
+      "use": "reserve",
+      "references": [
+        "BlackComet_wave-boss"
+      ],
+      "bounds": {
+        "min": [
+          -0.80146,
+          0.14979,
+          -0.56386
+        ],
+        "max": [
+          0.63507,
+          1.55021,
+          0.58261
+        ]
+      },
+      "triangles": 5672,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_HornedComet",
+      "title": "Horned Comet",
+      "category": "boss",
+      "use": "reserve",
+      "references": [
+        "BlackComet_wave-boss"
+      ],
+      "bounds": {
+        "min": [
+          -0.80146,
+          0.14979,
+          -0.63588
+        ],
+        "max": [
+          0.63507,
+          1.83358,
+          0.63588
+        ]
+      },
+      "triangles": 5856,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_EyeOfCinder",
+      "title": "Eye of Cinder",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "BlackComet_wave-boss/Eye.webp"
+      ],
+      "bounds": {
+        "min": [
+          -0.225,
+          0,
+          -0.815
+        ],
+        "max": [
+          0.235,
+          1.67485,
+          0.815
+        ]
+      },
+      "triangles": 5756,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_ThresholdGate",
+      "title": "Threshold gate",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "map_sketch.jpg"
+      ],
+      "bounds": {
+        "min": [
+          -0.225,
+          0,
+          -0.815
+        ],
+        "max": [
+          0.225,
+          1.67485,
+          0.815
+        ]
+      },
+      "triangles": 2400,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_Tokamak",
+      "title": "Toroidal fusion engine",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "sunspitter/base_images/article2_05d149956c.png",
+        "sunspitter/base_images/img6_article_e25339a262.png"
+      ],
+      "bounds": {
+        "min": [
+          -0.76483,
+          0,
+          -0.76483
+        ],
+        "max": [
+          0.76483,
+          1.29,
+          0.76483
+        ]
+      },
+      "triangles": 6156,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_FaradayCage",
+      "title": "Faraday service cage",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "tesla_coil/base_images/arcattack-cage.webp"
+      ],
+      "bounds": {
+        "min": [
+          -0.47,
+          0,
+          -0.47
+        ],
+        "max": [
+          0.47,
+          1.355,
+          0.47
+        ]
+      },
+      "triangles": 3352,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Prop_UpgradeStation",
+      "title": "Upgrade workbench",
+      "category": "prop",
+      "use": "reserve",
+      "references": [
+        "map_sketch.jpg",
+        "walls/wall_template.jpg"
+      ],
+      "bounds": {
+        "min": [
+          -0.47,
+          0,
+          -0.315
+        ],
+        "max": [
+          0.47,
+          1.225,
+          0.315
+        ]
+      },
+      "triangles": 584,
+      "parts": 1,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Kit_FortressWall",
+      "title": "Fortress wall module",
+      "category": "wall",
+      "use": "reserve",
+      "references": [
+        "walls"
+      ],
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.18
+        ],
+        "max": [
+          0.5,
+          1.75,
+          0.18
+        ]
+      },
+      "triangles": 1256,
+      "parts": 3,
+      "file": "cinder-production-reserve.glb"
+    },
+    {
+      "node": "Kit_FloorPlate",
+      "title": "Diamond steel plate",
+      "category": "floor",
+      "use": "kit",
+      "references": [
+        "floor'ground_tiles"
+      ],
+      "bounds": {
+        "min": [
+          -0.5,
+          -0.1,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          0,
+          0.5
+        ]
+      },
+      "triangles": 200,
+      "parts": 1,
+      "file": "cinder-industrial-kit.glb"
+    },
+    {
+      "node": "Kit_FloorGrate",
+      "title": "Service grating",
+      "category": "floor",
+      "use": "kit",
+      "references": [
+        "floor'ground_tiles"
+      ],
+      "bounds": {
+        "min": [
+          -0.5,
+          -0.1,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          0.0005,
+          0.5
+        ]
+      },
+      "triangles": 320,
+      "parts": 1,
+      "file": "cinder-industrial-kit.glb"
+    },
+    {
+      "node": "Kit_FloorHazard",
+      "title": "Hazard edge plate",
+      "category": "floor",
+      "use": "kit",
+      "references": [
+        "floor'ground_tiles"
+      ],
+      "bounds": {
+        "min": [
+          -0.5,
+          -0.1,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          0.004,
+          0.5
+        ]
+      },
+      "triangles": 284,
+      "parts": 1,
+      "file": "cinder-industrial-kit.glb"
+    }
+  ],
+  "packages": [
+    {
+      "key": "authored-units",
+      "path": "public/assets/models/cinder-authored-units.glb",
+      "bytes": 3708680,
+      "rawBytes": 3884876,
+      "sha256": "f43f2ba30373262ea35cb054f638a41458456f864901309c326c071849fc298e",
+      "nodes": 102,
+      "meshes": 40,
+      "primitives": 88,
+      "materials": 11,
+      "textures": 0,
+      "optimization": "weld, dedup, prune; semantic roots and motion extras retained; no decoder required"
+    },
+    {
+      "key": "industrial-kit",
+      "path": "public/assets/models/cinder-industrial-kit.glb",
+      "bytes": 118732,
+      "rawBytes": 126360,
+      "sha256": "99bf2017feb23783cdad28fcbf3d63be409a0fc40e1974b62589c3d1f3770f7b",
+      "nodes": 9,
+      "meshes": 3,
+      "primitives": 6,
+      "materials": 3,
+      "textures": 1,
+      "optimization": "weld, dedup, prune; semantic roots and motion extras retained; no decoder required"
+    },
+    {
+      "key": "production-reserve",
+      "path": "public/assets/models/cinder-production-reserve.glb",
+      "bytes": 3993132,
+      "rawBytes": 4005056,
+      "sha256": "7e93bad1e9ca4ac221eb96111ae3acaafcdddbd1b8ed0a5c136fcfd1b57bf1ba",
+      "nodes": 58,
+      "meshes": 23,
+      "primitives": 60,
+      "materials": 10,
+      "textures": 0,
+      "optimization": "weld, dedup, prune; semantic roots and motion extras retained; no decoder required"
+    }
+  ]
+}

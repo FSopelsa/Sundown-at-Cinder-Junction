@@ -91,6 +91,25 @@ button:disabled {
 .tower-details__heading { justify-content: space-between; }
 .tower-details__heading strong { font-size: 0.9rem; }
 [data-hud="tower-stats"] { color: var(--teal); font-size: 0.85rem; }
+.tower-targeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.tower-targeting > div { display: flex; min-width: 0; }
+.tower-targeting button {
+  min-width: 0;
+  border-radius: 0;
+  padding: 0.35rem 0.48rem;
+  font-size: 0.68rem;
+}
+.tower-targeting button:first-child { border-radius: 4px 0 0 4px; }
+.tower-targeting button:last-child { border-radius: 0 4px 4px 0; }
+.tower-targeting button + button { margin-left: -1px; }
 .upgrade-options { margin-top: 0.75rem; align-items: stretch; }
 .upgrade-options button { flex: 1; font-size: 0.8rem; }
 .tower-details__sell {
@@ -111,6 +130,9 @@ button:disabled {
 
 #game-root {
   width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  overflow: hidden;
   height: 100vh;
 }
 
@@ -459,6 +481,7 @@ button:disabled {
 .hud__notice {
   top: 7rem;
   left: 0.75rem;
+  z-index: 6;
   padding: 0.38rem 0.55rem;
   color: #d7c4a1;
 }
@@ -700,4 +723,37 @@ button:disabled {
   .camera-controls { width:max-content; max-width:calc(100% - 12px); }
   .camera-controls button { padding:5px 8px; }
   .hud__intel { display:none; }
+}
+
+/* Campaign controls stay contextual and leave the middle of the battlefield open. */
+.campaign-panel { position: absolute; top: 122px; left: 12px; width: 270px; padding: 12px; border: 1px solid #527c79; border-radius: 8px; background: rgb(12 23 27 / 94%); pointer-events: auto; font-size: 12px; max-height: 43vh; overflow: auto; }
+.campaign-panel > strong { display: block; font-size: 15px; margin: 5px 0; color: #ecddbd; }
+.campaign-panel p { line-height: 1.45; margin: 7px 0; color: #c5d2cc; }
+.campaign-panel small { display: block; color: #9dacaa; margin: 7px 0 0; line-height: 1.4; }
+.campaign-panel button { padding: 6px 8px; font-size: 11px; margin: 3px 3px 0 0; }
+.campaign-panel summary { cursor: pointer; padding: 9px 0 3px; color: #8bdbca; }
+.campaign-mode .hud__brand > .hud__eyebrow { display: none; }
+.campaign-mode .build-palette { max-width: 270px; }
+.campaign-mode .build-palette__tower-description { display: none; }
+.campaign-mode .build-palette__options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.campaign-mode .build-palette__tower { padding: 7px; }
+.campaign-mode .build-palette__tower-name { font-size: 11px; }
+.campaign-mode .build-palette__hint { font-size: 10px; }
+.campaign-mode .hud__notice { left: 300px; right: 290px; font-size: 12px; }
+@media (max-width: 900px) { .campaign-panel { top: 158px; width: 225px; max-height: 30vh; } .campaign-mode .hud__notice { left: 245px; right: 12px; } }
+@media (max-height: 760px) { .campaign-panel { top: 100px; max-height: 28vh; } .campaign-panel > p { max-height: 54px; overflow: auto; } .campaign-mode .build-palette { max-height: 40vh; overflow: auto; } }
+
+.campaign-mode .hud__notice { top: 166px; left: 305px; right: 300px; max-width: none; text-align: center; }
+@media (max-width: 980px) { .campaign-mode .hud__notice { top: 214px; left: 250px; right: 12px; } }
+
+.campaign-mode .hud__topbar { grid-template-columns: minmax(0, 1fr) auto auto; }
+.campaign-mode .hud__brand { min-width: 0; }
+.campaign-mode .level-picker { flex-wrap: wrap; }
+.campaign-mode .level-picker select { max-width: 100%; }
+.campaign-mode .hud__intel { top: 215px; bottom: auto; right: 12px; max-width: 260px; }
+@media (max-width: 1300px) and (min-width: 981px) {
+  .campaign-mode .hud__topbar { gap: 8px; }
+  .campaign-mode .hud__controls { gap: 6px; }
+  .campaign-mode .hud__status { gap: 9px; }
+  .campaign-mode .audio-control label { display: none; }
 }

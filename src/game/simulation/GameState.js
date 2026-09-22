@@ -1,10 +1,18 @@
+import { createCampaignState } from './systems/CampaignSystem.js';
 import { getMap } from '../content/map.js';
 import { createHeroState } from '../content/heroes.js';
+import {
+  createPickupState,
+  getRandomSnabbaSkorSpawnDelay,
+} from '../content/pickups.js';
 
-export const SAVE_SCHEMA_VERSION = 1;
+export const SAVE_SCHEMA_VERSION = 2;
 
 function cloneTower(tower) {
-  return { ...tower, level: tower.level ?? 1, upgrades: [...(tower.upgrades ?? [])],
+  const targeting = ['first', 'toughest', 'last'].includes(tower.targeting)
+    ? tower.targeting
+    : 'first';
+  return { ...tower, level: tower.level ?? 1, targeting, upgrades: [...(tower.upgrades ?? [])],
     construction: tower.construction ? { ...tower.construction } : null,
     effect: tower.effect ? { ...tower.effect } : null,
     chain: tower.chain ? { ...tower.chain } : null };
@@ -55,6 +63,9 @@ function createWaveState(wave = {}) {
     isBounty: Boolean(wave.isBounty),
     label: typeof wave.label === 'string' ? wave.label : '',
     elapsedMs: Number.isFinite(wave.elapsedMs) ? wave.elapsedMs : 0,
+    planningRemainingMs: Number.isFinite(wave.planningRemainingMs)
+      ? Math.max(0, wave.planningRemainingMs)
+      : 0,
     carryoverCount:
       Number.isInteger(wave.carryoverCount) && wave.carryoverCount >= 0
         ? wave.carryoverCount
@@ -89,9 +100,11 @@ function createRoomState(map, snapshot = {}) {
 
 export class GameState {
   constructor(snapshot = {}) {
-    this.schemaVersion = snapshot.schemaVersion ?? SAVE_SCHEMA_VERSION;
+    this.schemaVersion = SAVE_SCHEMA_VERSION;
     const map = getMap(snapshot.levelId);
     this.levelId = map.id;
+    this.campaign = createCampaignState(map, snapshot.campaign);
+    this.accumulatorMs = Number.isFinite(snapshot.accumulatorMs) ? snapshot.accumulatorMs : 0;
     this.scrap = Number.isFinite(snapshot.scrap) ? snapshot.scrap : map.startingScrap;
     this.catalysts = { ...(snapshot.catalysts ?? {}) };
     this.towers = Array.isArray(snapshot.towers)
@@ -112,6 +125,18 @@ export class GameState {
     this.wormholes = Array.isArray(snapshot.wormholes)
       ? snapshot.wormholes.slice(0, 2).map(cloneFieldObject)
       : [];
+    this.pickups = Array.isArray(snapshot.pickups)
+      ? snapshot.pickups.map(cloneFieldObject)
+      : (map.pickupSpawns ?? []).map(createPickupState).filter(Boolean);
+    const hasPickupSchedule = Object.prototype.hasOwnProperty.call(
+      snapshot,
+      'snabbaSkorSpawnRemainingMs',
+    );
+    this.snabbaSkorSpawnRemainingMs = hasPickupSchedule
+      ? (Number.isFinite(snapshot.snabbaSkorSpawnRemainingMs)
+        ? Math.max(0, snapshot.snabbaSkorSpawnRemainingMs)
+        : null)
+      : getRandomSnabbaSkorSpawnDelay();
     this.roomState = createRoomState(map, snapshot.roomState);
     this.wave = createWaveState(snapshot.wave);
     this.stationIntegrity = Number.isFinite(snapshot.stationIntegrity)
@@ -140,6 +165,8 @@ export class GameState {
     return {
       schemaVersion: this.schemaVersion,
       levelId: this.levelId,
+      campaign: structuredClone(this.campaign),
+      accumulatorMs: this.accumulatorMs,
       scrap: this.scrap,
       catalysts: { ...this.catalysts },
       towers: this.towers.map(cloneTower),
@@ -148,6 +175,8 @@ export class GameState {
       gravityWells: this.gravityWells.map(cloneFieldObject),
       scrapPiles: this.scrapPiles.map(cloneFieldObject),
       wormholes: this.wormholes.map(cloneFieldObject),
+      pickups: this.pickups.map(cloneFieldObject),
+      snabbaSkorSpawnRemainingMs: this.snabbaSkorSpawnRemainingMs,
       roomState: {
         unlockedRoomIds: [...this.roomState.unlockedRoomIds],
         openDoorIds: [...this.roomState.openDoorIds],
@@ -163,8 +192,8 @@ export class GameState {
   static fromJSON(value) {
     const snapshot = typeof value === 'string' ? JSON.parse(value) : value;
 
-    if (snapshot.schemaVersion !== SAVE_SCHEMA_VERSION) {
-      throw new Error(`Unsupported save schema: ${snapshot.schemaVersion}`);
+    if (!snapshot || ![1, SAVE_SCHEMA_VERSION].includes(snapshot.schemaVersion)) {
+      throw new Error(`Unsupported save schema: ${snapshot?.schemaVersion}`);
     }
 
     return new GameState(snapshot);

@@ -16,8 +16,9 @@ changes.
 
 - **Target Platforms**: Desktop browser
 - **Input Methods**: Keyboard and mouse/pointer
-- **Primary Input**: Keyboard movement plus pointer selection, placement, and
-  camera interaction
+- **Primary Input**: Pointer-led tower placement, selection, and hero move
+  orders; `H` toggles movement mode, `Shift` issues a temporary move order,
+  `Ctrl` queues construction, and keyboard/drag controls move the camera
 - **Gamepad Support**: None currently
 - **Touch Support**: None currently
 - **Platform Notes**: Vite development and production builds; WebGL2-capable

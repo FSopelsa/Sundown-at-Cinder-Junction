@@ -1,10 +1,13 @@
+import { CampaignScene } from './CampaignScene.js';
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ACTIONS } from '../game/input/actions.js';
 import { KEY_BINDINGS } from '../game/input/bindings.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { TacticalCamera } from './TacticalCamera.js';
 import { EffectsLayer } from './EffectsLayer.js';
 import { EntityPresenter } from './EntityPresenter.js';
+import { disposeObjectResources } from './disposeObjectResources.js';
 import { ModelLibrary } from './loaders/ModelLibrary.js';
 import { RoomScene } from './RoomScene.js';
 import { RouteOverlay } from './RouteOverlay.js';
@@ -34,6 +37,7 @@ export class BattlefieldRenderer {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
     this.onResize = this.onResize.bind(this);
     this.onContextLost = this.onContextLost.bind(this);
     this.onContextRestored = this.onContextRestored.bind(this);
@@ -52,12 +56,19 @@ export class BattlefieldRenderer {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const studio = new RoomEnvironment();
+    this.materialEnvironment = pmrem.fromScene(studio, 0.04);
+    this.scene.environment = this.materialEnvironment.texture;
+    this.scene.environmentIntensity = 0.35;
+    studio.dispose();
+    pmrem.dispose();
     this.renderer.domElement.setAttribute('aria-label', '3D Cinder Junction battlefield');
     this.parent.replaceChildren(this.renderer.domElement);
     this.addLights();
     this.resize();
 
-    this.modelLibrary = await ModelLibrary.load();
+    this.modelLibrary = await ModelLibrary.load(undefined, { includeReserve: Boolean(this.simulation.map.campaign) });
     this.roomScene = new RoomScene(this.scene, this.modelLibrary);
     this.doorRevision = this.getDoorRevision();
     this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
@@ -67,6 +78,19 @@ export class BattlefieldRenderer {
     this.effects = new EffectsLayer(this.scene);
     this.audio = new AudioManager(this.simulation.state.settings);
     this.cameraControls = new TacticalCamera(this.camera, this.renderer.domElement, this.simulation.map, this.hud.root);
+    if (this.simulation.map.campaign) {
+      this.cameraControls.azimuth = -0.12;
+      this.cameraControls.setMap(this.visibleMap());
+      this.campaignScene = new CampaignScene(this.scene, this.modelLibrary, this.simulation.map);
+      this.hud.campaignHud.focusRoom = id => {
+        const room = this.simulation.map.rooms.find(r => r.id === id && this.simulation.state.roomState.unlockedRoomIds.includes(id));
+        if (room) {
+          this.cameraControls.setMap({ ...this.simulation.map, rooms: [room] }, true);
+          this.cameraControls.map = this.visibleMap();
+        }
+      };
+      this.hud.showNotice(this.simulation.state.campaign.lastMessage, 'neutral');
+    }
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     // Room blockouts currently have flat navigable terrain. Pick against a
@@ -89,8 +113,14 @@ export class BattlefieldRenderer {
     return this;
   }
 
+  visibleMap() {
+    const map = this.simulation.map;
+    return map.campaign ? { ...map, rooms: map.rooms.filter(r => this.simulation.state.roomState.unlockedRoomIds.includes(r.id)) } : map;
+  }
+
   describeMap() {
     const map = this.simulation.map;
+    if (map.campaign) return this.simulation.state.campaign.lastMessage;
     if (!isRoomMap(map)) return `${map.name} ready.`;
     const doors = map.roomConnections ?? [];
     const open = doors.filter((connection) =>
@@ -101,7 +131,7 @@ export class BattlefieldRenderer {
   }
 
   getDoorRevision() {
-    return this.simulation.state.roomState?.openDoorIds?.join('|') ?? '';
+    return JSON.stringify(this.simulation.state.roomState ?? {});
   }
 
   // Doors live in simulation state, so an unlock only has to change
@@ -111,6 +141,11 @@ export class BattlefieldRenderer {
     if (revision === this.doorRevision) return;
     this.doorRevision = revision;
     this.roomScene.build(this.simulation.map, this.simulation.state.roomState);
+    if (this.simulation.map.campaign) {
+      this.cameraControls.setMap(this.visibleMap(), true);
+      this.hud.hideOutcome();
+      this.hud.showNotice(this.simulation.state.campaign.lastMessage, 'success');
+    }
   }
 
   addLights() {
@@ -125,6 +160,8 @@ export class BattlefieldRenderer {
     sun.shadow.camera.top = 22;
     sun.shadow.camera.bottom = -22;
     this.scene.add(sun);
+    this.sunLight = sun;
+    this.scene.add(sun.target);
   }
 
   createBuildPreview() {
@@ -152,6 +189,7 @@ export class BattlefieldRenderer {
     this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
     this.renderer.domElement.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('resize', this.onResize);
     this.renderer.domElement.addEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.addEventListener('webglcontextrestored', this.onContextRestored);
@@ -161,6 +199,7 @@ export class BattlefieldRenderer {
     this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
     this.renderer.domElement.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('resize', this.onResize);
     this.renderer.domElement.removeEventListener('webglcontextlost', this.onContextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.onContextRestored);
@@ -200,6 +239,10 @@ export class BattlefieldRenderer {
     const hit = this.raycaster.ray.intersectPlane(this.pickPlane, this.pickPoint);
     if (!hit) return null;
     const point = worldToSimulation(hit);
+    if (this.simulation.map.campaign) {
+      const cell = worldToRoomCell(this.simulation.map, point.x, point.y);
+      if (!this.simulation.state.roomState.unlockedRoomIds.includes(cell?.roomId)) return null;
+    }
     if (isRoomMap(this.simulation.map) && !getRoomAtWorldPosition(this.simulation.map, point.x, point.y)) {
       return null;
     }
@@ -228,6 +271,20 @@ export class BattlefieldRenderer {
       return;
     }
     this.audio.unlock();
+    if (this.simulation.map.campaign && !this.hud?.getTargetingSkill()) {
+      const room = getRoomAtWorldPosition(this.simulation.map, point.x, point.y);
+      const machine = roomCellCenter(this.simulation.map, room.terminal);
+      if (distanceBetween(point, machine) < 28 || distanceBetween(point, { x: machine.x, y: machine.y - 40 }) < 24) {
+        const result = this.simulation.dispatch('campaign-interact', { targetId: `save:${room.id}` });
+        this.hud.showNotice(result.ok ? result.message : result.reason, result.ok ? 'neutral' : 'warning');
+        return;
+      }
+      const trialDoor = this.simulation.map.roomConnections.find(d => d.from.roomId === room.id && room.id === 'workshop' && distanceBetween(point, roomCellCenter(this.simulation.map, d.from)) < 30 && ['solar-door','cryo-door','arc-door','grav-door'].includes(d.id));
+      if (trialDoor) {
+        const result = this.simulation.dispatch('campaign-interact', { targetId: `trial:${trialDoor.id.replace('-door', '')}` });
+        this.hud.showNotice(result.ok ? result.message : result.reason, result.ok ? 'neutral' : 'warning'); return;
+      }
+    }
     const targetingSkill = this.hud?.getTargetingSkill();
     if (targetingSkill) {
       this.hud.resolveSkillTarget(this.simulation.dispatch(ACTIONS.castHeroSkill, { skillId: targetingSkill, ...point }));
@@ -256,12 +313,15 @@ export class BattlefieldRenderer {
     }
     const result = this.simulation.dispatch(ACTIONS.placeTower, {
       towerType: this.hud?.getSelectedTowerType() ?? 'peacemaker',
+      queue: event.ctrlKey || this.hud?.isBuildQueueActive(),
       ...point,
     });
     this.hud.showNotice(
       result.ok
         ? result.construction
-          ? `${result.tower.name} queued. Singularity is moving into build range.`
+          ? result.queued
+            ? `${result.tower.name} reserved as the next build order.`
+            : `${result.tower.name} queued. Singularity is moving into build range.`
           : result.replacedWall
           ? `${result.tower.name} deployed, replacing a wall for ${result.wallRefund} Scrap.`
           : `${result.tower.name} deployed.`
@@ -273,10 +333,18 @@ export class BattlefieldRenderer {
 
   onKeyDown(event) {
     if (['SELECT', 'INPUT', 'BUTTON', 'TEXTAREA'].includes(event.target?.tagName)) return;
+    if (event.key === 'Shift') {
+      this.hud?.beginTemporaryHeroCommand();
+      return;
+    }
+    if (event.key === 'Control') {
+      this.hud?.beginBuildQueue();
+      return;
+    }
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (key === 'h') {
       event.preventDefault();
-      this.hud?.commandHero();
+      this.hud?.toggleHeroCommand();
       return;
     }
     const binding = KEY_BINDINGS[key];
@@ -286,32 +354,64 @@ export class BattlefieldRenderer {
     if (!result.ok) this.hud?.showNotice(result.reason, 'warning');
   }
 
+  onKeyUp(event) {
+    if (event.key === 'Shift') this.hud?.endTemporaryHeroCommand();
+    if (event.key === 'Control') this.hud?.endBuildQueue();
+  }
+
   frame(now) {
     if (!this.running) return;
     const delta = Math.min(250, Math.max(0, now - this.lastFrameAt));
     this.lastFrameAt = now;
     this.cameraControls.update(delta);
+    if (this.simulation.map.campaign) {
+      const x = Math.round(this.cameraControls.target.x), z = Math.round(this.cameraControls.target.z);
+      this.sunLight.position.set(x - 12, 28, z - 8); this.sunLight.target.position.set(x, 0, z);
+    }
     const state = this.simulation.state;
     this.audio.syncSettings(state.settings);
     const visualSpeed = state.settings.paused || state.stationIntegrity <= 0 ? 0 : state.settings.speed;
     this.presentationTime += delta * visualSpeed;
     this.simulation.update(delta);
     this.syncRooms();
+    this.campaignScene?.update(state, this.presentationTime);
+    this.hud.campaignHud?.update();
     this.routeOverlay.update(this.simulation.map, this.simulation.state, delta);
     for (const event of this.simulation.systems.towerSystem.drainEvents()) {
-      if (event.type !== 'construction-complete') continue;
-      const label = event.construction.kind === 'build'
-        ? `${event.towerName} is online.`
-        : `${event.towerName} upgrade complete.`;
-      this.hud?.showNotice(label, 'success');
+      if (event.type === 'construction-blocked') {
+        this.hud?.showNotice(`${event.towerName} is still queued: ${event.reason}`, 'warning');
+      } else if (event.type === 'construction-started') {
+        this.hud?.showNotice(`Singularity is moving to the next order: ${event.towerName}.`, 'neutral');
+      } else if (event.type === 'construction-complete') {
+        const label = event.construction.kind === 'build'
+          ? `${event.towerName} is online.`
+          : `${event.towerName} upgrade complete.`;
+        this.hud?.showNotice(label, 'success');
+      }
     }
     this.entities.sync(this.simulation.state, this.hud?.selectedTowerId, this.camera, this.presentationTime, this.simulation.map);
+    if (state.hero.alive) {
+      const focus = this.simulationToWorld(state.hero);
+      const target = new THREE.Vector3(focus.x, 0.45, focus.z);
+      this.roomScene.updateOcclusion(this.camera, target);
+      this.entities.updateWallOcclusion(this.camera, target);
+    }
     const combatEvents = this.simulation.systems.combatSystem.drainEvents();
+    this.entities.consumeCombat(combatEvents);
     for (const event of combatEvents) {
       if (event.type === 'tower-fire') this.audio.playTowerAttack(event.towerType);
     }
     this.effects.consumeCombat(combatEvents);
-    this.effects.consumeHero(this.simulation.systems.heroSystem.drainEvents());
+    const heroEvents = this.simulation.systems.heroSystem.drainEvents();
+    for (const event of heroEvents) {
+      if (event.type === 'pickup-collected' || event.type === 'pickup-purchased') {
+        this.hud?.showNotice(
+          `${event.pickup.name}: movement speed boosted for ${Math.ceil(event.pickup.durationMs / 1000)}s.`,
+          'success',
+        );
+      }
+    }
+    this.effects.consumeHero(heroEvents);
     this.effects.update(delta);
     this.announceStateChanges();
     this.renderer.render(this.scene, this.camera);
@@ -322,7 +422,7 @@ export class BattlefieldRenderer {
     const state = this.simulation.state;
     if (!this.wasWaveInProgress && state.wave.inProgress) this.audio.playWaveStart();
     if (this.wasWaveInProgress && !state.wave.inProgress && state.wave.completed) {
-      const campaignComplete = this.simulation.systems.waveSystem.hasCompletedCampaign();
+      const campaignComplete = !state.campaign && this.simulation.systems.waveSystem.hasCompletedCampaign();
       this.hud?.showNotice(campaignComplete ? 'The Black Comet is down. Cinder Junction holds.' : `${state.wave.label} cleared.`, 'success');
       this.hud?.showWaveResult({
         label: state.wave.label,
@@ -348,9 +448,16 @@ export class BattlefieldRenderer {
     this.audio?.dispose();
     this.effects?.dispose();
     this.entities?.dispose();
+    this.campaignScene?.dispose();
     this.roomScene?.dispose();
     this.routeOverlay?.dispose();
     this.modelLibrary?.dispose();
+    this.materialEnvironment?.dispose();
+    if (this.preview) {
+      this.scene?.remove(this.preview);
+      disposeObjectResources(this.preview);
+      this.preview = null;
+    }
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
   }

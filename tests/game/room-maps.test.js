@@ -14,11 +14,12 @@ import {
   roomRoutePoints,
   validateRoomMap,
 } from '../../src/game/simulation/roomNavigation.js';
+import { getRoomPerimeterWallSegments } from '../../src/three/RoomScene.js';
 
 const ROOM_MAPS = LEVELS.filter(isRoomMap);
 
 test('every room level validates and names a known palette per room', () => {
-  assert.deepEqual(ROOM_MAPS.map((map) => map.id), ['cinder-threshold', 'cinder-smeltworks']);
+  assert.deepEqual(ROOM_MAPS.map((map) => map.id), ['cinder-campaign', 'cinder-threshold', 'cinder-smeltworks']);
 
   for (const map of ROOM_MAPS) {
     assert.deepEqual(validateRoomMap(map), { ok: true, problems: [] });
@@ -82,6 +83,35 @@ test('the sealed Slag Shutter stays shut yet shortens the route once opened', ()
   });
 
   assert.ok(unlocked.get(entranceKey) < sealed.get(entranceKey));
+});
+
+test('manual hero commands use the current open-door state', () => {
+  const simulation = createSimulation({ levelId: SMELTWORKS_MAP.id });
+  simulation.state.roomState.openDoorIds = [
+    ...simulation.state.roomState.openDoorIds,
+    'slag-shutter',
+  ];
+  const destination = roomCellCenter(SMELTWORKS_MAP, {
+    roomId: 'tapline-terrace', col: 7, row: 1,
+  });
+  assert.equal(simulation.dispatch(ACTIONS.moveHero, destination).ok, true);
+  const rooms = new Set(simulation.state.hero.route.map((cell) => cell.roomId));
+  assert.equal(rooms.has('tapline-terrace'), true);
+  assert.equal(rooms.has('smelt-floor'), false);
+});
+
+test('procedural room shells leave only simulation-open door cells unobstructed', () => {
+  const intake = SMELTWORKS_MAP.rooms.find((room) => room.id === 'intake-bay');
+  const sealed = getRoomPerimeterWallSegments(SMELTWORKS_MAP, intake, SMELTWORKS_MAP.roomState);
+  assert.deepEqual(sealed.east, [[0, 240], [280, 480]]);
+  assert.deepEqual(sealed.south, [[0, 560]]);
+
+  const openState = {
+    ...SMELTWORKS_MAP.roomState,
+    openDoorIds: [...SMELTWORKS_MAP.roomState.openDoorIds, 'slag-shutter'],
+  };
+  const unlocked = getRoomPerimeterWallSegments(SMELTWORKS_MAP, intake, openState);
+  assert.deepEqual(unlocked.south, [[0, 280], [320, 560]]);
 });
 
 test('a fresh Smeltworks run builds, walks the room graph, and round-trips', () => {

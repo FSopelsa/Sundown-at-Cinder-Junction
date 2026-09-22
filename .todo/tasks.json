@@ -5,7 +5,7 @@
     "tags": [],
     "title": "+range Scrap Exchange",
     "description": "-Enhance the range of Scrap Exchange, -1/4 of the map, perhhaps even 1/3? /Same range for taunt and auras?",
-    "status": "TODO",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -19,15 +19,28 @@
         "nano": 373812700
       }
     },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 21,
+        "minute": 23,
+        "second": 55,
+        "nano": 638703200
+      }
+    },
     "isImported": false
   },
   {
     "id": "TASK_3",
-    "priority": "LOW",
+    "priority": "MEDIUM",
     "tags": [],
-    "title": "Assets and tweaksfor Worm Tunnel",
+    "title": "Assets and tweaks for Worm Tunnel",
     "description": "- Implement assets for Worm tunnel (Portals probably,   different colours for in- and out portal.\n- Should be more expensive/needs unlocking(e.g. at a higher lvl)",
-    "status": "TODO",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -40,6 +53,10 @@
         "second": 25,
         "nano": 835013500
       }
+    },
+    "finishDate": {
+      "date": { "year": 2026, "month": 9, "day": 18 },
+      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
     },
     "isImported": false
   },
@@ -242,7 +259,7 @@
     "tags": [],
     "title": "Vague grid lines on the ground",
     "description": "to show the squares where towers can be built etc. Perhaps a grey-ish colour compared to the surrounding floor",
-    "status": "TODO",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -256,6 +273,19 @@
         "nano": 530865400
       }
     },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 15,
+        "minute": 32,
+        "second": 47,
+        "nano": 583878400
+      }
+    },
     "isImported": false
   },
   {
@@ -264,7 +294,7 @@
     "tags": [],
     "title": "Change shape of tile target market",
     "description": "Right now its round but it should indicate what tile on the floors grid that is targeted for a tower build",
-    "status": "TODO",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -278,37 +308,28 @@
         "nano": 97352400
       }
     },
-    "isImported": false
-  },
-  {
-    "id": "TASK_279",
-    "priority": "LOW",
-    "tags": [],
-    "title": "Try out time delay for building towers",
-    "description": "- Different variations\n- Perhaps game time only moves while towers are being built",
-    "status": "IN_PROGRESS",
-    "date": {
+    "finishDate": {
       "date": {
         "year": 2026,
         "month": 9,
-        "day": 14
+        "day": 18
       },
       "time": {
-        "hour": 1,
-        "minute": 15,
-        "second": 21,
-        "nano": 903022400
+        "hour": 15,
+        "minute": 32,
+        "second": 36,
+        "nano": 752489200
       }
     },
     "isImported": false
   },
   {
     "id": "TASK_292",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Fix the  Taunt ",
-    "description": "- The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
-    "status": "TODO",
+    "description": "Fix the  Taunt \n- The exchanges taunt is not a skill atm? - make it one, and look over exchanges other abilities too",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -322,15 +343,28 @@
         "nano": 126978000
       }
     },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 20,
+        "minute": 13,
+        "second": 50,
+        "nano": 785938400
+      }
+    },
     "isImported": false
   },
   {
     "id": "TASK_332",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Longer rounds (tweak enemies)",
-    "description": "- More enemies per round\n- Stronger enemies?\n- Slower?",
-    "status": "TODO",
+    "description": "Longer rounds (tweak enemies)\n- More enemies per round\n- Stronger enemies?\n- Slower?",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -348,11 +382,11 @@
   },
   {
     "id": "TASK_347",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Fix targetting for hero/builder",
-    "description": "- Player need better control over hero/builder-\t\n eg. hold ctrl to move around, or a hot key that shifts target to the hero",
-    "status": "TODO",
+    "description": "Fix targetting for hero/builder\n- Player need better control over hero/builder-\t\n eg. hold shift to be able to move it around, or a hot key that shifts/toggles target to the hero",
+    "status": "DONE",
     "date": {
       "date": {
         "year": 2026,
@@ -366,13 +400,26 @@
         "nano": 305221400
       }
     },
+    "finishDate": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 21,
+        "minute": 23,
+        "second": 5,
+        "nano": 684127600
+      }
+    },
     "isImported": false
   },
   {
     "id": "TASK_363",
     "priority": "LOW",
     "tags": [],
-    "title": "Brush UI",
+    "title": "Brush up UI",
     "description": "- Maybe look for insporation\n- Should be tidier, not bigger than it has to\n- Better info when overing\n- Clearer CD, cost etc.",
     "status": "TODO",
     "date": {
@@ -392,11 +439,11 @@
   },
   {
     "id": "TASK_460",
-    "priority": "LOW",
+    "priority": "HIGH",
     "tags": [],
     "title": "Longer buildings duration",
-    "description": "- Building (and upgrading) towers need to be a slower process.\n- Higher lvl of upgrade/tower means longer construction time.",
-    "status": "TODO",
+    "description": "Longer buildings duration\n- Building (and upgrading) towers needs to be a slower/longer process.\n- Higher lvl of upgrade/tower means longer construction time.",
+    "status": "IN_PROGRESS",
     "date": {
       "date": {
         "year": 2026,
@@ -409,6 +456,176 @@
         "second": 32,
         "nano": 38567200
       }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_665",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Armor/elemental resistance",
+    "description": "Armor and/or elemental resistance for mobs, - and perhaps hero etc?",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 15
+      },
+      "time": {
+        "hour": 23,
+        "minute": 56,
+        "second": 14,
+        "nano": 71064300
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_684",
+    "priority": "MEDIUM",
+    "tags": [],
+    "title": "Transparency on view blocking walls",
+    "description": "- Walls closest to pov now blocks at least one lane of squares,\n- Impl some kind of transparency effect on these walls to enable see through",
+    "status": "DONE",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 16
+      },
+      "time": {
+        "hour": 13,
+        "minute": 48,
+        "second": 56,
+        "nano": 261945700
+      }
+    },
+    "finishDate": {
+      "date": { "year": 2026, "month": 9, "day": 18 },
+      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_704",
+    "priority": "LOW",
+    "tags": [],
+    "title": "\u0027Tight/responsive/snappy\u0027 Hero movement",
+    "description": "- Controlling the Hero/Builder needs to be easy and quick, feel very responsive \n- tly feels sluggish and heavy. Refactor it to prioritize responsiveness: remove any high interpolation (lerp) dampening on movement vectors, sharpen the acceleration/deceleration curves, and make sure inputs are processed in Update (or FixedUpdate with accurate sub-pixel delta times) to minimize latency.",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 16
+      },
+      "time": {
+        "hour": 20,
+        "minute": 3,
+        "second": 36,
+        "nano": 723109700
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_745",
+    "priority": "HIGH",
+    "tags": [],
+    "title": "Wall should be able to connect diagonaly",
+    "description": "- Connection between walls should work when placed diagonaly to each other too. ",
+    "status": "DONE",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 17
+      },
+      "time": {
+        "hour": 4,
+        "minute": 24,
+        "second": 35,
+        "nano": 615434000
+      }
+    },
+    "finishDate": {
+      "date": { "year": 2026, "month": 9, "day": 18 },
+      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_767",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Hold ctrl to place \u003e1 building in sequence",
+    "description": "/ When holding ctrl it is possible to place down several towers in a que while holding ctrl. / Singularity then moves from qued tower to the next, and the next, in the same order that they where put down. / When a tile has been selected for a qued tower, it counts as if there are already a tower there - making it impossible for enemies and Singularity to walk on that tile.",
+    "status": "DONE",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 17
+      },
+      "time": {
+        "hour": 4,
+        "minute": 25,
+        "second": 24,
+        "nano": 114080300
+      }
+    },
+    "finishDate": {
+      "date": { "year": 2026, "month": 9, "day": 18 },
+      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_922",
+    "priority": "LOW",
+    "tags": [],
+    "title": "Clearer firing from towers (bullets/snow/lasers and shit..)",
+    "description": "- Should be clearly visable what enemies are being fired on from which towers",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 20,
+        "minute": 8,
+        "second": 39,
+        "nano": 216625200
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_946",
+    "priority": "MEDIUM",
+    "tags": [],
+    "title": "Towers targetting settings",
+    "description": "- Settings for what enemies towers should prioritize (first/toughest/last..).\n- Can be individually set for each tower",
+    "status": "DONE",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 20,
+        "minute": 11,
+        "second": 33,
+        "nano": 570741400
+      }
+    },
+    "finishDate": {
+      "date": { "year": 2026, "month": 9, "day": 18 },
+      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
     },
     "isImported": false
   }

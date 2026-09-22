@@ -1,3 +1,5 @@
+import { CampaignSystem } from './systems/CampaignSystem.js';
+import { getCampaignWave } from '../content/campaign.js';
 import { purchaseSupport } from './systems/SupportShop.js';
 import { ACTIONS } from '../input/actions.js';
 import { getMap } from '../content/map.js';
@@ -8,6 +10,7 @@ import { EconomySystem } from './systems/EconomySystem.js';
 import { ElementRecipeSystem } from './systems/ElementRecipeSystem.js';
 import { EnemySystem } from './systems/EnemySystem.js';
 import { HeroSystem } from './systems/HeroSystem.js';
+import { PickupSystem } from './systems/PickupSystem.js';
 import { StatusEffectSystem } from './systems/StatusEffectSystem.js';
 import { TowerSystem } from './systems/TowerSystem.js';
 import { WaveSystem } from './systems/WaveSystem.js';
@@ -40,13 +43,20 @@ export function createSimulation(initialState = new GameState()) {
     map,
     heroSystem,
   );
-  const waveSystem = new WaveSystem(state, enemySystem,
-    map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined, heroSystem);
+  const waveSystem = new WaveSystem(
+    state,
+    enemySystem,
+    map.campaign ? index => getCampaignWave(map, state, index) : map.waveSet === 'elemental-trial' ? getElementalTrialWave : undefined,
+    heroSystem,
+    economySystem,
+  );
+  const pickupSystem = new PickupSystem(state, map);
   const elementRecipeSystem = new ElementRecipeSystem();
-  let accumulatorMs = 0;
+  const campaignSystem = map.campaign ? new CampaignSystem(state, map, heroSystem) : null;
 
   function tick(deltaMs) {
     waveSystem.update(deltaMs);
+    pickupSystem.update(deltaMs);
     statusEffectSystem.update(deltaMs);
     if (map.mode === 'maze') enemySystem.refreshMazeRoutes();
     if (map.mode === 'rooms') enemySystem.refreshRoomRoutes();
@@ -54,6 +64,7 @@ export function createSimulation(initialState = new GameState()) {
     towerSystem.update(deltaMs);
     enemySystem.update(deltaMs);
     waveSystem.completeIfFinished();
+    campaignSystem?.update(deltaMs);
   }
 
   function update(deltaMs) {
@@ -62,16 +73,18 @@ export function createSimulation(initialState = new GameState()) {
     }
 
     const frameMs = Math.min(MAX_FRAME_MS, Math.max(0, deltaMs));
-    accumulatorMs += frameMs * state.settings.speed;
+    state.accumulatorMs += frameMs * state.settings.speed;
 
-    while (accumulatorMs >= FIXED_STEP_MS) {
+    while (state.accumulatorMs >= FIXED_STEP_MS) {
       tick(FIXED_STEP_MS);
-      accumulatorMs -= FIXED_STEP_MS;
+      state.accumulatorMs -= FIXED_STEP_MS;
     }
   }
 
   function dispatch(action, payload = {}) {
     switch (action) {
+      case 'campaign-interact':
+        return campaignSystem?.interact(payload.targetId) ?? { ok: false, reason: 'No campaign here.' };
       case ACTIONS.startWave:
         return waveSystem.startNextWave();
       case ACTIONS.placeTower:
@@ -79,14 +92,20 @@ export function createSimulation(initialState = new GameState()) {
           payload.towerType ?? 'peacemaker',
           payload.x,
           payload.y,
+          { queue: Boolean(payload.queue) },
         );
+      case ACTIONS.setTowerTargeting:
+        return towerSystem.setTowerTargeting(payload.towerId, payload.targeting);
       case ACTIONS.upgradeTower:
         return towerSystem.upgradeTower(payload.towerId, payload.upgrade);
       case ACTIONS.purchaseSupport:
         return purchaseSupport(state, economySystem, heroSystem, payload.towerId, payload.item);
+      case ACTIONS.activateTowerAbility:
+        return towerSystem.activateTowerAbility(payload.towerId);
       case ACTIONS.sellTower:
         return towerSystem.sellTower(payload.towerId);
       case ACTIONS.moveHero:
+        if (state.campaign) state.campaign.pendingInteraction = null;
         return heroSystem.commandMove(payload.x, payload.y);
       case ACTIONS.castHeroSkill:
         return heroSystem.castHeroSkill(payload.skillId, payload.x, payload.y);
@@ -111,11 +130,13 @@ export function createSimulation(initialState = new GameState()) {
     map,
     state,
     systems: {
+      campaignSystem,
       combatSystem,
       economySystem,
       elementRecipeSystem,
       enemySystem,
       heroSystem,
+      pickupSystem,
       statusEffectSystem,
       towerSystem,
       waveSystem,

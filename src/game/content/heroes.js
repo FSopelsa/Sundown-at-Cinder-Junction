@@ -25,6 +25,10 @@ export const HERO_DEFINITION = Object.freeze({
 // invalidating saves or deleting the experimental implementation.
 export const HERO_ABILITY_PROTOTYPES_ENABLED = false;
 
+export function isHeroSkillPlayerVisible(skillId) {
+  return HERO_ABILITY_PROTOTYPES_ENABLED || skillId === 'worm-tunnel';
+}
+
 export const HERO_SKILLS = Object.freeze([
   Object.freeze({
     id: 'gravity-well',
@@ -77,15 +81,16 @@ export const HERO_SKILLS = Object.freeze([
   Object.freeze({
     id: 'worm-tunnel',
     label: 'Worm Tunnel',
-    unlockLevel: 5,
+    unlockLevel: 6,
     target: 'ground',
-    cooldownMs: 20000,
+    cooldownMs: 24000,
+    scrapCost: 75,
     durationMs: 5000,
     durationUpgradeMs: 2500,
     maxUpgradeLevel: 2,
     upgradeCost: 50,
     minimumDistance: 80,
-    description: 'Set a five-second one-way tunnel. The first endpoint is the entrance; upgrades extend its lifetime.',
+    description: 'Spend 75 Scrap to link a five-second one-way tunnel. The first endpoint is the entrance.',
   }),
 ]);
 
@@ -189,6 +194,13 @@ export function createHeroState(map, snapshot = {}) {
       0,
       Number.isFinite(snapshot.aegisRemainingMs) ? snapshot.aegisRemainingMs : 0,
     ),
+    speedBoostRemainingMs: Math.max(
+      0,
+      Number.isFinite(snapshot.speedBoostRemainingMs) ? snapshot.speedBoostRemainingMs : 0,
+    ),
+    speedBoostMultiplier: Number.isFinite(snapshot.speedBoostMultiplier)
+      ? Math.max(1, snapshot.speedBoostMultiplier)
+      : 1,
     trainingPurchases: Math.max(
       0,
       Number.isInteger(snapshot.trainingPurchases) ? snapshot.trainingPurchases : 0,

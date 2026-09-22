@@ -1,3 +1,4 @@
+import { campaignRoutePoints } from '../game/simulation/campaignRouting.js';
 import * as THREE from 'three';
 import { buildDistanceField, routePoints } from '../game/simulation/maze.js';
 import { buildRoomDistanceField, roomRoutePoints } from '../game/simulation/roomNavigation.js';
@@ -5,7 +6,7 @@ import { simulationToWorld } from './coordinates.js';
 
 function routeSignature(map, state) {
   return [
-    map.id,
+    map.id, state.campaign?.activeEncounterId, state.campaign?.completed.join(),
     state.towers.map((tower) => `${tower.id}:${tower.x}:${tower.y}:${tower.ladder}`).join('|'),
     state.wormholes.map((portal) => `${portal.cell?.roomId ?? ''}:${portal.cell?.col},${portal.cell?.row}:${portal.remainingMs > 0}`).join('|'),
     state.roomState?.openDoorIds?.join('|') ?? '',
@@ -13,6 +14,7 @@ function routeSignature(map, state) {
 }
 
 function getRoutePoints(map, state) {
+  if (map.campaign) return campaignRoutePoints(map, state);
   if (map.mode === 'rooms') {
     const distances = buildRoomDistanceField(map, state.towers, null, state.wormholes, state.roomState);
     return roomRoutePoints(map, distances, state.wormholes, state.roomState);

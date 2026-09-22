@@ -7,17 +7,52 @@ export const SCRAP_EXCHANGE_AURA_BASE_RANGE = 180;
 export const SCRAP_EXCHANGE_AURA_RANGE_STEP = 90;
 export const SCRAP_EXCHANGE_AURA_MAX_RANGE = 360;
 export const SCRAP_EXCHANGE_AURA_MAX_LEVEL = 3;
+export const SCRAP_EXCHANGE_TAUNT_DURATION_MS = 6000;
+export const SCRAP_EXCHANGE_TAUNT_DURATION_STEP_MS = 3000;
+export const SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL = 2;
+export const SCRAP_EXCHANGE_TAUNT_COOLDOWN_MS = 14000;
 export const BUILDER_CONSTRUCTION = Object.freeze({
-  wallBuildMs: 650,
-  towerBuildMs: 1400,
-  upgradeMs: 1000,
+  wallBuildMs: 1200,
+  towerBuildBaseMs: 2800,
+  towerBuildCostMs: 5,
+  upgradeBaseMs: 2200,
+  upgradeLevelStepMs: 1200,
   workingRange: 82,
 });
 
 export function getTowerBuildTimeMs(definition) {
-  return definition?.id === 'wall'
-    ? BUILDER_CONSTRUCTION.wallBuildMs
-    : BUILDER_CONSTRUCTION.towerBuildMs;
+  if (definition?.id === 'wall') return BUILDER_CONSTRUCTION.wallBuildMs;
+  return BUILDER_CONSTRUCTION.towerBuildBaseMs +
+    Math.max(0, definition?.cost ?? 0) * BUILDER_CONSTRUCTION.towerBuildCostMs;
+}
+
+export function getTowerUpgradeTimeMs(tower, upgrade) {
+  const currentLevel = upgrade === 'range'
+    ? Math.max(1, Number.isInteger(tower.auraLevel) ? tower.auraLevel : 1)
+    : upgrade === 'taunt'
+      ? Math.max(0, Number.isInteger(tower.tauntUpgradeLevel) ? tower.tauntUpgradeLevel : 0)
+      : Math.max(1, Number.isInteger(tower.level) ? tower.level : 1);
+  const nextTier = currentLevel + 1;
+  return BUILDER_CONSTRUCTION.upgradeBaseMs +
+    Math.max(0, nextTier - 2) * BUILDER_CONSTRUCTION.upgradeLevelStepMs;
+}
+
+export function getTauntDurationMs(tower) {
+  const upgradeLevel = Math.max(
+    0,
+    Number.isInteger(tower?.tauntUpgradeLevel) ? tower.tauntUpgradeLevel : 0,
+  );
+  return SCRAP_EXCHANGE_TAUNT_DURATION_MS +
+    upgradeLevel * SCRAP_EXCHANGE_TAUNT_DURATION_STEP_MS;
+}
+
+export function getTauntDurationUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower?.type]) {
+  const upgradeLevel = Math.max(
+    0,
+    Number.isInteger(tower?.tauntUpgradeLevel) ? tower.tauntUpgradeLevel : 0,
+  );
+  if (upgradeLevel >= SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL || !definition) return null;
+  return Math.ceil(definition.cost * (0.35 + upgradeLevel * 0.2));
 }
 
 export function getUpgradeCost(tower, definition = TOWER_DEFINITIONS[tower.type]) {
@@ -103,15 +138,15 @@ export const TOWER_DEFINITIONS = Object.freeze({
     shotsPerSecond: 0.9,
     damageType: 'arc',
     assetKey: ASSET_KEYS.towers.teslaCoil,
-    chain: Object.freeze({ maxTargets: 4, jumpRange: 110, damageMultiplier: 0.72 }),
-    description: 'Arc lightning chains to 4 enemies, losing 28% damage per jump. Deals double damage to shields.',
+    chain: Object.freeze({ maxTargets: 6, jumpRange: 110, damageMultiplier: 0.80}),
+    description: 'Arc lightning chains to 6 enemies, losing 20% damage per jump. Deals double damage to shields.',
   }),
   scrapExchange: Object.freeze({
     id: 'scrapExchange', name: 'Scrap Exchange', cost: 100, range: 100,
     damage: 0, shotsPerSecond: 0, damageType: 'neutral',
     assetKey: ASSET_KEYS.towers.scrapExchange,
     auraRange: SCRAP_EXCHANGE_AURA_BASE_RANGE,
-    description: '600 hull. Taunts enemies within 100 range; they stop and bombard it. Sells recovery, XP and a relay aura.',
+    description: '600 hull. Activate a short-range taunt to hold enemies in place. Sells recovery, XP and a relay aura.',
   }),
   wall: Object.freeze({
     id: 'wall',

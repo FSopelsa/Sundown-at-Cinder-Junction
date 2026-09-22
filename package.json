@@ -12,10 +12,14 @@
     "test:browser": "playwright test",
     "assets:validate": "node scripts/check-models.mjs validate",
     "assets:inspect": "node scripts/check-models.mjs inspect",
-    "check": "npm run test && npm run build && npm run assets:validate && npm run test:browser"
+    "assets:prepare": "node scripts/prepare-asset-collection.mjs",
+    "assets:prepare:snabba-skor": "node scripts/prepare-snabba-skor.mjs",
+    "check": "npm run test && npm run build && npm run assets:validate && npm run test:browser",
+    "siege:server": "node server/siege-server.js"
   },
   "dependencies": {
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "ws": "8.21.0"
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.5.0",

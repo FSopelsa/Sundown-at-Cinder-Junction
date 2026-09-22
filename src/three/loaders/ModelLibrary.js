@@ -4,7 +4,7 @@ import { ASSET_MANIFEST } from '../../game/assets/manifest.js';
 function prepareForRuntime(root) {
   root.traverse((node) => {
     if (!node.isMesh) return;
-    node.castShadow = true;
+    node.castShadow = node.userData.cast_shadow !== false;
     node.receiveShadow = true;
     node.frustumCulled = true;
   });
@@ -17,11 +17,11 @@ export class ModelLibrary {
     this.failures = failures;
   }
 
-  static async load(manifest = ASSET_MANIFEST) {
+  static async load(manifest = ASSET_MANIFEST, { includeReserve = false } = {}) {
     const loader = new GLTFLoader();
     const models = new Map();
     const failures = [];
-    await Promise.all(manifest.models.map(async (asset) => {
+    await Promise.all(manifest.models.filter((asset) => includeReserve || asset.preload !== false).map(async (asset) => {
       try {
         const gltf = await loader.loadAsync(asset.path);
         models.set(asset.key, prepareForRuntime(gltf.scene));
@@ -45,6 +45,7 @@ export class ModelLibrary {
   dispose() {
     const disposedGeometry = new Set();
     const disposedMaterials = new Set();
+    const disposedTextures = new Set();
     for (const root of this.models.values()) {
       root.traverse((node) => {
         if (!node.isMesh) return;
@@ -56,6 +57,12 @@ export class ModelLibrary {
         for (const material of materials) {
           if (material && !disposedMaterials.has(material)) {
             disposedMaterials.add(material);
+            for (const value of Object.values(material)) {
+              if (value?.isTexture && !disposedTextures.has(value)) {
+                disposedTextures.add(value);
+                value.dispose();
+              }
+            }
             material.dispose();
           }
         }

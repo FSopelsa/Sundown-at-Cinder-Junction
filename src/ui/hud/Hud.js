@@ -1,3 +1,4 @@
+import { getEncounter } from '../../game/content/campaign.js';
 import { SUPPORT_ITEMS } from '../../game/simulation/systems/SupportShop.js';
 import { FINAL_WAVE_INDEX, getRaidScaling } from '../../game/content/waves.js';
 import {
@@ -7,11 +8,15 @@ import {
   getUpgradeCost,
   getAuraRangeUpgradeCost,
   SCRAP_EXCHANGE_AURA_MAX_LEVEL,
+  SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL,
+  SCRAP_EXCHANGE_TAUNT_DURATION_STEP_MS,
+  getTauntDurationMs,
+  getTauntDurationUpgradeCost,
 } from '../../game/content/towers.js';
 import {
   getHeroSkill,
-  HERO_ABILITY_PROTOTYPES_ENABLED,
   HERO_DEFINITION,
+  isHeroSkillPlayerVisible,
 } from '../../game/content/heroes.js';
 import { LEVELS } from '../../game/content/map.js';
 import { ACTIONS } from '../../game/input/actions.js';
@@ -45,7 +50,9 @@ export class Hud {
     this.lastRenderKey = '';
     this.selectedTowerType = 'peacemaker';
     this.selectedTowerId = null;
-    this.inputMode = 'move';
+    this.inputMode = 'build';
+    this.temporaryHeroCommand = null;
+    this.queueModifierActive = false;
     this.targetingSkillId = null;
     this.outcome = null;
   }
@@ -62,6 +69,7 @@ export class Hud {
                 ${LEVELS.map((level) => `<option value="${level.id}" ${level.id === this.simulation.state.levelId ? 'selected' : ''}>${level.name}</option>`).join('')}
               </select>
               <button type="button" data-action="change-level" title="Starts a fresh run in the chosen level">Start level</button>
+              <a href="?assets" style="color: inherit; font-size: 12px">Asset library</a>
             </div>
           </div>
 
@@ -99,6 +107,14 @@ export class Hud {
           <div data-hud="tower-details" hidden>
             <div class="tower-details__heading"><strong data-hud="tower-name"></strong><button type="button" data-action="back-build">Back to build</button></div>
             <p data-hud="tower-stats"></p>
+            <div class="tower-targeting" data-hud="tower-targeting">
+              <span>Target priority</span>
+              <div role="group" aria-label="Tower target priority">
+                <button type="button" data-targeting="first">First</button>
+                <button type="button" data-targeting="toughest">Toughest</button>
+                <button type="button" data-targeting="last">Last</button>
+              </div>
+            </div>
             <p data-hud="tower-history" class="build-palette__hint"></p>
             <div class="upgrade-options">
               <button type="button" data-upgrade="damage"></button>
@@ -147,6 +163,8 @@ export class Hud {
       towerName: this.root.querySelector('[data-hud="tower-name"]'),
       towerStats: this.root.querySelector('[data-hud="tower-stats"]'),
       towerHistory: this.root.querySelector('[data-hud="tower-history"]'),
+      towerTargeting: this.root.querySelector('[data-hud="tower-targeting"]'),
+      targetingButtons: [...this.root.querySelectorAll('[data-targeting]')],
       upgradeButtons: [...this.root.querySelectorAll('[data-upgrade]')],
       sellTower: this.root.querySelector('[data-action="sell-tower"]'),
       buildHint: this.root.querySelector('[data-hud="build-hint"]'),
@@ -189,6 +207,8 @@ export class Hud {
     this.root.querySelector('[data-action="change-level"]').addEventListener('click', () => {
       const url = new URL(window.location.href);
       url.searchParams.set('level', this.root.querySelector('[data-hud="level"]').value);
+      url.searchParams.set('checkpoint', 'new');
+      url.searchParams.delete('review');
       window.location.assign(url.href);
     });
     this.root.querySelector('[data-action="back-build"]').addEventListener('click', () => {
@@ -197,21 +217,26 @@ export class Hud {
       this.render(true);
     });
     this.root.querySelector('[data-hud="structure-actions"]').addEventListener('click', event => {
-      const button = event.target.closest('[data-support], [data-ladder], [data-upgrade]');
+      const button = event.target.closest('[data-support], [data-ladder], [data-upgrade], [data-taunt]');
       if (!button) return;
       const result = button.hasAttribute('data-upgrade')
         ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: button.dataset.upgrade })
         : button.hasAttribute('data-ladder')
           ? this.simulation.dispatch(ACTIONS.upgradeTower, { towerId: this.selectedTowerId, upgrade: 'ladder' })
-          : this.simulation.dispatch(ACTIONS.purchaseSupport, { towerId: this.selectedTowerId, item: button.dataset.support });
+          : button.hasAttribute('data-taunt')
+            ? this.simulation.dispatch(ACTIONS.activateTowerAbility, { towerId: this.selectedTowerId })
+            : this.simulation.dispatch(ACTIONS.purchaseSupport, { towerId: this.selectedTowerId, item: button.dataset.support });
       this.showNotice(result.ok
-        ? result.message ?? (button.hasAttribute('data-upgrade') ? 'Relay aura expanded.' : 'Ladder installed. The hero can cross this wall.')
+        ? result.message ?? (button.hasAttribute('data-taunt')
+          ? `Taunt active for ${(result.durationMs / 1000).toFixed(0)}s.`
+          : result.construction
+            ? `${result.tower.name} upgrade queued. Singularity is moving into range.`
+            : button.hasAttribute('data-upgrade') ? 'Structure upgrade complete.' : 'Ladder installed. The hero can cross this wall.')
         : result.reason, result.ok ? 'success' : 'warning');
       this.render(true);
     });
     this.elements.commandHero.addEventListener('click', () => this.commandHero());
     this.elements.heroSkills.addEventListener('click', (event) => {
-      if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
       const upgrade = event.target.closest('[data-skill-upgrade]');
       if (upgrade) {
         const result = this.simulation.dispatch(ACTIONS.upgradeHeroSkill, { skillId: upgrade.dataset.skillUpgrade });
@@ -272,6 +297,19 @@ export class Hud {
       this.simulation.dispatch(ACTIONS.setSpeed, { speed: 2 });
       this.render(true);
     });
+    this.elements.towerTargeting.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-targeting]');
+      if (!button || !this.selectedTowerId) return;
+      const result = this.simulation.dispatch(ACTIONS.setTowerTargeting, {
+        towerId: this.selectedTowerId,
+        targeting: button.dataset.targeting,
+      });
+      this.showNotice(
+        result.ok ? `${result.tower.name} now targets ${result.targeting} enemies.` : result.reason,
+        result.ok ? 'success' : 'warning',
+      );
+      this.render(true);
+    });
 
     this.elements.audioToggle.addEventListener('click', () => {
       this.simulation.state.settings.audioEnabled = !this.simulation.state.settings.audioEnabled;
@@ -322,6 +360,59 @@ export class Hud {
     return this.inputMode === 'build';
   }
 
+  isBuildQueueActive() {
+    return this.queueModifierActive;
+  }
+
+  beginBuildQueue() {
+    if (this.queueModifierActive || this.inputMode !== 'build') return;
+    this.queueModifierActive = true;
+    this.showNotice('Build queue active. Placed towers reserve their tiles immediately.', 'neutral');
+    this.render(true);
+  }
+
+  endBuildQueue() {
+    if (!this.queueModifierActive) return;
+    this.queueModifierActive = false;
+    this.render(true);
+  }
+
+  toggleHeroCommand() {
+    if (this.inputMode === 'move' && !this.temporaryHeroCommand) {
+      this.inputMode = 'build';
+      this.targetingSkillId = null;
+      this.showNotice('Build mode restored.', 'neutral');
+      this.render(true);
+      return;
+    }
+    this.commandHero();
+  }
+
+  beginTemporaryHeroCommand() {
+    const hero = this.simulation.state.hero;
+    if (!hero.alive || this.inputMode === 'skill' || this.temporaryHeroCommand) return;
+    this.temporaryHeroCommand = {
+      inputMode: this.inputMode,
+      selectedTowerId: this.selectedTowerId,
+      targetingSkillId: this.targetingSkillId,
+    };
+    this.inputMode = 'move';
+    this.selectedTowerId = null;
+    this.targetingSkillId = null;
+    this.showNotice('Temporary movement command active. Click clear ground to route Singularity.', 'neutral');
+    this.render(true);
+  }
+
+  endTemporaryHeroCommand() {
+    if (!this.temporaryHeroCommand) return;
+    const previous = this.temporaryHeroCommand;
+    this.temporaryHeroCommand = null;
+    this.inputMode = previous.inputMode;
+    this.selectedTowerId = previous.selectedTowerId;
+    this.targetingSkillId = previous.targetingSkillId;
+    this.render(true);
+  }
+
   commandHero() {
     const hero = this.simulation.state.hero;
     if (!hero.alive) {
@@ -330,13 +421,15 @@ export class Hud {
     }
 
     this.inputMode = 'move';
+    this.temporaryHeroCommand = null;
     this.targetingSkillId = null;
     this.selectedTowerId = null;
-    this.showNotice('Movement command armed. Click the battlefield, or press H.', 'neutral');
+    this.showNotice('Movement mode armed. Click clear ground; press H to toggle, or hold Shift for a temporary order.', 'neutral');
     this.render(true);
   }
 
   inspectTower(towerId) {
+    this.temporaryHeroCommand = null;
     this.selectedTowerId = towerId;
     this.inputMode = 'build';
     this.targetingSkillId = null;
@@ -353,6 +446,7 @@ export class Hud {
 
     this.selectedTowerType = towerType;
     this.selectedTowerId = null;
+    this.temporaryHeroCommand = null;
     this.inputMode = 'build';
     this.targetingSkillId = null;
     this.showNotice(`${definition.name} selected. ${definition.description}`, 'neutral');
@@ -360,7 +454,7 @@ export class Hud {
   }
 
   activateHeroSkill(skillId) {
-    if (!HERO_ABILITY_PROTOTYPES_ENABLED) return;
+    if (!isHeroSkillPlayerVisible(skillId)) return;
     const hero = this.simulation.state.hero;
     const slot = hero.skillSlots.find((candidate) => candidate.id === skillId);
     const skill = getHeroSkill(skillId);
@@ -409,7 +503,7 @@ export class Hud {
       this.showNotice(
         result.pending
           ? `${skill.label}: first endpoint set. Click the second endpoint.`
-          : `${skill.label} cast.`,
+          : `${skill.label} linked${result.cost ? ` for ${result.cost} Scrap` : ''}.`,
         'success',
       );
     } else {
@@ -421,7 +515,7 @@ export class Hud {
   startWave() {
     const result = this.simulation.dispatch(ACTIONS.startWave);
     const healthIncrease = result.ok
-      ? Math.round((getRaidScaling(result.wave.index).healthMultiplier - 1) * 100)
+      ? Math.round((getRaidScaling(result.wave.index + (getEncounter(this.simulation.map, this.simulation.state)?.tier ?? 0) * 3).healthMultiplier - 1) * 100)
       : 0;
     const carryoverText = result.ok && result.wave.carryoverCount > 0
       ? ` ${result.wave.carryoverCount} ${result.wave.carryoverCount === 1 ? 'returning enemy' : 'returning enemies'} arrive first.`
@@ -431,7 +525,7 @@ export class Hud {
       : '';
     this.showNotice(
       result.ok
-        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}`
+        ? `${result.wave.label} incoming.${healthIncrease > 0 ? ` +${healthIncrease}% enemy hull.` : ''}${carryoverText}${reviveText}${result.earlyStartBonus ? ` +${result.earlyStartBonus} early-launch Scrap.` : ''}`
         : result.reason,
       result.ok ? 'success' : 'warning',
     );
@@ -444,6 +538,7 @@ export class Hud {
   }
 
   showWaveResult({ label, campaignComplete = false, carryoverCount = 0 }) {
+    if (this.simulation.state.campaign) { this.showNotice(`${label} cleared.`, 'success'); return; }
     this.outcome = campaignComplete
       ? {
           tone: 'success',
@@ -471,9 +566,9 @@ export class Hud {
       tone: 'danger',
       eyebrow: 'Station lost',
       title: 'The junction has fallen.',
-      copy: 'The rail is overrun. Restart the run and try a different build.',
+      copy: this.simulation.state.campaign ? 'Load a room checkpoint or machine save from the campaign panel. Earlier saves remain available.' : 'The rail is overrun. Restart the run and try a different build.',
       action: 'restart',
-      buttonLabel: 'Restart run',
+      buttonLabel: this.simulation.state.campaign && this.campaignHud?.saves.latest() ? 'Resume last save' : 'Restart run',
     };
     this.renderOutcome();
   }
@@ -508,7 +603,8 @@ export class Hud {
       ? Math.min(...state.wormholes.map((portal) => portal.remainingMs ?? 0))
       : 0;
     const renderKey = [
-      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}:${t.construction?.kind}:${t.construction?.upgrade}:${Math.ceil(t.construction?.remainingMs ?? 0)}`).join(),
+      state.campaign?.activeEncounterId, Math.ceil((state.campaign?.revealRemainingMs ?? 0) / 1000),
+      state.towers.map(t => `${t.id}:${Math.ceil(t.hp ?? 0)}:${t.ladder}:${t.aura}:${t.auraLevel}:${t.auraRange}:${Math.ceil(t.tauntRemainingMs ?? 0)}:${Math.ceil(t.tauntCooldownRemainingMs ?? 0)}:${t.tauntUpgradeLevel}:${t.targeting}:${t.construction?.status}:${t.construction?.kind}:${t.construction?.upgrade}:${Math.ceil(t.construction?.remainingMs ?? 0)}`).join(),
       state.scrap,
       state.stationIntegrity,
       state.wave.index,
@@ -526,8 +622,10 @@ export class Hud {
       this.selectedTowerId,
       this.inputMode,
       this.targetingSkillId,
+      this.queueModifierActive,
       state.towers.find((tower) => tower.id === this.selectedTowerId)?.level,
       Math.ceil((state.hero.aegisRemainingMs ?? 0) / 1000),
+      Math.ceil((state.hero.speedBoostRemainingMs ?? 0) / 1000),
       state.hero.alive,
       state.hero.level,
       state.hero.hp,
@@ -569,37 +667,60 @@ export class Hud {
         button.disabled = Boolean(construction) || cost === null || state.scrap < cost || state.stationIntegrity <= 0;
       }
       const structure = tower.type === 'wall' || tower.type === 'scrapExchange';
+      this.elements.towerTargeting.hidden = structure;
+      for (const button of this.elements.targetingButtons) {
+        button.setAttribute('aria-pressed', String(button.dataset.targeting === (tower.targeting ?? 'first')));
+        button.disabled = Boolean(construction);
+      }
       for (const button of this.elements.upgradeButtons) button.hidden = structure;
       const actions = this.root.querySelector('[data-hud="structure-actions"]');
       const auraLevel = Math.max(0, Number.isInteger(tower.auraLevel) ? tower.auraLevel : (tower.aura ? 1 : 0));
       const auraRange = tower.auraRange ?? 180;
       const auraCost = tower.aura ? getAuraRangeUpgradeCost(tower) : null;
+      const tauntDurationMs = getTauntDurationMs(tower);
+      const tauntLevel = Math.max(0, Number.isInteger(tower.tauntUpgradeLevel) ? tower.tauntUpgradeLevel : 0);
+      const tauntCost = tower.type === 'scrapExchange' ? getTauntDurationUpgradeCost(tower) : null;
+      const tauntActive = (tower.tauntRemainingMs ?? 0) > 0;
+      const tauntCooldownMs = tower.tauntCooldownRemainingMs ?? 0;
       const auraUpgrade = tower.type === 'scrapExchange' && tower.aura
         ? `<button data-upgrade="range" ${construction || auraCost === null || state.scrap < auraCost ? 'disabled' : ''}>${auraCost === null ? `Relay aura maximum · ${auraRange}` : `Expand relay aura to ${auraRange + 90} · ${auraCost} Scrap`}</button>`
         : '';
+      const tauntAction = tower.type === 'scrapExchange'
+        ? `<button data-taunt ${construction || tauntActive || tauntCooldownMs > 0 ? 'disabled' : ''}>${tauntActive ? `Taunt active · ${Math.ceil(tower.tauntRemainingMs / 1000)}s` : tauntCooldownMs > 0 ? `Taunt recharges · ${Math.ceil(tauntCooldownMs / 1000)}s` : `Activate taunt · ${(tauntDurationMs / 1000).toFixed(0)}s`}</button>`
+        : '';
+      const tauntUpgrade = tower.type === 'scrapExchange' && tauntCost !== null
+        ? `<button data-upgrade="taunt" ${construction || state.scrap < tauntCost ? 'disabled' : ''}>Extend taunt to ${((tauntDurationMs + SCRAP_EXCHANGE_TAUNT_DURATION_STEP_MS) / 1000).toFixed(0)}s · ${tauntCost} Scrap</button>`
+        : '';
       actions.innerHTML = tower.type === 'wall'
         ? `<button data-ladder ${construction || tower.ladder || state.scrap < 12 ? 'disabled' : ''}>${tower.ladder ? 'Ladder installed · hero passage' : 'Install ladder · 12 Scrap'}</button>`
-        : tower.type === 'scrapExchange' ? auraUpgrade + Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
+        : tower.type === 'scrapExchange' ? tauntAction + tauntUpgrade + auraUpgrade + Object.entries(SUPPORT_ITEMS).map(([id, offer]) => {
           const price = offer.cost * (id === 'buyback' ? hero.level : id === 'xp' ? 1 + (hero.trainingPurchases ?? 0) : 1);
-          const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
+          const unavailable = (id === 'aura' && tower.aura) || (id === 'buyback' && hero.alive) || (['heal','buff','xp','snabbaSkor'].includes(id) && !hero.alive) || (id === 'heal' && hero.hp >= hero.maxHp) || (id === 'repair' && tower.hp >= tower.maxHp) || (id === 'buff' && hero.aegisRemainingMs > 0) || (id === 'xp' && hero.experienceToNext === null);
           return `<button data-support="${id}" ${construction || unavailable || state.scrap < price ? 'disabled' : ''}>${offer.label} · ${price} Scrap</button>`;
         }).join('') : '';
       if (structure) {
         this.elements.towerName.textContent = tower.name;
         this.elements.towerStats.textContent = tower.type === 'wall'
           ? 'Blocks enemies. Ladder allows hero passage.'
-          : `${Math.ceil(tower.hp)} / ${tower.maxHp} hull · Taunt range 100 · Relay radius ${tower.aura ? `${auraRange} (${auraLevel}/${SCRAP_EXCHANGE_AURA_MAX_LEVEL})` : 'inactive'}`;
+          : `${Math.ceil(tower.hp)} / ${tower.maxHp} hull · Taunt ${tauntActive ? `${Math.ceil(tower.tauntRemainingMs / 1000)}s active` : tauntCooldownMs > 0 ? `${Math.ceil(tauntCooldownMs / 1000)}s recharge` : `${(tauntDurationMs / 1000).toFixed(0)}s ready`} (${tauntLevel}/${SCRAP_EXCHANGE_TAUNT_MAX_UPGRADE_LEVEL}) · Relay radius ${tower.aura ? `${auraRange} (${auraLevel}/${SCRAP_EXCHANGE_AURA_MAX_LEVEL})` : 'inactive'}`;
         this.elements.towerHistory.textContent = tower.type === 'wall'
           ? 'Select a combat tower, then click this wall to replace it.'
-          : 'Taunted enemies bombard the Exchange until it falls. Install the aura, then expand its radius. Auras do not stack.';
+          : 'Activate taunt when enemies enter range. Extend its duration twice, then install the relay aura; auras do not stack.';
       }
       if (construction) {
         const task = construction.kind === 'build'
           ? 'assembly'
-          : `${construction.upgrade === 'range' ? 'relay range' : construction.upgrade} upgrade`;
-        this.elements.towerName.textContent = `${tower.name} · ${constructionPercent}%`;
-        this.elements.towerStats.textContent = `Marshal ${task} in progress · ${Math.ceil(construction.remainingMs / 1000)}s remaining`;
-        this.elements.towerHistory.textContent = 'Singularity must remain within the build radius. Construction pauses while the Marshal is away.';
+          : `${construction.upgrade === 'range' ? 'relay range' : construction.upgrade === 'taunt' ? 'taunt duration' : construction.upgrade} upgrade`;
+        const queued = construction.status === 'queued';
+        this.elements.towerName.textContent = queued
+          ? `${tower.name} · queued`
+          : `${tower.name} · ${constructionPercent}%`;
+        this.elements.towerStats.textContent = queued
+          ? `Build order ${construction.queueIndex} · tile reserved`
+          : `Marshal ${task} in progress · ${Math.ceil(construction.remainingMs / 1000)}s remaining`;
+        this.elements.towerHistory.textContent = queued
+          ? 'Singularity will move here after the earlier build orders are complete.'
+          : 'Singularity must remain within the build radius. Construction pauses while the Marshal is away.';
         actions.innerHTML = '';
       }
       const sellValue = getTowerSellValue(tower);
@@ -611,8 +732,9 @@ export class Hud {
     const carryoverSuffix = state.wave.carryoverCount > 0
       ? ` +${state.wave.carryoverCount}`
       : '';
-    this.elements.wave.textContent =
-      state.wave.index === 0
+    this.elements.wave.textContent = state.campaign
+      ? state.campaign.activeEncounterId ? `${state.wave.index}/${getEncounter(this.simulation.map, state).waves}` : 'Explore'
+      : state.wave.index === 0
         ? 'Standby'
         : `${state.wave.index}/${FINAL_WAVE_INDEX} ${state.wave.label}${carryoverSuffix}`;
     this.elements.enemies.textContent = String(state.enemies.length);
@@ -635,10 +757,14 @@ export class Hud {
       state.stationIntegrity <= 0 ||
       (state.wave.index >= FINAL_WAVE_INDEX && state.wave.completed);
 
+    if (state.campaign) {
+      this.elements.startWave.disabled ||= !state.campaign.activeEncounterId || state.campaign.revealRemainingMs > 0;
+      this.elements.startWave.textContent = state.campaign.revealRemainingMs > 0 ? 'Revealing room…' : state.campaign.activeEncounterId ? 'Start wave' : 'Choose a trial';
+    }
     this.elements.heroName.textContent = hero.name;
     this.elements.heroLevel.textContent = `Level ${hero.level}`;
     this.elements.heroState.textContent = hero.alive
-      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}`
+      ? `${hero.damage} damage · ${(1000 / hero.attackIntervalMs).toFixed(2)} attacks/sec${hero.aegisRemainingMs > 0 ? ` · Aegis ${Math.ceil(hero.aegisRemainingMs / 1000)}s` : ''}${hero.speedBoostRemainingMs > 0 ? ` · Snabba skor ${Math.ceil(hero.speedBoostRemainingMs / 1000)}s` : ''}`
       : 'DOWN — returns at the next raid';
     this.elements.heroHp.textContent = `${Math.ceil(hero.hp)} / ${hero.maxHp}`;
     this.elements.heroHpFill.style.width = `${(100 * hero.hp) / hero.maxHp}%`;
@@ -650,10 +776,11 @@ export class Hud {
       ? '100%'
       : `${(100 * hero.experience) / hero.experienceToNext}%`;
     const wormholeRemainingMs = activeWormholeRemainingMs;
-    this.elements.heroSkills.hidden = !HERO_ABILITY_PROTOTYPES_ENABLED;
-    this.elements.heroSkills.innerHTML = HERO_ABILITY_PROTOTYPES_ENABLED ? `
+    const visibleSkillSlots = hero.skillSlots.filter((slot) => isHeroSkillPlayerVisible(slot.id));
+    this.elements.heroSkills.hidden = visibleSkillSlots.length === 0;
+    this.elements.heroSkills.innerHTML = visibleSkillSlots.length > 0 ? `
       <span class="hero-skills__label">Abilities</span>
-      <div class="hero-skills__grid">${hero.skillSlots.map((slot) => {
+      <div class="hero-skills__grid">${visibleSkillSlots.map((slot) => {
         const cooldown = Math.ceil((slot.cooldownRemainingMs ?? 0) / 1000);
         const skill = getHeroSkill(slot.id);
         const tunnelActive = slot.id === 'worm-tunnel' && wormholeRemainingMs > 0;
@@ -663,15 +790,15 @@ export class Hud {
             ? `${Math.ceil(wormholeRemainingMs / 1000)}s active`
           : cooldown > 0
             ? `${cooldown}s`
-            : 'Ready';
+            : skill?.scrapCost ? `Ready · ${skill.scrapCost}` : 'Ready';
         const upgradeCost = skill?.durationUpgradeMs && slot.unlocked && (slot.upgradeLevel ?? 0) < skill.maxUpgradeLevel
           ? skill.upgradeCost * ((slot.upgradeLevel ?? 0) + 1)
           : null;
-        return `<div class="hero-skill-wrap"><button type="button" class="hero-skill" data-skill-id="${slot.id}" title="${slot.description}" aria-pressed="${this.targetingSkillId === slot.id}" ${!hero.alive || !slot.unlocked || cooldown > 0 ? 'disabled' : ''}>
+        return `<div class="hero-skill-wrap"><button type="button" class="hero-skill" data-skill-id="${slot.id}" title="${slot.description}" aria-pressed="${this.targetingSkillId === slot.id}" ${!hero.alive || !slot.unlocked || cooldown > 0 || (skill?.scrapCost ?? 0) > state.scrap ? 'disabled' : ''}>
           <span>${slot.label}</span><small>${status}</small>
         </button>${upgradeCost === null ? '' : `<button type="button" class="hero-skill__upgrade" data-skill-upgrade="${slot.id}" ${state.scrap < upgradeCost ? 'disabled' : ''}>+${skill.durationUpgradeMs / 1000}s · ${upgradeCost} Scrap</button>`}</div>`;
       }).join('')}</div>` : '';
-    this.elements.commandHero.textContent = this.inputMode === 'move' ? 'Move Singularity · active' : 'Move Singularity';
+    this.elements.commandHero.textContent = this.inputMode === 'move' ? 'Move Singularity · active' : 'Move Singularity · H';
     this.elements.commandHero.setAttribute('aria-pressed', String(this.inputMode === 'move'));
     this.elements.commandHero.disabled = !hero.alive;
 
@@ -686,7 +813,7 @@ export class Hud {
       );
       button.disabled =
         state.stationIntegrity <= 0 || state.scrap < definition.cost;
-      if (state.towers.some((tower) => tower.construction)) button.disabled = true;
+      if (state.towers.some((tower) => tower.construction) && !this.queueModifierActive) button.disabled = true;
     }
 
     const riftLeech = state.enemies.find(
@@ -700,15 +827,17 @@ export class Hud {
       ? 'FIELD INTEL // Rift Leeches regenerate unless burning. Sunspitter solar fire suppresses it.'
       : '';
     this.elements.buildHint.textContent = this.inputMode === 'move'
-      ? 'Move Singularity active: click clear ground to issue a route. Select a tower to build.'
+      ? 'Move Singularity active: click clear ground to issue a route. Press H to return to building; hold Shift for a temporary move order.'
       : this.inputMode === 'skill'
         ? `${getHeroSkill(this.targetingSkillId)?.label ?? 'Hero skill'} active: choose a valid target.`
       : this.simulation.map.mode === 'maze'
         ? 'Build a maze on the grid. Keep a route open to the exit. Click a wall while building to replace it and recover 80%.'
       : this.simulation.map.mode === 'rooms'
           ? state.towers.some((tower) => tower.construction)
-            ? 'Singularity is constructing. The task advances only while the Marshal is within two tiles.'
-            : 'Build in either unlocked room. Singularity walks into range to assemble or upgrade it; keep every room route clear.'
+            ? this.queueModifierActive
+              ? 'Build queue active. Each placed tower reserves its tile and is assembled in order.'
+              : 'Singularity is constructing. Hold Ctrl to reserve more towers in sequence.'
+            : 'Build in an unlocked combat room. Singularity walks into range to assemble or upgrade it; keep every room route clear.'
         : 'Click clear ground to deploy the selected tower. Click a deployed tower to upgrade.';
   }
 
@@ -718,6 +847,7 @@ export class Hud {
   }
 
   dispose() {
+    this.campaignHud?.dispose();
     if (this.animationFrame !== null) {
       window.cancelAnimationFrame(this.animationFrame);
     }

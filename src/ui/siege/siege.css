@@ -1,0 +1,127 @@
+.siege-mode { --siege-text:#ece9db; --siege-muted:#98a9ac; --siege-line:#647a7b55; --siege-accent:#e7ae68; background:#10191e; }
+.siege-mode { overflow:hidden; }
+.siege-mode #app { min-height:100dvh; }
+.siege-mode #game-root { position:absolute; inset:0; top:0; height:100dvh; min-height:100dvh; }
+.siege-mode #hud-root { position:fixed; }
+.siege-ui { color:var(--siege-text); font-family:'Segoe UI',sans-serif; font-size:13px; }
+.siege-ui [hidden] { display:none!important; }
+.siege-ui button,.siege-ui input { border:1px solid var(--siege-line); border-radius:2px; background:#15232ae8; color:var(--siege-text); font:inherit; padding:10px 13px; }
+.siege-ui button { transition:background .15s,border-color .15s; }
+.siege-ui button:hover:not(:disabled),.siege-ui button[aria-pressed=true] { background:#294048f5; border-color:#9ab3b2; }
+.siege-ui button:focus-visible,.siege-ui a:focus-visible { outline:2px solid #ffe3a4; outline-offset:3px; }
+.siege-ui button:disabled { opacity:.45; cursor:not-allowed; }
+.siege-ui button.siege-primary { background:#dca25c; color:#152026; border-color:#e9b573; font-weight:750; }
+.siege-ui button.siege-primary:hover { background:#f2c184; }
+.siege-ui input { width:100%; min-width:0; }
+.siege-kicker { display:block; color:var(--siege-accent); font-size:10px; letter-spacing:.2em; font-weight:650; }
+.siege-lobby { pointer-events:auto; position:absolute; left:5vw; top:50%; transform:translateY(-50%); width:470px; max-height:96vh; overflow:auto; padding:28px 30px; background:linear-gradient(110deg,#0d1b22f7,#12242cec); border-left:2px solid #c99254; box-shadow:0 20px 80px #0005; scrollbar-width:thin; }
+.siege-lobby h1 { font-family:'Bahnschrift Condensed','Arial Narrow',Impact,sans-serif; font-size:64px; font-stretch:condensed; font-weight:800; line-height:.98; letter-spacing:-.025em; margin:25px 0 17px; }
+.siege-lobby h1 em { color:#e8b575; font-style:normal; }
+.siege-intro { font-size:15px; line-height:1.6; color:#c0ccca; margin:0 0 22px; }
+.siege-lobby-meta { font-size:10px; font-weight:650; letter-spacing:.14em; display:flex; gap:30px; color:var(--siege-muted); border-bottom:1px solid var(--siege-line); padding-bottom:17px; margin-bottom:18px; }
+.siege-hero-choices { display:flex; gap:9px; }
+.siege-hero-choices button { display:flex; align-items:center; text-align:left; flex:1; gap:10px; padding:12px; }
+.siege-hero-choices button[aria-pressed=true] { border-color:var(--hero-color); background:#29404d; }
+.siege-hero-symbol { color:var(--hero-color); font-size:34px; line-height:1; }
+.siege-hero-choices strong { display:block; font-size:15px; }
+.siege-hero-choices small { display:block; color:var(--siege-muted); font-size:10px; margin-top:4px; }
+.siege-kit { min-height:103px; padding:4px 0 14px; }
+.siege-kit p { line-height:1.5; margin:12px 0 6px; font-size:12px; }
+.siege-kit span { color:#baa6d9; display:block; font-size:10px; }
+.siege-kit small { display:block; color:var(--siege-muted); font-size:10px; line-height:1.5; margin-top:7px; }
+.siege-solo-actions { display:flex; gap:8px; }
+.siege-solo-actions .siege-primary { flex:1; display:flex; justify-content:space-between; }
+.siege-network { margin-top:17px; border-bottom:1px solid var(--siege-line); padding-bottom:12px; }
+.siege-network summary { cursor:pointer; color:#b9cfcb; font-size:12px; }
+.siege-network label { display:block; margin:12px 0; font-size:10px; color:var(--siege-muted); }
+.siege-network input { margin-top:5px; }
+.siege-network-row { display:flex; align-items:center; gap:6px; }
+.siege-network-row button { white-space:nowrap; }
+.siege-network-row input { margin:0; }
+.siege-network [data-do=session] { margin-top:8px; font-size:10px; }
+.siege-lobby footer { display:flex; gap:22px; margin-top:13px; }
+.siege-lobby footer a { color:#849b9f; font-size:11px; text-decoration:none; }
+.siege-lobby footer a:hover { color:#f4cd99; }
+.siege-connection { color:#f1b580; font-size:11px; margin:10px 0 0; }
+.siege-roster>div { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--siege-line); }
+.siege-roster>div small { margin-left:auto; color:#86d5bf; }
+.siege-room-code { font-size:22px; letter-spacing:.16em; color:#eff0dd; margin:0 10px; }
+.siege-room-actions { display:flex; gap:8px; margin-top:12px; }
+.siege-objective { position:absolute; left:22px; top:20px; width:335px; padding:15px 17px 12px; background:linear-gradient(90deg,#10232bec,#12242bbb); border-left:2px solid #dca263; box-shadow:0 7px 25px #0003; }
+.siege-objective-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:9px 0 11px; }
+.siege-objective-title strong { font-size:16px; }
+.siege-objective time { font-size:11px; color:#b7c8c4; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.siege-meter { height:5px; background:#50616d66; overflow:hidden; }
+.siege-meter i { display:block; height:100%; background:linear-gradient(90deg,#2c9997,#84e5be); transition:width .12s linear; }
+.siege-statusline { display:flex; justify-content:space-between; margin-top:7px; font-size:9px; letter-spacing:.04em; color:#a6bcb9; }
+.siege-statusline b { color:#d9e6df; margin-left:6px; font-weight:500; }
+.siege-objective p { font-size:11px; line-height:1.5; color:#a8babb; margin:9px 0 0; }
+.siege-team { pointer-events:auto; position:absolute; right:22px; top:20px; text-align:right; max-width:340px; }
+.siege-team>div:first-child { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
+.siege-teammate { background:#10212be8; padding:7px 10px; display:grid; grid-template-columns:5px auto; gap:3px 7px; text-align:left; }
+.siege-teammate i { background:var(--hero-color); grid-row:span 2; }
+.siege-teammate b { font-size:10px; letter-spacing:.08em; max-width:105px; overflow:hidden; text-overflow:ellipsis; }
+.siege-teammate span { font-size:9px; color:#a5bab7; }
+.siege-team-tools { display:flex; gap:5px; justify-content:flex-end; margin:10px 0 5px; }
+.siege-team-tools button { font-size:11px; padding:8px 10px; }
+.siege-team-tools button b { display:block; color:#d9bb82; font-size:9px; font-weight:500; margin-top:3px; }
+.siege-team [data-siege=network-status] { font-size:9px; letter-spacing:.12em; color:#a4c5bc; text-shadow:0 1px 3px #000; }
+.siege-hero-hud { pointer-events:auto; position:absolute; left:22px; bottom:18px; width:470px; background:linear-gradient(90deg,#10212aee,#12232cd9); padding:12px 14px 9px; border-top:1px solid #92a8a14a; }
+.siege-hero-heading { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+.siege-hero-heading strong { font-size:16px; }
+.siege-hero-heading span { font-size:10px; color:#b1accc; }
+.siege-hero-heading span:last-child { margin-left:auto; color:#b5d0c9; }
+.siege-hull { height:4px; }
+.siege-xp { height:2px; background:#45434c; margin-top:3px; }
+.siege-xp i { display:block; height:100%; background:#b897dd; }
+.siege-abilities { display:flex; gap:7px; margin-top:10px; }
+.siege-abilities button { flex:1; min-width:0; position:relative; display:grid; grid-template-columns:27px 1fr; text-align:left; gap:1px 4px; padding:9px 7px 7px; }
+.siege-abilities kbd { position:absolute; right:5px; top:4px; color:#7d959a; font-size:9px; }
+.siege-ability-symbol { grid-row:span 2; font-size:29px; align-self:center; }
+.siege-abilities strong { font-size:10px; padding-right:7px; line-height:1.4; }
+.siege-abilities small { font-size:8px; color:#8ca9a9; letter-spacing:.08em; }
+.siege-key-hint { font-size:9px; margin-top:8px; color:#90a3a4; white-space:nowrap; }
+.siege-inventory { pointer-events:auto; position:absolute; right:22px; bottom:20px; width:294px; padding:10px 12px; background:#10212be6; }
+.siege-inventory>span { display:flex; gap:5px; font-size:10px; color:#aebbbb; margin-bottom:8px; }
+.siege-inventory>span b { color:#e2c78f; }
+.siege-inventory>span small { margin-left:auto; color:#7f969d; font-size:9px; }
+.siege-inventory>div { display:flex; gap:5px; }
+.siege-inventory button { position:relative; width:64px; height:65px; padding:5px; }
+.siege-inventory button kbd { position:absolute; top:4px; left:5px; color:#78959c; font-size:8px; }
+.siege-inventory button span { font-size:24px; color:#cebb92; display:block; }
+.siege-inventory button small { font-size:8px; line-height:1.1; display:block; }
+.siege-inventory button.is-equipped { border-color:#8ec4ae; }
+.siege-inventory button i { position:absolute; right:3px; top:3px; color:#7bddb7; font-size:7px; font-style:normal; }
+.siege-toast { position:absolute; top:175px; left:24px; max-width:410px; padding:10px 14px; border-left:2px solid #d5b17b; background:#152630de; color:#ddd7bc; font-size:12px; line-height:1.5; opacity:0; transition:opacity .25s; }
+.siege-toast.is-visible { opacity:1; }
+.siege-boss { position:absolute; top:22px; left:50%; transform:translateX(-50%); width:min(360px,28vw); padding:10px; background:#281b22db; }
+.siege-boss>div:first-child { font-size:10px; letter-spacing:.12em; margin-bottom:7px; color:#e8ad9a; }
+.siege-boss span { font-size:8px; display:block; color:#b4a3a8; margin-top:5px; }
+.siege-boss i { background:linear-gradient(90deg,#984b50,#ef9c78); }
+.siege-drawer { pointer-events:auto; position:absolute; right:22px; top:145px; width:340px; max-height:calc(100vh - 275px); overflow:auto; padding:22px; background:#11242bf5; border:1px solid #748d8b55; box-shadow:0 10px 60px #0006; }
+.siege-drawer h2 { font-size:23px; line-height:1.1; margin:12px 0; }
+.siege-drawer p { color:#a5b9b8; font-size:12px; line-height:1.6; }
+.siege-close { position:absolute; top:4px; right:4px; padding:2px 8px!important; font-size:22px!important; background:none!important; border:0!important; }
+.siege-shop { display:grid; gap:6px; }
+.siege-shop button { display:flex; align-items:center; text-align:left; gap:12px; padding:10px; }
+.siege-shop button>span { color:#cdb18a; font-size:24px; width:24px; }
+.siege-shop strong,.siege-fort-choice strong { font-size:12px; flex:1; }
+.siege-shop small,.siege-fort-choice small { display:block; color:#9db2b2; font-size:10px; font-weight:400; margin-top:5px; line-height:1.4; }
+.siege-shop b,.siege-fort-choice b { font-size:11px; color:#dfbc7c; white-space:nowrap; }
+.siege-pad-choice { display:flex; gap:6px; margin-bottom:10px; }
+.siege-pad-choice button { text-transform:capitalize; flex:1; }
+.siege-fort-choice { display:flex; text-align:left; gap:12px; width:100%; margin-bottom:7px; }
+.siege-drawer .siege-primary { width:100%; margin-top:10px; font-size:12px; }
+.siege-menu-buttons { display:flex; flex-wrap:wrap; gap:7px; }
+.siege-target-hint { position:absolute; left:50%; bottom:185px; transform:translateX(-50%); padding:9px 15px; background:#251f36ed; border:1px solid #a78dcc; font-size:12px; }
+.siege-outcome { pointer-events:auto; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:500px; max-width:90vw; background:#14232cf7; padding:35px; text-align:center; border:1px solid #cdaa76; box-shadow:0 20px 100px #0009; }
+.siege-outcome h2 { font:38px 'Bahnschrift Condensed','Arial Narrow',sans-serif; color:#e5c28e; }
+.siege-outcome p { color:#a5bbb9; line-height:1.5; }
+.siege-mode .camera-controls { left:auto; top:auto; transform:none; right:22px; bottom:155px; width:294px; display:flex; flex-wrap:wrap; gap:3px; padding:6px; background:#14242caa; border:0; box-shadow:none; }
+.siege-mode .camera-controls[hidden] { display:none!important; }
+.siege-mode .camera-controls button { padding:5px 9px; font-size:10px; background:#162c35d9; border-color:#61777766; border-radius:2px; }
+.siege-mode .camera-controls small { display:none; }
+@media(max-width:1050px) { .siege-objective { width:290px; } .siege-hero-hud { width:410px; } .siege-key-hint { font-size:8px; } .siege-boss { top:174px; width:240px; } .siege-toast { max-width:285px; } }
+@media(max-height:800px) { .siege-lobby { padding:20px 25px; width:450px; } .siege-lobby h1 { font-size:52px; margin:20px 0 12px; } .siege-intro { margin-bottom:14px; font-size:14px; } .siege-lobby-meta { margin-bottom:12px; padding-bottom:12px; } .siege-kit { min-height:90px; } }
+@media(max-width:720px) { .siege-lobby { left:12px; width:calc(100% - 24px); max-width:470px; top:12px; transform:none; max-height:calc(100dvh - 24px); } .siege-lobby h1 { font-size:48px; } .siege-objective { left:10px; top:10px; width:245px; padding:10px; } .siege-objective-title strong { font-size:13px; } .siege-objective p { font-size:10px; } .siege-team { right:10px; top:146px; max-width:210px; } .siege-team-tools { gap:3px; } .siege-team-tools button { font-size:9px; padding:6px; } .siege-teammate { display:none; } .siege-hero-hud { left:10px; bottom:10px; width:calc(100% - 20px); padding:9px; } .siege-key-hint { display:none; } .siege-inventory { bottom:148px; right:10px; padding:7px; width:250px; } .siege-inventory button { width:55px; height:53px; } .siege-inventory button span { font-size:20px; } .siege-inventory>span small { display:none; } .siege-mode .camera-controls { bottom:auto; top:10px; right:10px; width:66px; padding:0; } .siege-mode .camera-controls button { width:100%; margin:0; } .siege-mode .camera-controls button[data-camera=left],.siege-mode .camera-controls button[data-camera=right],.siege-mode .camera-controls button[data-camera=up],.siege-mode .camera-controls button[data-camera=down] { display:none; } .siege-toast { left:10px; top:225px; max-width:calc(100% - 20px); font-size:11px; } .siege-drawer { top:210px; right:10px; width:calc(100% - 20px); max-height:calc(100dvh - 365px); padding:18px; } .siege-boss { top:140px; left:10px; transform:none; width:150px; } .siege-target-hint { bottom:265px; max-width:95vw; width:max-content; font-size:10px; } }
+@media(prefers-reduced-motion:reduce) { .siege-ui * { transition:none!important; } }

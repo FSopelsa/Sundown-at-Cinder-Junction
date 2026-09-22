@@ -19,6 +19,10 @@ export class CombatSystem {
       throw new RangeError('Damage must be a positive finite number.');
     }
 
+    const keys = this.gameState.campaign?.keys ?? [];
+    if (source?.kind === 'hero') amount *= 1 + (keys.includes('solar') ? 0.1 : 0) + (keys.includes('arc') ? 0.1 : 0);
+    if (source?.kind === 'tower' && keys.includes(['neutral', 'void'].includes(damageType) ? 'grav' : damageType)) amount *= 1.2;
+
     const targetId =
       typeof targetOrId === 'string' ? targetOrId : targetOrId?.id;
     const target = this.gameState.enemies.find((enemy) => enemy.id === targetId);

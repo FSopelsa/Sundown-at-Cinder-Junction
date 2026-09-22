@@ -1,4 +1,5 @@
 import { SCRAP_EXCHANGE_AURA_BASE_RANGE } from '../../content/towers.js';
+import { PICKUP_DEFINITIONS } from '../../content/pickups.js';
 
 // Shop effects belong to simulation state and survive serialization.
 export const SUPPORT_ITEMS = Object.freeze({
@@ -8,6 +9,7 @@ export const SUPPORT_ITEMS = Object.freeze({
   buyback: { label: 'Revive hero now', cost: 100 },
   xp: { label: 'Training · 25 XP', cost: 50 },
   repair: { label: 'Restore Exchange hull', cost: 35 },
+  snabbaSkor: { label: 'Snabba skor · movement boost', cost: PICKUP_DEFINITIONS.speedBoost.purchaseCost },
 });
 export function purchaseSupport(state, economy, heroes, towerId, item) {
   const tower = state.towers.find(t => t.id === towerId && t.type === 'scrapExchange' && t.hp > 0);
@@ -17,7 +19,7 @@ export function purchaseSupport(state, economy, heroes, towerId, item) {
   if (!tower || !offer || state.stationIntegrity <= 0) return fail('Select an operational Scrap Exchange.');
   if (item === 'aura' && tower.aura) return fail('This Exchange already has a relay aura.');
   if (item === 'repair' && tower.hp >= tower.maxHp) return fail('Exchange hull is already full.');
-  if (item === 'buyback' ? hero.alive : ['heal','buff','xp'].includes(item) && !hero.alive) return fail(item === 'buyback' ? 'Your hero is already alive.' : 'Revive your hero first.');
+  if (item === 'buyback' ? hero.alive : ['heal','buff','xp','snabbaSkor'].includes(item) && !hero.alive) return fail(item === 'buyback' ? 'Your hero is already alive.' : 'Revive your hero first.');
   if (item === 'heal' && hero.hp >= hero.maxHp) return fail('Hero hull is already full.');
   if (item === 'buff' && hero.aegisRemainingMs > 0) return fail('Aegis is already active.');
   if (item === 'xp' && hero.experienceToNext === null) return fail('Hero is at maximum level.');
@@ -28,6 +30,11 @@ export function purchaseSupport(state, economy, heroes, towerId, item) {
   if (item === 'buyback') heroes.reviveForNextWave();
   if (item === 'xp') { heroes.awardExperience(25); hero.trainingPurchases = (hero.trainingPurchases ?? 0) + 1; }
   if (item === 'repair') tower.hp = tower.maxHp;
+  if (item === 'snabbaSkor') {
+    const pickup = { ...PICKUP_DEFINITIONS.speedBoost, id: 'support-snabba-skor', type: 'speed-boost', x: hero.x, y: hero.y };
+    heroes.applyPickupEffect(pickup);
+    heroes.events.push({ type: 'pickup-purchased', x: hero.x, y: hero.y, pickup });
+  }
   if (item === 'aura') {
     tower.aura = true;
     tower.auraLevel = 1;

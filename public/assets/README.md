@@ -10,8 +10,14 @@ Vite serves this directory unchanged at `/assets/...`.
   are not shipped by the Three.js renderer.
 
 Register every runtime asset in `src/game/assets/manifest.js`. Gameplay code
-must use the semantic manifest key, not a filename. Editable Blender sources
-and their export instructions live in `assets/blender/`.
+must use the semantic manifest key, not a filename. Audio files in `audio/`
+must also be manifest-registered; `npm.cmd run assets:validate` rejects stray
+runtime audio files. Editable Blender sources and their export instructions
+live in `assets/blender/`.
+
+Audio provenance is recorded in `docs/3d/provenance/legacy-audio.md`. The
+current audio collection is retained for local prototype use only until each
+source and licence has been verified for redistribution.
 
 ## Admitting a GLB
 

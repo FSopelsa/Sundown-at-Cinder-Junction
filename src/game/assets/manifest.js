@@ -28,7 +28,12 @@ export const MODEL_KEYS = Object.freeze({
     arrivalYard: 'environment-arrival-yard',
     relayHall: 'environment-relay-hall',
   }),
-  units: 'prototype-units',
+  units: 'authored-units',
+  prototypeUnits: 'prototype-units',
+  industrialKit: 'industrial-kit',
+  productionReserve: 'production-reserve',
+  snabbaSkor: 'prop-snabba-skor',
+  zipBag: 'prop-zip-bag',
 });
 
 export const AUDIO_KEYS = Object.freeze({
@@ -59,6 +64,18 @@ export const AUDIO_KEYS = Object.freeze({
 export const ASSET_MANIFEST = Object.freeze({
   models: Object.freeze([
     Object.freeze({
+      key: MODEL_KEYS.snabbaSkor,
+      path: '/assets/models/cinder-snabba-skor.glb',
+      kind: 'interactive-prop',
+      preload: true,
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.zipBag,
+      path: '/assets/models/cinder-zip-bag.glb',
+      kind: 'interactive-prop',
+      preload: true,
+    }),
+    Object.freeze({
       key: MODEL_KEYS.environment.arrivalYard,
       path: '/assets/models/cinder-arrival-yard.glb',
       kind: 'environment',
@@ -69,9 +86,26 @@ export const ASSET_MANIFEST = Object.freeze({
       kind: 'environment',
     }),
     Object.freeze({
-      key: MODEL_KEYS.units,
+      key: MODEL_KEYS.prototypeUnits,
       path: '/assets/models/cinder-prototype-units.glb',
       kind: 'unit-kit',
+      preload: false,
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.units,
+      path: '/assets/models/cinder-authored-units.glb',
+      kind: 'unit-kit',
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.industrialKit,
+      path: '/assets/models/cinder-industrial-kit.glb',
+      kind: 'modular-kit',
+    }),
+    Object.freeze({
+      key: MODEL_KEYS.productionReserve,
+      path: '/assets/models/cinder-production-reserve.glb',
+      kind: 'production-reserve',
+      preload: false,
     }),
   ]),
   audio: Object.freeze([
@@ -86,6 +120,18 @@ export const ASSET_MANIFEST = Object.freeze({
     Object.freeze({ key: AUDIO_KEYS.ui.towerPlaced, path: '/assets/audio/towers/placeTower-swordSound-339823.mp3' }),
     Object.freeze({ key: AUDIO_KEYS.ui.failure, path: '/assets/audio/defeat-477823.mp3' }),
   ]),
+});
+
+// Siege uses its own presentation kit. Keep this selection in the asset
+// manifest so the default route never waits on unrelated campaign or viewer
+// packages before the battlefield can render.
+export const SIEGE_ASSET_MANIFEST = Object.freeze({
+  models: Object.freeze(ASSET_MANIFEST.models.filter((asset) => [
+    MODEL_KEYS.units,
+    MODEL_KEYS.industrialKit,
+    MODEL_KEYS.productionReserve,
+    MODEL_KEYS.snabbaSkor,
+  ].includes(asset.key))),
 });
 
 export function getModelAsset(key) {

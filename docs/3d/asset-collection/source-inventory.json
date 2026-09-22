@@ -1,0 +1,952 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "assets/archive/legacy-2d-sprites/ASSET_PIPELINE.md",
+      "bytes": 5555,
+      "sha256": "f3248a697322795971f977fc91cb75f1e48849b9fe25b5ac1a6bfd5033c46e96",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/4wf36kdu.jpg",
+      "bytes": 101434,
+      "sha256": "a669b79d45cd93d3155667aaafdb0dc07520aecde8536aae5ac71d55a039fadc",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/jfmp7r9k.jpg",
+      "bytes": 88167,
+      "sha256": "ac124c7deed5a27c38e30a30546d2f4cac0552d42448a6f6b404031b290c79b3",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/s2m4h2uw.jpg",
+      "bytes": 141423,
+      "sha256": "49b10ce185cec1d7b6fffd7fbcbbff17fcef7b4b209493b43b624023d04e7de3",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/wtq2x7i8.jpg",
+      "bytes": 209414,
+      "sha256": "7fcd09c732deb826282021e868bd01f9d8b8671cfbf060e0439f9b6aee17a03e",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/xawm00rb.jpg",
+      "bytes": 91222,
+      "sha256": "a3871204b20e9b50ceda21369dfcab186fb4694e43e04f55c5b4e540c5feb428",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot-preview.gif",
+      "bytes": 142809,
+      "sha256": "d460500475faa00f7b283fa276d04ed67df0d2082c50d9ee8ef79b6bd449c079",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot-preview.png",
+      "bytes": 312433,
+      "sha256": "19ccea7d5751c70a8bbd602b0d2700bd7a23a195a46ef025dc76cc694774ebfb",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot-raw.png",
+      "bytes": 2300488,
+      "sha256": "71b5b9ded19d662fd8b8410f2ace6003f99b403e66ea6c603da6eaec8fedeab2",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot.json",
+      "bytes": 3488,
+      "sha256": "878eaac269247fde49e851d080224fd5c5aacaff75188c1c98812c23948ca4e1",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot.png",
+      "bytes": 378659,
+      "sha256": "c8e3406d80ff2cd886ce9a6312633152596c2e65f4741137d148c490c2c17f60",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/README.md",
+      "bytes": 634,
+      "sha256": "eec5a7daf346976e63ab8d956faa11699ab2714f28243ba4d11a0b56422e2d9c",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/0_0-4.webp",
+      "bytes": 105692,
+      "sha256": "f366171e31d4816e85ff7dc9fd2510bd43f73f0e875bc9e59345171b7e13b1a2",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/article2_05d149956c.png",
+      "bytes": 770369,
+      "sha256": "e28274b9ac243935c32a555873f85b3156a3ef39dc3927a2d758403abd6588dc",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/hqdefault.jpg",
+      "bytes": 50793,
+      "sha256": "065435e3b06ff50a9520518d333e8981eb590f591218fff650d08d1a43a5b8b1",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/img6_article_e25339a262.png",
+      "bytes": 966110,
+      "sha256": "cfe1faff18e1c20b24d769dc2c42e431a61be053673bc935062f737c44e0bdaf",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/scientists-reveal-terrifying-breakthrough-chinas-artificial-sun-revolutionizes-energy-with-1000-more-power-than-ever-before.jpg",
+      "bytes": 123059,
+      "sha256": "84fd41254c651ba2f38859140587cb4ffefc8a843454fb91f97094eaed097a61",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/sdun.jpg",
+      "bytes": 23834,
+      "sha256": "facbccec68df6caa96a9a18b985f84702db0beb09771b9ec1ba5eae320c65767",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/sunimages.jpg",
+      "bytes": 38086,
+      "sha256": "3f1c04aa72e3ec1fc02a902a8eec0376fc259bce557579aff4dfbac27e9dfd08",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/base_images/z.hqdefault.png",
+      "bytes": 140214,
+      "sha256": "66f031970b21526d4a9545729d05cf32be3ea92ba514a4856f4649ae88a3e5c1",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/sunspitter-charge-preview.png",
+      "bytes": 346305,
+      "sha256": "12366c9aad97e24539ae15482defbb64711543ece7176d36f23a0261a662bc9e",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/sunspitter-charge-raw.png",
+      "bytes": 1788303,
+      "sha256": "e25dab558073296acf106efc19c2d931930dc60d102d142c3ed0278a74d1efed",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/sunspitter-charge.json",
+      "bytes": 3201,
+      "sha256": "376b85720c912d12432cfaa53d998ffe3f2f01fbbaf5761a82942cf959ddffb2",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/sunspitter/sunspitter-charge.png",
+      "bytes": 339480,
+      "sha256": "e61e401e548965a96dee61078ad162f13b395272f0fdf0d36dcdc2afaec85913",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/base_images/arcattack-cage.webp",
+      "bytes": 42786,
+      "sha256": "a240f13f90c0f3f2e5387652774cc903728209ede6665f7606bbaecd868147ac",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/base_images/gsneinx0z9bc1.jpeg",
+      "bytes": 1217273,
+      "sha256": "e4b36c5f1d0ed9ad7eecf55491126562bbc13b0332c66a68e006b1f13cd24576",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/base_images/worlds-largest-tesla-coil-shock-the-rock-event.jpg",
+      "bytes": 126200,
+      "sha256": "ed448987722b8cac37f58a9a843a9c55390e2520d2fd57b5b9e86e9d81ac2c02",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/tesla-coil-preview.gif",
+      "bytes": 89665,
+      "sha256": "948a0d415848d8417736b31c28690dab262316d37692ef19fe1727bfbe58d689",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/tesla-coil-preview.png",
+      "bytes": 194156,
+      "sha256": "a7360a3d94576b17131ac2fb419e3673b45b62d2c932e72a0577c4e50d57e110",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/tesla-coil-raw.png",
+      "bytes": 1577888,
+      "sha256": "bba486cb78c7e74b498e78018624d58415870ed663d21015d3f2d254cc749cc2",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/tesla-coil.json",
+      "bytes": 3480,
+      "sha256": "c3f8e9021a8bab460197355be144fde63aa5ecbd03fd9bbd1a6d7dc2c4f5c187",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/archive/legacy-2d-sprites/tesla_coil/tesla-coil.png",
+      "bytes": 245657,
+      "sha256": "8ba0fd72a1eefe286bd9d9d24abc97bdb65d9cd46488be2a93e68c170e2c58d4",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_TeslaCoil",
+        "Prop_ArcPylon",
+        "Prop_FaradayCage"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/BlackComet_wave-boss/DeathComet.jpg",
+      "bytes": 820051,
+      "sha256": "cb8ec8d0e09957b0ebab44ce3a7fbcbfe6ddc45a51b7a92092fed74d810551ce",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_BlackComet",
+        "Prop_DeathComet",
+        "Prop_HornedComet",
+        "Prop_EyeOfCinder"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/BlackComet_wave-boss/demonComet.jpg",
+      "bytes": 117259,
+      "sha256": "ddecafb9395f1ae0b159d1a397dda59da5302309b3d7a26692f2c406ce778ed2",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_BlackComet",
+        "Prop_DeathComet",
+        "Prop_HornedComet",
+        "Prop_EyeOfCinder"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/BlackComet_wave-boss/Eye.webp",
+      "bytes": 340780,
+      "sha256": "4f3645c0a1724be7aecfa77fb037dcd9f0803240270bd49482f964055a91fe19",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_BlackComet",
+        "Prop_DeathComet",
+        "Prop_HornedComet",
+        "Prop_EyeOfCinder"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/blender/build_asset_collection.py",
+      "bytes": 33864,
+      "sha256": "c028961da0ac9e327c966cd3f22403406f105552fdac28563cd9ac42e9488642",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/blender/cinder-asset-collection.blend",
+      "bytes": 1442437,
+      "sha256": "bd07b4a2d9d847446a812d8825e7d04c276ba86590c0ad44ce83a31ba432ef7a",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/blender/cinder-asset-collection.blend1",
+      "bytes": 1438131,
+      "sha256": "2b952b24c74bbee41d0099d82e900bb3b0c7492a84532eeb848d1aed05eb04cb",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/blender/cinder-threshold-prototype.blend",
+      "bytes": 468426,
+      "sha256": "f033d81c72d86fbe634f78a79b5f9490a6bb1de585092713e4e3c52425fbc7d3",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/blender/export_cinder_threshold.py",
+      "bytes": 12976,
+      "sha256": "942b9e6c16ff761b8d43ad0dfa69d870854a881d2c9d4425a081605ae64df8fb",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/blender/README.md",
+      "bytes": 1598,
+      "sha256": "791fe68c1895cb9f2e8773e0860c22419f35176b5ec293aae310e0c27b6ed03e",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/floor'ground_tiles/floor-metal_plate.png",
+      "bytes": 1880474,
+      "sha256": "f37ef835fbccb3b545a0adfe689de612e5f205cdbdb30af15a0716b5131fd02d",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Kit_FloorPlate",
+        "Kit_FloorGrate",
+        "Kit_FloorHazard"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/map_sketch.jpg",
+      "bytes": 1950185,
+      "sha256": "502c15ea9343eb7dc1902f3c227668e60cec77ba89202a7cb58a7b96feb75b38",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Prop_ThresholdGate",
+        "Prop_UpgradeStation"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/MechDog_enemy/MechDog.jpg",
+      "bytes": 40176,
+      "sha256": "6d3ceb95a36cc84451eb0584f4066e545235764b61ae4fbc0e9bad0292bc6c63",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_RustRunner",
+        "Unit_TinbackHauler"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/base_images/Singularity-Cast.gif",
+      "bytes": 399143,
+      "sha256": "cfa2c34953957a8d58160260fc6707dde385ed7bd56726d5e72fc8743f9a9a36",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/base_images/Singularity-run-trimmed.png",
+      "bytes": 650626,
+      "sha256": "610330833aa6fc5c12377916ceb203d01994bc7eae718f500ed71f4bb01294ac",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/singularity-cast-raw.png",
+      "bytes": 1885057,
+      "sha256": "7780ca4d58486e4747add420f6f13101b9d0a152acc1d476b646a69eecb0a893",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/Singularity-Cast.gif",
+      "bytes": 399143,
+      "sha256": "cfa2c34953957a8d58160260fc6707dde385ed7bd56726d5e72fc8743f9a9a36",
+      "duplicateOf": "assets/singularity_hero/base_images/Singularity-Cast.gif",
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/singularity-hero-preview.gif",
+      "bytes": 343037,
+      "sha256": "2afb32c05fb131f2c2b5273ca9fe92d2b492a61ec949e5344d92b5b8dab6715e",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/singularity-hero-preview.png",
+      "bytes": 681053,
+      "sha256": "b7000891c2f69bb16f88a1cbbd6593fa99a46e56bf4179e8dc1cf7fad09def7f",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/singularity-hero.json",
+      "bytes": 10834,
+      "sha256": "2287e7ef1622c78d1b90eb3d433c302fa9f6a47012b845baf703c5083a82629e",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    },
+    {
+      "path": "assets/singularity_hero/singularity-hero.png",
+      "bytes": 813653,
+      "sha256": "beb2f7be254fcbab03c9e022bd0cfd20b1c72688e6f16e7c005d5e8877b9f216",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/singularity_hero/Singularity-run-trimmed.png",
+      "bytes": 650626,
+      "sha256": "610330833aa6fc5c12377916ceb203d01994bc7eae718f500ed71f4bb01294ac",
+      "duplicateOf": "assets/singularity_hero/base_images/Singularity-run-trimmed.png",
+      "role": "source-art",
+      "models": [
+        "Unit_Hero"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/cold_Iron_Longshot/base_images/4wf36kdu.jpg",
+      "bytes": 101434,
+      "sha256": "a669b79d45cd93d3155667aaafdb0dc07520aecde8536aae5ac71d55a039fadc",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/4wf36kdu.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/cold_Iron_Longshot/base_images/jfmp7r9k.jpg",
+      "bytes": 88167,
+      "sha256": "ac124c7deed5a27c38e30a30546d2f4cac0552d42448a6f6b404031b290c79b3",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/jfmp7r9k.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/cold_Iron_Longshot/base_images/wtq2x7i8.jpg",
+      "bytes": 209414,
+      "sha256": "7fcd09c732deb826282021e868bd01f9d8b8671cfbf060e0439f9b6aee17a03e",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/base_images/wtq2x7i8.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/cold_Iron_Longshot/cold-iron-longshot-preview.png",
+      "bytes": 312433,
+      "sha256": "19ccea7d5751c70a8bbd602b0d2700bd7a23a195a46ef025dc76cc694774ebfb",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot-preview.png",
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/cold_Iron_Longshot/cold-iron-longshot.png",
+      "bytes": 378659,
+      "sha256": "c8e3406d80ff2cd886ce9a6312633152596c2e65f4741137d148c490c2c17f60",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/cold_Iron_Longshot/cold-iron-longshot.png",
+      "role": "source-art",
+      "models": [
+        "Tower_ColdIronLongshot",
+        "Prop_CryogenicPlant"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/0_0-4.webp",
+      "bytes": 105692,
+      "sha256": "f366171e31d4816e85ff7dc9fd2510bd43f73f0e875bc9e59345171b7e13b1a2",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/0_0-4.webp",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/article2_05d149956c.png",
+      "bytes": 770369,
+      "sha256": "e28274b9ac243935c32a555873f85b3156a3ef39dc3927a2d758403abd6588dc",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/article2_05d149956c.png",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/hqdefault.jpg",
+      "bytes": 50793,
+      "sha256": "065435e3b06ff50a9520518d333e8981eb590f591218fff650d08d1a43a5b8b1",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/hqdefault.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/img6_article_e25339a262.png",
+      "bytes": 966110,
+      "sha256": "cfe1faff18e1c20b24d769dc2c42e431a61be053673bc935062f737c44e0bdaf",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/img6_article_e25339a262.png",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/scientists-reveal-terrifying-breakthrough-chinas-artificial-sun-revolutionizes-energy-with-1000-more-power-than-ever-before.jpg",
+      "bytes": 123059,
+      "sha256": "84fd41254c651ba2f38859140587cb4ffefc8a843454fb91f97094eaed097a61",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/scientists-reveal-terrifying-breakthrough-chinas-artificial-sun-revolutionizes-energy-with-1000-more-power-than-ever-before.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/sdun.jpg",
+      "bytes": 23834,
+      "sha256": "facbccec68df6caa96a9a18b985f84702db0beb09771b9ec1ba5eae320c65767",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/sdun.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/base_images/sunimages.jpg",
+      "bytes": 38086,
+      "sha256": "3f1c04aa72e3ec1fc02a902a8eec0376fc259bce557579aff4dfbac27e9dfd08",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/base_images/sunimages.jpg",
+      "role": "visual-reference",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/sprites/sunspitter/sunspitter-charge.png",
+      "bytes": 339480,
+      "sha256": "e61e401e548965a96dee61078ad162f13b395272f0fdf0d36dcdc2afaec85913",
+      "duplicateOf": "assets/archive/legacy-2d-sprites/sunspitter/sunspitter-charge.png",
+      "role": "source-art",
+      "models": [
+        "Tower_Sunspitter",
+        "Prop_ContainmentReactor",
+        "Prop_Tokamak"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/TechSquid_enemy/TechSquid.jpg",
+      "bytes": 418895,
+      "sha256": "b0ea8021c622d932112d7ed8899a4cb2c9c7a15a0abdc26b465305736e1303d1",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Unit_RiftLeech",
+        "Prop_TechSquidSentinel"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/walls/wall_template.jpg",
+      "bytes": 35162,
+      "sha256": "b806194f297ea37f9cbd62ef53c695f5fedf82474b3708d964e142d182182df4",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_Wall",
+        "Kit_FortressWall"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "assets/walls/walls_by_vincentiusmatthew_dcm0j78-fullview.jpg",
+      "bytes": 67397,
+      "sha256": "11d634bed995e380f1c7c51f19422d711f0a0da03611ffdb1c8515bcfd189bc1",
+      "duplicateOf": null,
+      "role": "source-art",
+      "models": [
+        "Tower_Wall",
+        "Kit_FortressWall"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "graphicInspo/example.PNG",
+      "bytes": 715785,
+      "sha256": "f4c9e188aae8d3f37cafd307e998a496eb7153d5763a50770cc8b2ab70060236",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "collection-art-direction"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "graphicInspo/exampleGame.PNG",
+      "bytes": 729463,
+      "sha256": "86745bd5f8b3add57b64b5b83af180ae1d05398a448918d36ce9d3e4e99d0746",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "collection-art-direction"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "graphicInspo/exg..PNG",
+      "bytes": 685922,
+      "sha256": "93977d092b0f9f3e1cb40d611cc2a5dd0d43f5a9d716c9da0fdbba006ab8bbcb",
+      "duplicateOf": null,
+      "role": "visual-reference",
+      "models": [
+        "collection-art-direction"
+      ],
+      "disposition": "Reviewed as reference; source preserved; original 3D interpretation; pixels not shipped",
+      "referenceLicence": "Not supplied; reference-only"
+    },
+    {
+      "path": "graphicInspo/graphics_insporation.md",
+      "bytes": 50,
+      "sha256": "ffe9b2a2d7ad9d6c0f42d14feb802c6a6368ba0dd3b7c403c752381bc5ed6bb3",
+      "duplicateOf": null,
+      "role": "authoring-or-metadata",
+      "models": [
+        "collection-art-direction"
+      ],
+      "disposition": "Preserved source or supporting metadata",
+      "referenceLicence": null
+    }
+  ]
+}

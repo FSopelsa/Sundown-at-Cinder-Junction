@@ -1,5 +1,15 @@
 # Cinder Threshold Blender source
 
+The newer [reference-led collection](../../docs/3d/asset-collection/README.md)
+contains 29 hero, tower, enemy, floor and reserve models. Its source is
+`cinder-asset-collection.blend`; rebuild with `build_asset_collection.py`, then
+`npm.cmd run assets:prepare`. Inspect the collection in the game at `/?assets`.
+The older room/prototype workflow below remains available independently.
+
+The separately authored [Snabba skor](../../docs/3d/snabba-skor/README.md) adds an
+openable transparent prop. Its source is `cinder-snabba-skor.blend`; rebuild with
+`build_snabba_skor.py`, then `npm.cmd run assets:prepare:snabba-skor`.
+
 `export_cinder_threshold.py` builds the first 3D milestone's source scene in
 Blender and exports three GLB files into `public/assets/models/`:
 

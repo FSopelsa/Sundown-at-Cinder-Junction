@@ -6,6 +6,7 @@ import { LEVELS } from '../../src/game/content/map.js';
 import { findHeroPath, isHeroCellBlocked, worldToHeroCell } from '../../src/game/simulation/navigation.js';
 import { buildDistanceField, cellKey, worldToCell } from '../../src/game/simulation/maze.js';
 import { roomCellCenter } from '../../src/game/simulation/roomNavigation.js';
+import { ACTIONS } from '../../src/game/input/actions.js';
 
 function finishConstruction(simulation) {
  for(let frame=0;frame<1200 && simulation.state.towers.some((tower) => tower.construction);frame+=1) simulation.update(1000/60);
@@ -38,7 +39,9 @@ for (const map of LEVELS) {
   const restored=GameState.fromJSON(state.toJSON());assert.equal(restored.hero.aegisRemainingMs,15000);assert.equal(restored.towers[0].aura,true);
   systems.heroSystem.takeDamage(100000);assert.equal(buy('buyback').ok,true);assert.equal(state.hero.alive,true);
   const enemy=systems.enemySystem.spawn('dustMite');enemy.x=exchange.x-60;enemy.y=exchange.y;
-  const before={x:enemy.x,y:enemy.y};systems.enemySystem.update(100);assert.deepEqual({x:enemy.x,y:enemy.y},before);assert.ok(exchange.hp<exchange.maxHp);
+  assert.equal(systems.enemySystem.attackExchange(enemy),false);assert.equal(enemy.tauntedBy,null);assert.equal(exchange.hp,exchange.maxHp);
+  assert.equal(sim.dispatch(ACTIONS.activateTowerAbility,{towerId:exchange.id}).ok,true);
+  const before={x:enemy.x,y:enemy.y};assert.equal(systems.enemySystem.attackExchange(enemy),true);assert.deepEqual({x:enemy.x,y:enemy.y},before);assert.ok(exchange.hp<exchange.maxHp);
   exchange.hp=1;enemy.attackCooldownMs=0;systems.enemySystem.update(100);assert.equal(state.towers.length,0);
   assert.equal(buy('repair').ok,false);
  });
@@ -66,6 +69,21 @@ test('Scrap Exchange relay aura can be expanded to a quarter-map radius', () => 
  assert.equal(exchange.auraRange,360);
  assert.equal(sim.systems.towerSystem.upgradeTower(exchange.id,'range').ok,false);
  assert.equal(GameState.fromJSON(sim.state.toJSON()).towers[0].auraRange,360);
+});
+
+test('Scrap Exchange taunt is timed, recharges, and gains duration through special upgrades', () => {
+ const sim=createSimulation(new GameState({levelId:'cinder-maze',scrap:10000}));
+ const exchange=sim.systems.towerSystem.placeTower('scrapExchange',420,220).tower;
+ assert.equal(sim.dispatch(ACTIONS.activateTowerAbility,{towerId:exchange.id}).durationMs,6000);
+ assert.equal(sim.dispatch(ACTIONS.activateTowerAbility,{towerId:exchange.id}).ok,false);
+ sim.systems.towerSystem.update(6000);
+ assert.equal(exchange.tauntRemainingMs,0);
+ assert.ok(exchange.tauntCooldownRemainingMs>0);
+ assert.equal(sim.systems.towerSystem.upgradeTower(exchange.id,'taunt').ok,true);
+ assert.equal(exchange.tauntUpgradeLevel,1);
+ sim.systems.towerSystem.update(8000);
+ assert.equal(sim.dispatch(ACTIONS.activateTowerAbility,{towerId:exchange.id}).durationMs,9000);
+ assert.equal(GameState.fromJSON(sim.state.toJSON()).towers[0].tauntUpgradeLevel,1);
 });
 
 test('hero physically crosses a ladder wall while ordinary wall remains impassable', () => {

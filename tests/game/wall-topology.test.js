@@ -68,3 +68,19 @@ test('walls in different rooms never visually join across the room gap', () => {
     showPositiveEndCap: true,
   });
 });
+
+test('diagonal walls add one owned bridge between their cell centres', () => {
+  const northWest = wall('wall-nw', 'arrival-yard', 5, 5);
+  const southEast = wall('wall-se', 'arrival-yard', 6, 6);
+
+  const owner = getWallTopology(THRESHOLD_MAP, northWest, [northWest, southEast]);
+  assert.equal(owner.diagonalBridges.length, 1);
+  assert.deepEqual(owner.diagonalBridges[0], {
+    direction: 'southEast',
+    offsetX: 0.5,
+    offsetZ: 0.5,
+    rotationY: -Math.PI / 4,
+    scaleX: Math.SQRT2,
+  });
+  assert.equal(getWallTopology(THRESHOLD_MAP, southEast, [northWest, southEast]).diagonalBridges, undefined);
+});

@@ -2,6 +2,12 @@ import * as THREE from 'three';
 import { getRoomPalette } from '../game/content/rooms.js';
 import { roomCellCenter } from '../game/simulation/roomNavigation.js';
 import { METERS_PER_SIMULATION_UNIT, simulationToWorld } from './coordinates.js';
+import { createFloorKit } from './floorKit.js';
+import {
+  disposeWallFadeMaterials,
+  makeWallFadeable,
+  updateWallOcclusion,
+} from './wallOcclusion.js';
 
 function getRenderableRooms(map) {
   if (map.mode === 'rooms') return map.rooms;
@@ -16,11 +22,55 @@ function getRenderableRooms(map) {
 // Grid walls, floors, and trim are generated from the room palette, so a new
 // room only needs a palette name in content. Distinctive rooms opt into a GLB
 // through `environment.model`.
-function makeProceduralRoom(room, palette) {
+export function getRoomPerimeterWallSegments(map, room, roomState = null) {
+  const { grid } = room;
+  const edges = { north: [], south: [], west: [], east: [] };
+  for (const connection of map.roomConnections ?? []) {
+    if (!isDoorOpen(connection, roomState)) continue;
+    const endpoint = connection.from.roomId === room.id
+      ? connection.from
+      : connection.to.roomId === room.id ? connection.to : null;
+    if (!endpoint) continue;
+    if (endpoint.col === 0) edges.west.push([endpoint.row * grid.cellSize, (endpoint.row + 1) * grid.cellSize]);
+    else if (endpoint.col === grid.columns - 1) edges.east.push([endpoint.row * grid.cellSize, (endpoint.row + 1) * grid.cellSize]);
+    else if (endpoint.row === 0) edges.north.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
+    else if (endpoint.row === grid.rows - 1) edges.south.push([endpoint.col * grid.cellSize, (endpoint.col + 1) * grid.cellSize]);
+  }
+  if (map.campaign) {
+    const entries = [map.exit, ...map.campaign.encounters.flatMap(e => [e.spawn, e.goal].filter(Boolean))];
+    for (const cell of entries.filter(c => c.roomId === room.id)) {
+      if (cell.col === 0) edges.west.push([cell.row * grid.cellSize, (cell.row + 1) * grid.cellSize]);
+      else if (cell.col === grid.columns - 1) edges.east.push([cell.row * grid.cellSize, (cell.row + 1) * grid.cellSize]);
+      else if (cell.row === 0) edges.north.push([cell.col * grid.cellSize, (cell.col + 1) * grid.cellSize]);
+    }
+  }
+  const splitAroundOpenings = (length, openings) => {
+    const segments = [];
+    let cursor = 0;
+    for (const [start, end] of openings
+      .map(([first, last]) => [Math.max(0, first), Math.min(length, last)])
+      .filter(([first, last]) => last > first)
+      .sort(([first], [second]) => first - second)) {
+      if (start > cursor) segments.push([cursor, start]);
+      cursor = Math.max(cursor, end);
+    }
+    if (cursor < length) segments.push([cursor, length]);
+    return segments;
+  };
+  return {
+    north: splitAroundOpenings(grid.columns * grid.cellSize, edges.north),
+    south: splitAroundOpenings(grid.columns * grid.cellSize, edges.south),
+    west: splitAroundOpenings(grid.rows * grid.cellSize, edges.west),
+    east: splitAroundOpenings(grid.rows * grid.cellSize, edges.east),
+  };
+}
+
+function makeProceduralRoom(room, palette, map, roomState) {
   const { grid } = room;
   const width = grid.columns * grid.cellSize * METERS_PER_SIMULATION_UNIT;
   const depth = grid.rows * grid.cellSize * METERS_PER_SIMULATION_UNIT;
   const group = new THREE.Group();
+  group.userData.ownsResources = true;
   const floor = new THREE.Mesh(
     new THREE.BoxGeometry(width, 0.20, depth),
     new THREE.MeshStandardMaterial({ color: palette.floor, metalness: 0.55, roughness: 0.68 }),
@@ -37,22 +87,35 @@ function makeProceduralRoom(room, palette) {
     emissive: palette.trim,
     emissiveIntensity: 0.22,
   });
-  const wall = (side, spanX, spanZ, x, z) => {
+  const wall = (side, spanX, spanZ, x, z, index) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(spanX, 1.5, spanZ), wallMaterial);
-    mesh.name = `${room.id} wall ${side}`;
+    mesh.name = `${room.id} wall ${side} ${index}`;
     mesh.position.set(x, 0.75, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
     const trim = new THREE.Mesh(new THREE.BoxGeometry(spanX, 0.09, spanZ), trimMaterial);
-    trim.name = `${room.id} trim ${side}`;
+    trim.name = `${room.id} trim ${side} ${index}`;
     trim.position.set(x, 1.54, z);
     group.add(trim);
   };
-  wall('north', width, 0.18, width / 2, 0);
-  wall('south', width, 0.18, width / 2, depth);
-  wall('west', 0.18, depth, 0, depth / 2);
-  wall('east', 0.18, depth, width, depth / 2);
+  const perimeter = getRoomPerimeterWallSegments(map, room, roomState);
+  perimeter.north.forEach(([start, end], index) => {
+    wall('north', (end - start) * METERS_PER_SIMULATION_UNIT, 0.18,
+      (start + end) * METERS_PER_SIMULATION_UNIT / 2, 0, index);
+  });
+  perimeter.south.forEach(([start, end], index) => {
+    wall('south', (end - start) * METERS_PER_SIMULATION_UNIT, 0.18,
+      (start + end) * METERS_PER_SIMULATION_UNIT / 2, depth, index);
+  });
+  perimeter.west.forEach(([start, end], index) => {
+    wall('west', 0.18, (end - start) * METERS_PER_SIMULATION_UNIT,
+      0, (start + end) * METERS_PER_SIMULATION_UNIT / 2, index);
+  });
+  perimeter.east.forEach(([start, end], index) => {
+    wall('east', 0.18, (end - start) * METERS_PER_SIMULATION_UNIT,
+      width, (start + end) * METERS_PER_SIMULATION_UNIT / 2, index);
+  });
   return group;
 }
 
@@ -82,6 +145,7 @@ function makeBuildGrid(room, palette) {
     }),
   );
   gridLines.name = `${room.id} build grid`;
+  gridLines.userData.ownsResources = true;
   return gridLines;
 }
 
@@ -100,6 +164,7 @@ function connectionBridge(map, connection, open) {
   const dz = toWorld.z - fromWorld.z;
   const length = Math.hypot(dx, dz);
   const bridge = new THREE.Group();
+  bridge.userData.ownsResources = true;
   bridge.name = `${connection.id} ${open ? 'bridge' : 'sealed bridge'}`;
   const deck = new THREE.Mesh(
     new THREE.BoxGeometry(length + 0.3, 0.16, 0.88),
@@ -142,28 +207,54 @@ export class RoomScene {
     this.group.name = 'Cinder rooms';
     this.scene.add(this.group);
     this.floorSurfaces = [];
+    this.wallOccluders = [];
+    this.owned ??= new Set();
   }
 
   build(map, roomState = map.roomState ?? null) {
     this.clear();
     this.group.name = `${map.name} rooms`;
-    for (const room of getRenderableRooms(map)) {
+    for (const room of getRenderableRooms(map).filter(room => !map.campaign || roomState.unlockedRoomIds.includes(room.id))) {
       const palette = getRoomPalette(room.environment?.palette);
       const { grid } = room;
       const position = simulationToWorld(grid.x, grid.y);
       const environment = this.modelLibrary.clone(room.environment?.model) ??
-        makeProceduralRoom(room, palette);
+        makeProceduralRoom(room, palette, map, roomState);
+      if (!room.environment?.model) this.collectOwned(environment);
+      const floorKit = createFloorKit(room, this.modelLibrary);
+      if (floorKit) {
+        environment.traverse((node) => {
+          if (/^Floor[ _](slab|plate)/.test(node.name) || node.name === `${room.id} floor`) node.visible = false;
+        });
+        if (map.campaign) {
+          const tint = new THREE.Color({ rust: 0xbfa58e, teal: 0x86b6b7, ember: 0xc5a482, slag: 0xa3b39c, basalt: 0x94a7bb }[room.environment.palette] ?? 0xffffff);
+          floorKit.traverse(node => {
+            if (!node.isMesh) return;
+            const tintMaterial = original => { const material = original.clone(); material.color.multiply(tint); this.owned.add(material); return material; };
+            node.material = Array.isArray(node.material) ? node.material.map(tintMaterial) : tintMaterial(node.material);
+          });
+        }
+        environment.add(floorKit);
+      }
       environment.name = `${room.id} environment`;
       environment.position.set(position.x, 0, position.z);
+      environment.traverse((node) => {
+        if (!node.isMesh || !/wall/i.test(`${node.name} ${node.parent?.name ?? ''}`)) return;
+        makeWallFadeable(node);
+        this.wallOccluders.push(node);
+      });
       this.group.add(environment);
       const gridLines = makeBuildGrid(room, palette);
       gridLines.position.set(position.x, 0, position.z);
+      this.collectOwned(gridLines);
       this.group.add(gridLines);
       this.addFloorSurface(room);
       this.addRoomLight(room, palette);
     }
     for (const connection of map.roomConnections ?? []) {
+      if (map.campaign && ![connection.from.roomId, connection.to.roomId].every(id => roomState.unlockedRoomIds.includes(id))) continue;
       const bridge = connectionBridge(map, connection, isDoorOpen(connection, roomState));
+      if (bridge) this.collectOwned(bridge);
       if (bridge) this.group.add(bridge);
     }
   }
@@ -191,6 +282,7 @@ export class RoomScene {
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(point.x, 0.03, point.z);
     floor.userData.roomId = room.id;
+    this.collectOwned(floor);
     this.floorSurfaces.push(floor);
     this.group.add(floor);
   }
@@ -204,14 +296,35 @@ export class RoomScene {
     const light = new THREE.PointLight(palette.light, palette.lightIntensity, 15, 2);
     light.name = `${room.id} light`;
     light.position.set(point.x, 3.8, point.z);
-    light.castShadow = true;
+    light.castShadow = false;
     light.shadow.mapSize.set(512, 512);
     this.group.add(light);
   }
 
+  updateOcclusion(camera, target) {
+    this.group.updateMatrixWorld(true);
+    return updateWallOcclusion(camera, target, this.wallOccluders);
+  }
+
+  collectOwned(root) {
+    root.traverse(node => {
+      if (node.geometry) this.owned.add(node.geometry);
+      for (const material of (Array.isArray(node.material) ? node.material : [node.material])) if (material) this.owned.add(material);
+    });
+  }
+
   clear() {
+    for (const wall of this.wallOccluders) disposeWallFadeMaterials(wall);
+    this.group.traverse((node) => {
+      // Instance buffers are room-owned; their shared geometry/materials belong to ModelLibrary.
+      if (node.isInstancedMesh) node.dispose();
+    });
     this.floorSurfaces = [];
+    this.wallOccluders = [];
+    this.owned ??= new Set();
     this.group.clear();
+    for (const resource of this.owned) resource.dispose();
+    this.owned.clear();
   }
 
   dispose() {

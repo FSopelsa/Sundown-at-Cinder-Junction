@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { readdir, stat } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { extname, resolve } from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { ASSET_MANIFEST } from '../src/game/assets/manifest.js';
@@ -8,7 +8,22 @@ import { ASSET_MANIFEST } from '../src/game/assets/manifest.js';
 const command = process.argv[2];
 const supportedCommands = new Set(['validate', 'inspect']);
 const modelsDirectory = resolve('public/assets/models');
+const audioDirectory = resolve('public/assets/audio');
 const cli = resolve('node_modules/@gltf-transform/cli/bin/cli.js');
+const runtimeAudioExtensions = new Set(['.mp3', '.ogg', '.wav']);
+
+async function listRuntimeFiles(directory, extensions, relativeDirectory = '') {
+  const files = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const relativePath = relativeDirectory ? `${relativeDirectory}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...await listRuntimeFiles(resolve(directory, entry.name), extensions, relativePath));
+    } else if (extensions.has(extname(entry.name).toLowerCase())) {
+      files.push(relativePath);
+    }
+  }
+  return files.sort();
+}
 
 if (!supportedCommands.has(command)) {
   throw new Error(`Expected one of ${[...supportedCommands].join(', ')}; received ${command ?? 'nothing'}.`);
@@ -20,6 +35,19 @@ const models = (await readdir(modelsDirectory))
 
 if (models.length === 0) {
   throw new Error(`No GLB files found in ${modelsDirectory}.`);
+}
+
+const audioFiles = await listRuntimeFiles(audioDirectory, runtimeAudioExtensions);
+const manifestAudioPaths = new Set(
+  ASSET_MANIFEST.audio.map((asset) => asset.path.replace('/assets/audio/', '')),
+);
+const unregisteredAudio = audioFiles.filter((audio) => !manifestAudioPaths.has(audio));
+const missingAudio = [...manifestAudioPaths].filter((audio) => !audioFiles.includes(audio));
+if (unregisteredAudio.length || missingAudio.length) {
+  throw new Error([
+    unregisteredAudio.length ? `Unregistered audio files: ${unregisteredAudio.join(', ')}.` : '',
+    missingAudio.length ? `Missing manifest audio files: ${missingAudio.join(', ')}.` : '',
+  ].filter(Boolean).join(' '));
 }
 
 const manifestModelNames = new Set(
@@ -64,4 +92,8 @@ for (const model of models) {
   if (exitCode !== 0) {
     throw new Error(`glTF Transform ${command} failed for ${model} with exit code ${exitCode}.`);
   }
+}
+
+if (command === 'inspect') {
+  console.log(`\npublic/assets/audio: ${audioFiles.length} manifest-registered runtime files`);
 }

@@ -98,8 +98,8 @@ export function findNearestOpenHeroCell(map, towers, cell) {
   return null;
 }
 
-export function findHeroPath(map, towers, startPosition, targetPosition) {
-  if (isRoomMap(map)) return findRoomHeroPath(map, towers, startPosition, targetPosition);
+export function findHeroPath(map, towers, startPosition, targetPosition, roomState = null) {
+  if (isRoomMap(map)) return findRoomHeroPath(map, towers, startPosition, targetPosition, roomState);
   const start = findNearestOpenHeroCell(
     map,
     towers,
