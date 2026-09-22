@@ -5,10 +5,11 @@ async function point(page,x,y) { return page.evaluate(([x,y])=>window.__siege.sc
 async function state(page) { return page.evaluate(()=>window.__siege.client.state); }
 
 test('default production siege boots, hero selection works, and the compact layout fits', async({page},info)=>{
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const errors=[],modelRequests=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',request=>{if(request.url().includes('/assets/models/'))modelRequests.push(request.url());});
   await page.setViewportSize({width:1440,height:900});await page.goto('/');
   await expect(page.getByRole('heading',{name:'THE LAST DEPARTURE.'})).toBeVisible();
   await page.waitForTimeout(1500);
+  expect(modelRequests.some(url => /cinder-(arrival-yard|relay-hall|prototype-units|zip-bag)\.glb/.test(url))).toBe(false);
   await page.screenshot({path:info.outputPath('01-departure.png')});
   await page.locator('[data-hero="bastion"]').click();await expect(page.locator('[data-siege="kit"]')).toContainText('Iron heart');
   await page.getByRole('button',{name:'Deploy solo'}).click();

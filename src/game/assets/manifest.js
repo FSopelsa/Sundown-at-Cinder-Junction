@@ -122,6 +122,18 @@ export const ASSET_MANIFEST = Object.freeze({
   ]),
 });
 
+// Siege uses its own presentation kit. Keep this selection in the asset
+// manifest so the default route never waits on unrelated campaign or viewer
+// packages before the battlefield can render.
+export const SIEGE_ASSET_MANIFEST = Object.freeze({
+  models: Object.freeze(ASSET_MANIFEST.models.filter((asset) => [
+    MODEL_KEYS.units,
+    MODEL_KEYS.industrialKit,
+    MODEL_KEYS.productionReserve,
+    MODEL_KEYS.snabbaSkor,
+  ].includes(asset.key))),
+});
+
 export function getModelAsset(key) {
   return ASSET_MANIFEST.models.find((asset) => asset.key === key) ?? null;
 }

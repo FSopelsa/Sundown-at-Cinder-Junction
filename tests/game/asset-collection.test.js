@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { ASSET_CATALOGUE } from '../../src/game/assets/catalogue.js';
-import { ASSET_MANIFEST, MODEL_KEYS, getModelAsset } from '../../src/game/assets/manifest.js';
+import { ASSET_MANIFEST, MODEL_KEYS, SIEGE_ASSET_MANIFEST, getModelAsset } from '../../src/game/assets/manifest.js';
 import { ModelLibrary } from '../../src/three/loaders/ModelLibrary.js';
 import { animateAsset, collectMotionParts, headingFromTravel } from '../../src/three/assetMotion.js';
 import { createFloorKit } from '../../src/three/floorKit.js';
@@ -94,4 +94,19 @@ test('floor kit fills each cell once using shared instanced geometry', async () 
   assert.equal(createFloorKit({ id: 'missing', grid: { columns: 1, rows: 1, cellSize: 40 } }, new ModelLibrary()), null);
   assert.equal(getModelAsset(MODEL_KEYS.productionReserve).preload, false);
   assert.equal(new Set(ASSET_MANIFEST.models.map(a => a.path)).size, ASSET_MANIFEST.models.length);
+});
+
+test('siege manifest only includes the models rendered by the siege route', () => {
+  assert.deepEqual(SIEGE_ASSET_MANIFEST.models.map(asset => asset.key), [
+    MODEL_KEYS.snabbaSkor,
+    MODEL_KEYS.units,
+    MODEL_KEYS.industrialKit,
+    MODEL_KEYS.productionReserve,
+  ]);
+  assert.ok(!SIEGE_ASSET_MANIFEST.models.some(asset => [
+    MODEL_KEYS.environment.arrivalYard,
+    MODEL_KEYS.environment.relayHall,
+    MODEL_KEYS.prototypeUnits,
+    MODEL_KEYS.zipBag,
+  ].includes(asset.key)));
 });

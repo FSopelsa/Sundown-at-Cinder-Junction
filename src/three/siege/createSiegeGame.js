@@ -5,12 +5,12 @@ import { HEROES, ABILITIES, SIEGE_MAP, BASE, PADS, EVENT_SITE } from '../../game
 import { worldToRoomCell } from '../../game/simulation/roomNavigation.js';
 import { SiegeHud } from '../../ui/siege/SiegeHud.js';
 import { ModelLibrary } from '../loaders/ModelLibrary.js';
+import { SIEGE_ASSET_MANIFEST } from '../../game/assets/manifest.js';
 import { TacticalCamera } from '../TacticalCamera.js';
 import { EffectsLayer } from '../EffectsLayer.js';
 import { AudioManager } from '../audio/AudioManager.js';
 import { SiegeScene } from './SiegeScene.js';
 import { SiegePresenter } from './SiegePresenter.js';
-import { disposeObjectResources } from '../disposeObjectResources.js';
 
 export async function createSiegeGame() {
   const parent = document.querySelector('#game-root'), hudRoot = document.querySelector('#hud-root');
@@ -28,7 +28,9 @@ export async function createSiegeGame() {
   sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, far: 90 }); sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.025; scene.add(sun, sun.target);
   const resize = () => { const width = parent.clientWidth, height = parent.clientHeight; renderer.setSize(width, height); camera.aspect = width / height; camera.updateProjectionMatrix(); };
   resize();
-  const library = await ModelLibrary.load(undefined, { includeReserve: true });
+  // The Bastion and arena props live in the reserve kit, but the siege route
+  // should not block on every reserve or campaign model.
+  const library = await ModelLibrary.load(SIEGE_ASSET_MANIFEST, { includeReserve: true });
   if (library.failures.length) hud.notice('Some models could not be loaded. Reload to restore the full battlefield.');
   const deck = new SiegeScene(scene, library), entities = new SiegePresenter(scene, library), effects = new EffectsLayer(scene), audio = new AudioManager({ audioVolume: 0.35 });
   const cameraControls = new TacticalCamera(camera, renderer.domElement, SIEGE_MAP, hudRoot); cameraControls.azimuth = -0.12; cameraControls.elevation = 0.82; cameraControls.target.set(21, 0, 19); cameraControls.distance = 35; cameraControls.updateCamera();
