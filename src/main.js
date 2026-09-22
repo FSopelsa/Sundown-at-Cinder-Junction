@@ -11,6 +11,11 @@ if (parameters.has('assets')) {
   const { createAssetViewer } = await import('./three/AssetViewer.js');
   const viewer = await createAssetViewer(document.querySelector('#app'));
   if (import.meta.hot) import.meta.hot.dispose(() => viewer.dispose());
+} else if ((!parameters.has('level') || parameters.get('level') === 'cinder-siege') && !parameters.has('review') && !parameters.has('checkpoint')) {
+  const { createSiegeGame } = await import('./three/siege/createSiegeGame.js');
+  const siege = await createSiegeGame();
+  if (import.meta.env.DEV && parameters.has('debug')) window.__siege = siege;
+  if (import.meta.hot) import.meta.hot.dispose(() => { siege.dispose(); delete window.__siege; });
 } else {
   const requestedLevel = parameters.get('level');
   const review = import.meta.env.DEV && parameters.get('review') === 'junction';
@@ -21,7 +26,7 @@ if (parameters.has('assets')) {
     ? checkpoint ? saves.read(checkpoint) : saves.latest() : null;
   const reviewState = review && !resumed ? (await import('./dev/campaignReview.js')).createJunctionReview() : null;
   const simulation = createSimulation(resumed?.state ?? reviewState ?? { levelId: requestedLevel ?? DEFAULT_3D_LEVEL_ID });
-  if (checkpoint) { const cleanUrl = new URL(window.location.href); cleanUrl.searchParams.delete('checkpoint'); window.history.replaceState(null, '', cleanUrl); }
+  if (checkpoint || !requestedLevel) { const cleanUrl = new URL(window.location.href); cleanUrl.searchParams.delete('checkpoint'); cleanUrl.searchParams.set('level', simulation.state.levelId); window.history.replaceState(null, '', cleanUrl); }
   const hudRoot = document.querySelector('#hud-root');
 
   if (!(hudRoot instanceof HTMLElement)) {

@@ -10,16 +10,11 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     // Full Chromium headless uses the host GPU for WebGL instead of headless-shell rasterization.
-    channel: 'chromium',
+    channel: process.env.CINDER_BROWSER_CHANNEL || 'chromium',
     baseURL: 'http://127.0.0.1:4173',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     video: 'off',
   },
-  webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
-  },
+  globalSetup: './tests/browser/setup.js',
 });

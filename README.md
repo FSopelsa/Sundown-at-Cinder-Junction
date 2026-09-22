@@ -4,6 +4,20 @@ A hobby project where I'm building a space-western elemental tower-defense
 game. It currently uses **Three.js + WebGL**, Blender-made GLB assets, and a
 plain JavaScript simulation for the game rules.
 
+On **`cinder-junction-siege`**, the default is **The Last Departure**, a playable
+solo / 1–4-player hero siege. Pick Singularity or Bastion, defend the reactor,
+raid Ash Foundry and defeat the Black Comet. See the [siege guide](docs/cinder-junction-siege.md)
+for controls, the two hero kits, items, co-op and the exact local setup.
+
+```powershell
+npm.cmd run dev -- --host 127.0.0.1
+# Optional co-op server, in a second terminal:
+npm.cmd run siege:server
+```
+
+The browser lobby links to the original campaign, classic TD and asset library.
+The existing campaign remains at `/?level=cinder-campaign` with its own saves.
+
 ### Quick start
 
 Start with `main`:
@@ -37,7 +51,7 @@ If you want to help me try or improve something, see
 
 ### Expanding campaign
 
-The default now starts in **Room 1**. Clear its two waves to reveal **Room 2**,
+The campaign starts in **Room 1**. Clear its two waves to reveal **Room 2**,
 then clear that room to open the **sun junction**. Enemies retain the original
 portal goal and cross your earlier defenses. The sun grants its required
 door seal and seven seconds of regeneration.
@@ -54,7 +68,7 @@ are local to this browser and server address, including its port.
 
 Want to inspect the landmarks immediately? On the development server, open
 `/?review=junction`. This review sandbox uses separate saves. The normal
-campaign remains available at `/`. See [the campaign vision](docs/campaign-vision.md)
+campaign remains available at `/?level=cinder-campaign`. See [the campaign vision](docs/campaign-vision.md)
 for confirmed rules, tuning assumptions and deferred ideas.
 
 Rooms remain functional blockouts. The industrial floors, gates, consoles,
@@ -71,7 +85,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Open the displayed local Vite URL. The default route opens or resumes the expanding campaign. The
+Open the displayed local Vite URL. This branch opens the siege lobby; the campaign link opens or resumes the expanding campaign. The
 level selector still exposes the older simulation maps; they use a simple 3D
 fallback room until each receives authored environment assets.
 
@@ -120,10 +134,11 @@ content systems use stable semantic keys rather than filenames.
 npm.cmd run check
 ```
 
-This runs the simulation test suite and a production Vite build. The room
+This runs the simulation and WebSocket integration suites and a production Vite build. The room
 navigation tests cover a cross-room enemy route, hero traversal/save round
 trip, and path-safe placement on both sides of the Arrival Gate. It also
-validates shipped GLBs and runs a Chromium check that starts a Smeltworks raid.
+validates shipped GLBs and runs Chromium coverage for the original scenarios,
+the complete solo siege path, and two-client co-op.
 
 To print GLB structure and size details without changing files:
 

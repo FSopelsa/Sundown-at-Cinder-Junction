@@ -61,7 +61,7 @@ test('unlocked landmarks and workshop branches are usable; only the selected tri
   await page.addInitScript(({ key, record }) => {
     if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(record));
   }, { key: SAVE_PREFIX + 'auto', record: workshopCheckpoint() });
-  await page.goto('/');
+  await page.goto('/?level=cinder-campaign');
   await expect(page.locator('[data-hud="notice"]')).toContainText('Junction secured');
   await page.locator('.campaign-panel summary').click();
   await expect(page.locator('[data-room]')).toHaveCount(5);
