@@ -55,8 +55,17 @@
       }
     },
     "finishDate": {
-      "date": { "year": 2026, "month": 9, "day": 18 },
-      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 22,
+        "minute": 58,
+        "second": 41,
+        "nano": 966506000
+      }
     },
     "isImported": false
   },
@@ -234,9 +243,11 @@
   {
     "id": "TASK_55",
     "priority": "LOW",
-    "tags": [],
-    "title": "vNär vi har fler rum och ser långsam första laddning bör vi dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
-    "description": "c dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
+    "tags": [
+      "performance"
+    ],
+    "title": "Split up code so that Three.js-rendering and GLB-loading are imported at game start.",
+    "description": "- När vi har fler rum och ser långsam första laddning bör vi dela upp koden så att Three.js-renderingen och GLB-laddningen importeras när man går in i spelet. Att bara höja chunkSizeWarningLimit döljer varningen men förbättrar inte laddningen.",
     "status": "IN_PROGRESS",
     "date": {
       "date": {
@@ -502,8 +513,17 @@
       }
     },
     "finishDate": {
-      "date": { "year": 2026, "month": 9, "day": 18 },
-      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 22,
+        "minute": 58,
+        "second": 41,
+        "nano": 966506000
+      }
     },
     "isImported": false
   },
@@ -550,8 +570,17 @@
       }
     },
     "finishDate": {
-      "date": { "year": 2026, "month": 9, "day": 18 },
-      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 22,
+        "minute": 58,
+        "second": 41,
+        "nano": 966506000
+      }
     },
     "isImported": false
   },
@@ -576,8 +605,17 @@
       }
     },
     "finishDate": {
-      "date": { "year": 2026, "month": 9, "day": 18 },
-      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 22,
+        "minute": 58,
+        "second": 41,
+        "nano": 966506000
+      }
     },
     "isImported": false
   },
@@ -624,8 +662,183 @@
       }
     },
     "finishDate": {
-      "date": { "year": 2026, "month": 9, "day": 18 },
-      "time": { "hour": 22, "minute": 58, "second": 41, "nano": 966506000 }
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 18
+      },
+      "time": {
+        "hour": 22,
+        "minute": 58,
+        "second": 41,
+        "nano": 966506000
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_970",
+    "priority": "MEDIUM",
+    "tags": [
+      "multiplayer"
+    ],
+    "title": "Bots? -AI Heroes/Enemies(?)",
+    "description": "- Is there any plan for this so far?\n\n- Would it be difficult to implement?\n\t- Would it be taxing on the server etc?\n- Are old school \"AI\"-bots, like in WC3 the only option,- or could we use actual LLMs ex. via API?\n\t- Would that be expensive?",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 24
+      },
+      "time": {
+        "hour": 18,
+        "minute": 11,
+        "second": 6,
+        "nano": 559521100
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1019",
+    "priority": "HIGH",
+    "tags": [
+      "performance"
+    ],
+    "title": "Performance metrics -FPS, ping, other interesting values..",
+    "description": "- Option to display ping, fps counter (etc.?)",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 24
+      },
+      "time": {
+        "hour": 19,
+        "minute": 46,
+        "second": 24,
+        "nano": 611869400
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1045",
+    "priority": "LOW",
+    "tags": [
+      "Settings/Options"
+    ],
+    "title": "Graphics",
+    "description": "- Graphical settings - resolution, target fps,  brightness, colors etc.\n\t- Color blind mode?",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 24
+      },
+      "time": {
+        "hour": 20,
+        "minute": 20,
+        "second": 36,
+        "nano": 615954500
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1072",
+    "priority": "LOW",
+    "tags": [
+      "Settings/Options"
+    ],
+    "title": "Sound",
+    "description": "- Audio/sound settings - music and SFX etc.",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 24
+      },
+      "time": {
+        "hour": 20,
+        "minute": 22,
+        "second": 8,
+        "nano": 836519200
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1100",
+    "priority": "LOW",
+    "tags": [
+      "Settings/Options"
+    ],
+    "title": "Socials",
+    "description": "- Social settings - eg. chat on/off etc.\n/- Maybe multiplayer settings should here- (if not in game settings)/",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 24
+      },
+      "time": {
+        "hour": 22,
+        "minute": 43,
+        "second": 10,
+        "nano": 425361500
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1129",
+    "priority": "CRITICAL",
+    "tags": [],
+    "title": "ANTEKNING",
+    "description": "\"That means the current version can be made to feel more responsive without changing platforms. The first improvement for a MOBA-like feel would be local movement prediction: the player’s own hero should visually begin moving immediately, while the server remains authoritative and corrects mistakes. Remote heroes can continue to interpolate between server snapshots.\"",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 25
+      },
+      "time": {
+        "hour": 4,
+        "minute": 14,
+        "second": 48,
+        "nano": 230001600
+      }
+    },
+    "isImported": false
+  },
+  {
+    "id": "TASK_1159",
+    "priority": "LOW",
+    "tags": [
+      "Settings/Options"
+    ],
+    "title": "Game mechanics",
+    "description": "- Game settings - key, game speed?, difficulty- perhaps with extra extensive and precise control-/as a tool, or way to help with balancing while developing/",
+    "status": "TODO",
+    "date": {
+      "date": {
+        "year": 2026,
+        "month": 9,
+        "day": 26
+      },
+      "time": {
+        "hour": 21,
+        "minute": 24,
+        "second": 48,
+        "nano": 243836200
+      }
     },
     "isImported": false
   }
