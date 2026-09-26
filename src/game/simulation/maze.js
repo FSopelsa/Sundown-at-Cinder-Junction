@@ -134,10 +134,21 @@ export function validateMazePlacement(map, state, x, y, options = {}) {
     .some((occupied) => occupied && cellKey(occupied) === key))) {
     return { ok: false, reason: 'An enemy is crossing this cell.' };
   }
+  const hasRouteForCurrentActors = (distances) => distances.has(cellKey(map.entrance)) &&
+    !state.enemies.some((enemy) =>
+      !distances.has(cellKey(enemy.mazeNext ?? enemy.mazeCell ?? worldToCell(map, enemy.x, enemy.y))));
+
   const distances = buildDistanceField(map, activeTowers, cell, wormholes);
-  if (!distances.has(cellKey(map.entrance)) || state.enemies.some((enemy) =>
-    !distances.has(cellKey(enemy.mazeNext ?? enemy.mazeCell ?? worldToCell(map, enemy.x, enemy.y))))) {
+  if (!hasRouteForCurrentActors(distances)) {
     return { ok: false, reason: 'Leave an open route to the exit for every enemy.' };
   }
+
+  // A temporary tunnel may shorten the route, but it must never be the only
+  // thing keeping a permanent tower layout playable after the tunnel expires.
+  if (wormholes.length === 2 && wormholes.every((portal) => portal?.remainingMs > 0) &&
+    !hasRouteForCurrentActors(buildDistanceField(map, activeTowers, cell))) {
+    return { ok: false, reason: 'Leave an open route after the Worm Tunnel expires.' };
+  }
+
   return { ok: true, ...cellCenter(map, cell) };
 }
