@@ -50,6 +50,30 @@ test('Worm Tunnel is directional, expires, and can be upgraded for a longer acti
   assert.equal(simulation.state.wormholes.length, 0);
 });
 
+test('Worm Tunnel cannot be used to seal the permanent maze route', () => {
+  const simulation = createSimulation({ levelId: MAZE_MAP.id, scrap: 10000 });
+  unlockWormTunnel(simulation);
+  const entry = cellCenter(MAZE_MAP, { col: 3, row: 4 });
+  const exit = cellCenter(MAZE_MAP, { col: 20, row: 4 });
+
+  assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...entry }).ok, true);
+  assert.equal(simulation.dispatch(ACTIONS.castHeroSkill, { skillId: 'worm-tunnel', ...exit }).ok, true);
+  for (let row = 0; row < 9; row += 1) {
+    assert.equal(simulation.dispatch(ACTIONS.placeTower, {
+      towerType: 'wall',
+      ...cellCenter(MAZE_MAP, { col: 5, row }),
+    }).ok, true);
+  }
+
+  const finalWall = simulation.dispatch(ACTIONS.placeTower, {
+    towerType: 'wall',
+    ...cellCenter(MAZE_MAP, { col: 5, row: 9 }),
+  });
+  assert.equal(finalWall.ok, false);
+  assert.match(finalWall.reason, /after the Worm Tunnel expires/);
+  assert.equal(simulation.state.towers.length, 9);
+});
+
 test('Ctrl-style placement queues reserved towers and builds them in placement order', () => {
   const simulation = createSimulation({ levelId: THRESHOLD_MAP.id, scrap: 4000 });
   const firstPoint = roomCellCenter(THRESHOLD_MAP, { roomId: 'arrival-yard', col: 5, row: 5 });
